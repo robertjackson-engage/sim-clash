@@ -91,4 +91,39 @@
       else window.addEventListener('load', load);
     }
   }
+
+  // A direct download: the click starts the installer, and a short panel says what happens next.
+  if (cfg.downloadUrl) {
+    var dlPanel = null;
+    var showDl = function () {
+      if (!dlPanel) {
+        dlPanel = document.createElement('div');
+        dlPanel.className = 'dl-panel';
+        dlPanel.setAttribute('role', 'dialog');
+        dlPanel.setAttribute('aria-label', 'Your download has started');
+        dlPanel.innerHTML = '<div class="dl-card">' +
+          '<button type="button" class="dl-close" aria-label="Close">×</button>' +
+          '<p class="dl-kicker">Sim-Clash-Setup.exe · about 161 MB</p>' +
+          '<h2>Your download has started</h2>' +
+          '<ol>' +
+          '<li><b>Find the file.</b> It is in your Downloads folder. Double-click it when it finishes.</li>' +
+          '<li><b>Windows will warn you.</b> It says “Windows protected your PC” because the installer is not code-signed yet. Choose <b>More info</b>, then <b>Run anyway</b>.</li>' +
+          '<li><b>Play.</b> Open Sim Clash from your desktop. No launch monitor yet? Press <b>T</b> for test swings.</li>' +
+          '</ol>' +
+          '<p class="dl-foot">Nothing happening? <a href="' + cfg.downloadUrl + '">Try the download again</a> · <a href="install.html">Install help</a> · <a href="' + links.latest + '">Checksum and older versions</a></p>' +
+          '</div>';
+        document.body.appendChild(dlPanel);
+        var hide = function () { dlPanel.hidden = true; };
+        dlPanel.querySelector('.dl-close').addEventListener('click', hide);
+        dlPanel.addEventListener('click', function (e) { if (e.target === dlPanel) hide(); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') hide(); });
+      }
+      dlPanel.hidden = false;
+      var c = dlPanel.querySelector('.dl-close');
+      if (c) c.focus();
+    };
+    document.querySelectorAll('a[data-gh="download"]').forEach(function (a) {
+      a.addEventListener('click', function () { setTimeout(showDl, 200); });
+    });
+  }
 })();
