@@ -7,7 +7,8 @@ import * as THREE from 'three';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { buildHdTerrainLod, updateTerrainLod } from '../public/render/hd-terrain.js';
 import { buildGrass } from '../public/render/grass.js';
-import { gradeInto } from '../public/render/postfx.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { gradeInto, guardBloom, guardOutput, guardInto, FINITE_GLSL, FINITE_GLSL_ES1, SCENE_MAX } from '../public/render/postfx.js';
 import { QUALITY_PRESETS } from '../public/render/quality.js';
 
 const flat = (nx, ny, cellM = 1, minX = 0, minY = 0) => ({ minX, minY, cellM, nx, ny, heights: new Float32Array(nx * ny) });
@@ -94,6 +95,32 @@ test('the grade runs at the end of the OutputPass, after the sRGB encode', () =>
   assert.ok(enc > 0 && grade > enc, 'graded in display space');
   assert.ok(/uniform float uContrast, uSaturation, uVignette;/.test(fs));
   assert.equal(fs.trim().slice(-1), '}');
+});
+
+test('one bad pixel cannot black out the picture: every pass that reads the frame takes it through the NaN guard', () => {
+  // the bloom's bright pass: the frame is sanitised the moment it is read, before the luminance and the blur
+  const bloom = guardBloom(new UnrealBloomPass(new THREE.Vector2(64, 64), 0.1, 0.4, 1.6));
+  const hp = bloom.materialHighPassFilter.fragmentShader;
+  const read = hp.indexOf('vec4 texel = texture2D( tDiffuse, vUv );');
+  assert.ok(read > 0, "three's bright pass still reads the frame the way the guard expects");
+  assert.ok(hp.indexOf('texel.rgb = sceneFinite(texel.rgb);') > read && hp.indexOf('texel.rgb = sceneFinite(texel.rgb);') < hp.indexOf('luminance( texel.xyz )'), 'guarded before anything uses it');
+  assert.ok(hp.indexOf('bool sceneBad(float x)') > 0 && hp.indexOf('bool sceneBad(float x)') < hp.indexOf('void main'), 'the helper is declared before main');
+  // NaN and Inf are found by their bits (a comparison may be folded away), and the frame is clamped into a half float
+  assert.match(FINITE_GLSL, /floatBitsToUint\(x\) & 0x7f800000u\) == 0x7f800000u/);
+  assert.match(FINITE_GLSL, new RegExp(`clamp\\(c, vec3\\(0\\.0\\), vec3\\(${SCENE_MAX}\\.0\\)\\)`));
+  assert.ok(SCENE_MAX > 16 && SCENE_MAX < 65504, 'above anything the scene draws, inside a half float');
+  assert.ok(bloom.materialHighPassFilter.userData.unguarded.indexOf('sceneFinite') < 0, 'the stock text is kept for a NaN hunt');
+  // the output pass: guarded before tone mapping; with the grade too. It is compiled as GLSL ES 1.00 (no bit casts): the clamp alone
+  for (const pass of [guardOutput(new OutputPass()), gradeInto(guardOutput(new OutputPass()))]) {
+    const fs = pass.material.fragmentShader;
+    const at = fs.indexOf('gl_FragColor.rgb = sceneFinite(gl_FragColor.rgb);');
+    assert.ok(at > fs.indexOf('gl_FragColor = texture2D( tDiffuse, vUv );') && at < fs.indexOf('// tone mapping'), 'guarded before tone mapping');
+    assert.equal(pass.material.isRawShaderMaterial, true);
+    assert.ok(fs.indexOf('floatBitsToUint') < 0 && fs.indexOf(FINITE_GLSL_ES1.trim()) > 0, 'no bit cast in a GLSL ES 1.00 shader');
+    assert.equal(fs.trim().slice(-1), '}');
+  }
+  // a pass whose shader three has changed is refused, loudly
+  assert.throws(() => guardInto({ name: 'Changed', fragmentShader: 'void main() { gl_FragColor = vec4(1.0); }', userData: {} }, 'vec4 texel = texture2D( tDiffuse, vUv );', 'texel'), /NaN guard has nowhere to go/);
 });
 
 test('Low antialiases with FXAA, High keeps SMAA', () => {

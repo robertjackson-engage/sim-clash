@@ -1,6 +1,7 @@
 // Post-processing for GolfScene — bloom + SMAA over the base render.
 // Stock three.js passes only (see docs/visual-upgrade-plan.md, Step 1):
 //   RenderPass -> UnrealBloomPass -> OutputPass (tone map + sRGB + grade) -> SMAAPass (FXAA at Low) -> CAS.
+// Every pass that reads the scene's HDR frame takes it through a NaN / Inf guard (FINITE_GLSL below).
 // SAO/SSAO are intentionally omitted: the terrain is a flat height grid with
 // nothing to self-occlude, and SAO haloes over the 12000m far plane.
 import * as THREE from 'three';
@@ -14,6 +15,64 @@ import { FXAAPass } from 'three/addons/postprocessing/FXAAPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { RENDER_CONFIG } from './config.js';
 import { replaceGtaoNoiseTexture } from './gtao-noise.js';
+
+// ONE BAD PIXEL MUST NEVER COST THE PICTURE. A shader anywhere in the scene that divides by
+// zero or normalises nothing for one pixel of one frame writes a NaN (or an Inf) into the
+// HDR frame. The bloom then blurs the frame down through five mips and adds them back, and
+// a NaN survives every weighted sum it enters: ONE pixel became a black block that covered
+// four fifths of a 1080p frame (Midnight Mile's tee went "almost entirely black" in some
+// captures: a stadium beam's shader normalised a zero vector. That one is fixed at its
+// source in stadium-fx.js; putting three bad pixels in front of the lens on purpose gives
+// exactly that picture, and with this guard a three-pixel dot). The brightest thing a stage
+// draws measures about 45, so nothing honest comes near the limits here. Nothing can promise
+// that no shader will ever do that again, so every pass that READS the scene's frame takes
+// it through sceneFinite() first:
+// the bloom's bright pass, the air-and-lens pass (its depth of field and motion blur spread
+// a pixel too) and the output pass. A bad pixel is then one black pixel for one frame. It
+// costs a test a pixel in passes that already run: no pass is added.
+//   - NaN and Inf are found by their bits (an exponent of all ones). isnan() and "x != x"
+//     are comparisons a shader compiler is free to fold away; a bit pattern is not.
+//   - a negative colour is no colour (and a NaN in the sRGB curve's pow()), and nothing in
+//     the scene is brighter than SCENE_MAX: the clamp keeps a runaway highlight inside a
+//     half-float target, where it would otherwise become the next Inf.
+//   - three compiles the output pass (a RawShaderMaterial) as GLSL ES 1.00, which has no
+//     bit casts: there the guard is the clamp alone (FINITE_GLSL_ES1). On Direct3D, which is
+//     what the game runs on, min() and max() return the operand that is a number, so the
+//     clamp turns a NaN into 0 as well; and by then the pixel can no longer spread.
+export const SCENE_MAX = 512;
+export const FINITE_GLSL = /* glsl */`
+  bool sceneBad(float x) { return (floatBitsToUint(x) & 0x7f800000u) == 0x7f800000u; }
+  vec3 sceneFinite(vec3 c) {
+    if (sceneBad(c.r) || sceneBad(c.g) || sceneBad(c.b)) return vec3(0.0);
+    return clamp(c, vec3(0.0), vec3(${SCENE_MAX}.0));
+  }
+`;
+export const FINITE_GLSL_ES1 = /* glsl */`
+  vec3 sceneFinite(vec3 c) { return clamp(c, vec3(0.0), vec3(${SCENE_MAX}.0)); }
+`;
+// Put the guard into a stock three pass's shader: `read` is the line where it samples the
+// frame into `name` (a vec4). Throws when three's shader no longer has that line (a test
+// builds both passes, so an upgrade of three fails there and not in the game).
+export function guardInto(material, read, name) {
+  const fs = material.fragmentShader;
+  const at = fs.indexOf(read);
+  const main = fs.indexOf('void main');
+  if (at < 0 || main < 0 || at < main) throw new Error(`${material.name || 'a post-processing pass'}: its shader changed, the NaN guard has nowhere to go`);
+  material.userData.unguarded = fs;   // the stock text (a tool hunting for the SOURCE of a NaN puts it back)
+  const glsl = material.isRawShaderMaterial && material.glslVersion == null ? FINITE_GLSL_ES1 : FINITE_GLSL;
+  material.fragmentShader = fs.slice(0, main) + glsl + fs.slice(main, at + read.length) + ` ${name}.rgb = sceneFinite(${name}.rgb);` + fs.slice(at + read.length);
+  material.needsUpdate = true;
+  return material;
+}
+// The guard in the two stock passes that read the scene's frame.
+export function guardBloom(bloom) {
+  guardInto(bloom.materialHighPassFilter, 'vec4 texel = texture2D( tDiffuse, vUv );', 'texel');
+  return bloom;
+}
+export function guardOutput(pass) {
+  guardInto(pass.material, 'gl_FragColor = texture2D( tDiffuse, vUv );', 'gl_FragColor');
+  return pass;
+}
 
 // Cinematic grade in display space (after tone-map/sRGB): gentle contrast +
 // saturation, a warm-highlight / cool-shadow split-tone, and a soft vignette. It runs at
@@ -124,9 +183,10 @@ const ENV_SHADER = {
       vec4 v = uProjInv * vec4(uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
       return (uCamWorld * vec4(v.xyz / v.w, 1.0)).xyz;
     }
+    ${FINITE_GLSL}
     // the scene's colour at a pixel, through the air between it and the camera
     vec3 seen(vec2 uv, out float dist) {
-      vec3 c = texture2D(tDiffuse, uv).rgb;
+      vec3 c = sceneFinite(texture2D(tDiffuse, uv).rgb);   // (one bad pixel never spreads: see FINITE_GLSL)
       float depth = texture2D(tDepth, uv).x;
       dist = 1e5;
       if (depth >= 1.0) return c;             // the sky has its own air
@@ -188,7 +248,7 @@ const ENV_SHADER = {
         }
       }
       #endif
-      gl_FragColor = vec4(col, 1.0);
+      gl_FragColor = vec4(sceneFinite(col), 1.0);
     }`,
 };
 
@@ -274,13 +334,13 @@ export class PostFX {
     // linear 1.0, so a 1.0 threshold haloed the greens into glowing blobs at the
     // overview camera. Raise the threshold to 1.6 so only true speculars (sun glint
     // on water, the brightest sand) bloom, and keep strength low. (strength, radius, threshold).
-    this.bloom = new UnrealBloomPass(new THREE.Vector2(size.x, size.y), BLOOM_DEFAULT.strength, BLOOM_DEFAULT.radius, BLOOM_DEFAULT.threshold);
+    this.bloom = guardBloom(new UnrealBloomPass(new THREE.Vector2(size.x, size.y), BLOOM_DEFAULT.strength, BLOOM_DEFAULT.radius, BLOOM_DEFAULT.threshold));   // a NaN in the frame is not blurred across it (FINITE_GLSL)
     this.composer.addPass(this.bloom);
 
     // OutputPass applies renderer.toneMapping + toneMappingExposure and converts
     // to the renderer's output color space (composer render targets are linear); the
     // cinematic grade runs at its end, in display space, before SMAA.
-    const output = new OutputPass();
+    const output = guardOutput(new OutputPass());   // tone mapping never sees a NaN (FINITE_GLSL)
     if (RENDER_CONFIG.colorGrade) gradeInto(output);
     this.composer.addPass(output);
     this.output = output;

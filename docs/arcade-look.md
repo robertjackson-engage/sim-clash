@@ -587,6 +587,33 @@ window lights smeared into lines). The far layers' skylines are drawn by code fr
 random boxes and stand for nothing; the desert panorama's far town is generic mud-brick
 blocks and was left.
 
+### One bad pixel never costs the picture (the NaN guard)
+
+A shader that divides by zero or normalises a zero vector for one pixel of one frame writes
+a NaN (or an Inf) into the HDR frame. The bloom blurs the frame down through five mips and
+adds them back, and a NaN survives every sum it enters, so that one pixel came out as a
+black block over four fifths of the screen. This is what turned Midnight Mile's tee view
+"almost entirely black" in some captures before the release (a stadium beam's vertex shader
+normalised a zero vector; fixed at its source in `stadium-fx.js`).
+
+`public/render/postfx.js` now takes the frame through `sceneFinite()` in every pass that
+reads it (`FINITE_GLSL`): the bloom's bright pass, the air-and-lens pass and the output
+pass. NaN and Inf are found by their bits, not by a comparison a compiler may fold away;
+negative colours and anything past `SCENE_MAX` (512; the brightest thing a stage draws
+measures about 45) are clamped. No pass is added. A bad pixel is now a black dot for a
+frame.
+
+How it was proved, and how to look for the next one (private server, headless, no sound):
+three bad pixels were put in front of the lens on purpose (a quad whose shader returns
+`sqrt(-1)`, `1/0` or a negative number made from a uniform at run time). With three's
+stock passes the frame's mean brightness went from 131 to 0 with the quad in the middle
+and 79 % of it went black with the quad off to one side; with the guard the frame is the
+frame, with a three-pixel dot in it. Every frame of about 240,000, over all fifteen stages
+with drives, wedges and putts in flight and with slowed-down loads, was checked for NaN,
+Inf and its brightest value: one single frame with a NaN was seen, once, nine seconds into
+a cold load of Midnight Mile, and never again; what drew it was not found. The guard is
+there for exactly that.
+
 ### Not done
 
 - The far layers ARE in the water's sky reflection now ("The polish pass"), as they stand
