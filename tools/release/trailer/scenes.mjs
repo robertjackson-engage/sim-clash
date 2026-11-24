@@ -12,6 +12,7 @@
 // The swings were found by rehearsing with --fast and reading the results; the numbers are
 // ordinary ball data (ball speed mph, launch deg, start direction deg, spin rpm, spin axis deg).
 import { players, forDistance, putt } from './lib.mjs';
+import { beta2Scenes, WATCH_REPLAY } from './scenes-beta2.mjs';
 
 // ---------- small helpers ----------
 const BANNER = "(() => { const b = document.querySelector('.mt-banner'); return b && !b.classList.contains('hidden') && b.classList.contains('mt-b-turn') ? (b.innerText || '').replace(/\\s+/g, ' ').trim() : ''; })()";
@@ -19,11 +20,11 @@ const SCREEN = "(() => { const s = document.querySelector('.mt-screen'); return 
 const who = (m) => (m && m.players.find((p) => p.id === m.currentPlayerId)) || null;
 const line = (m) => (m ? `${m.phase}${m.tiebreak ? ` r${m.tiebreak.round}` : ''} up=${(who(m) || {}).name || '-'} ${m.players.map((p) => `${p.name}:${p.strokes}${p.holed ? ' IN' : ` ${p.lie} ${p.distToPinYd}yd`}`).join(' | ')}` : 'no match');
 
-async function fresh(c, seed, { tapInFt = 8 } = {}) {
+async function fresh(c, seed, { tapInFt = 8, names = ['Alex', 'Sam'] } = {}) {
   await c.restartServer(seed);
   await c.api('/api/arcade/reset', {});
   await c.api('/api/arcade/settings', { enabled: true, assist: { tapInFt } });   // SETTINGS > TAP-INS GIVEN (8 ft is the default)
-  c.P = await players(c, ['Alex', 'Sam']);
+  c.P = await players(c, names);
   await c.monitor.connect();
   await c.realSleep(300);
 }
@@ -60,12 +61,16 @@ async function winnerScreen(c, holdMs = 8000) {
   await c.sleep(holdMs);
 }
 // one swing by whoever is up; says what it did
-async function play(c, launch, label) {
+async function play(c, launch, label, { aim = null } = {}) {
   const before = c.matchNow();
   const me = who(before);
   // Aim: every full swing is played straight at the pin (key 0), so a take does not depend
   // on where the auto aim happened to point; a putt is left to the game's own line.
-  if (me && me.lie !== 'green') {
+  // (aim: a route of the stage that is not the flag's line, set as the aim keys would set it)
+  if (me && me.lie !== 'green' && aim != null) {
+    await c.api('/api/aim', { offset: aim });
+    await c.sleep(1100);
+  } else if (me && me.lie !== 'green') {
     if (!c.fast) { await c.key('0'); await c.sleep(700); }
     const st = await c.get('/api/state');
     if (st && st.aimOffset) { c.say(`   (aim was ${st.aimOffset}: set to 0)`); await c.api('/api/aim', { offset: 0 }); }
@@ -91,8 +96,10 @@ async function arm(c, id) {
 }
 
 // ---------- the swings (found with --fast) ----------
+const TUNE = process.env.TR_TUNE ? JSON.parse(process.env.TR_TUNE) : {};   // rehearsing: TR_TUNE='{"drive":{...}}' tries another swing
 const SW = {
-  drive: { speed: 168, vla: 12.5, hla: -1, spin: 2400, spinAxis: -1 },        // a big, straight drive
+  drive: { speed: 158, vla: 13, hla: 0, spin: 2600, spinAxis: 0 },            // at the flag: through the 150 mph wall and the boost ring behind it, onto the green
+  safe: { speed: 132, vla: 14.8, hla: 0, spin: 4300, spinAxis: 0 },           // the other way round, 22.5 degrees left of the flag: the Switchback, onto the speed strip at the turn
   slice: { speed: 150, vla: 13, hla: 7, spin: 3200, spinAxis: 28 },           // a real slice: starts right and keeps going
   rocket: { speed: 165, vla: 13.5, hla: 0, spin: 2500, spinAxis: 0 },         // the same drive, with the free Rocket under it
   lava: { speed: 100, vla: 18, hla: 2, spin: 6500, spinAxis: 5 },             // a 7-iron caught thin: short of the island
@@ -104,11 +111,12 @@ export const scenes = [
   // ------------------------------------------------------------------------------------
   {
     id: 'match',
-    title: 'title > VERSUS > lobby > VS + coin flip > stage intro > drive, slice, armed approach, the putt to win, the winner',
+    title: 'title > VERSUS > lobby > VS + coin flip > stage intro > the drive through the 150 mph wall (and its replay), the safe route onto the speed strip, armed approach, the putt to win, the winner',
     async run(c) {
       await fresh(c, 2, { tapInFt: 3 });        // wind seed 2: Canyon Run plays 7 mph, helping
       await c.goto(c.fast ? '/?menu=0' : '/', { settleMs: 10000 });
       await c.mouseAway();
+      await c.evaluate(WATCH_REPLAY);
       await c.rec.start('match');
       if (c.fast) await startQuick(c, 'canyon-run');
       else {
@@ -129,12 +137,13 @@ export const scenes = [
       await turnBanner(c);
       await c.sleep(900);
       const hero = who(c.matchNow());
-      // 1: the big drive, in ball cam
-      await play(c, SW.drive, 'drive');
+      // 1: the drive at the flag, in ball cam: 156 mph goes through the 150 wall and the ring
+      // (SMASHED IT!, and the game replays it by itself from another camera)
+      await play(c, TUNE.drive || SW.drive, 'drive');
       await turnBanner(c);
       await c.sleep(700);
-      // 2: the other player slices it off the same tee
-      await play(c, SW.slice, 'slice');
+      // 2: the other player goes round: the safe route, and the speed strip runs it up the ramp
+      await play(c, TUNE.safe || SW.safe, 'safe', { aim: TUNE.safeAim ?? -22.5 });
       await turnBanner(c);
       await c.sleep(600);
       // then whoever is up, until the hole is decided: the hero arms a Sticky ball for the
@@ -173,6 +182,7 @@ export const scenes = [
       await fresh(c, 1);
       await c.goto('/?menu=0', { settleMs: 8000 });
       await c.mouseAway();
+      await c.evaluate(WATCH_REPLAY);
       await c.rec.start('rocket');
       await c.sleep(800);
       const t = Date.now();
@@ -200,6 +210,7 @@ export const scenes = [
       await fresh(c, DRAGON.seed);
       await c.goto('/?menu=0', { settleMs: 8000 });
       await c.mouseAway();
+      await c.evaluate(WATCH_REPLAY);
       await c.rec.start('dragon');
       await c.sleep(800);
       const t = Date.now();
@@ -227,6 +238,7 @@ export const scenes = [
       await fresh(c, 1);
       await c.goto('/?menu=0', { settleMs: 8000 });
       await c.mouseAway();
+      await c.evaluate(WATCH_REPLAY);
       await c.rec.start('volcano');
       await c.sleep(800);
       const t = Date.now();
@@ -276,6 +288,7 @@ export const scenes = [
       const t = Date.now();
       await c.goto('/?menu=0', { settleMs: 2200 });
       await c.mouseAway();
+      await c.evaluate(WATCH_REPLAY);
       await c.rec.start('sudden');
       if (c.fast) await c.api('/api/match/continue', {});
       const cont = await c.waitEvent((x) => x.event === 'match' && x.data && (x.data.phase === 'loading' || x.data.phase === 'intro') && x.data.tiebreak, { since: t, timeoutMs: 20000 });
@@ -327,4 +340,6 @@ export const scenes = [
       }
     },
   },
+  // ---------- 1.0.0-beta.2: gadgets, flyovers, party, Bullseye (scenes-beta2.mjs) ----------
+  ...beta2Scenes({ fresh, who, line, untilPlay, turnBanner }),
 ];

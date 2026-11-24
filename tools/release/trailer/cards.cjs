@@ -39,9 +39,12 @@ body { font-family: var(--font); font-stretch: 75%; font-weight: 700; color: var
   linear-gradient(100deg, rgba(255, 90, 54, .30) 0%, rgba(255, 90, 54, 0) 38%),
   linear-gradient(280deg, rgba(46, 155, 255, .30) 0%, rgba(46, 155, 255, 0) 38%), var(--ink);
   display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.end .wm { font-size: 250px; margin-bottom: 44px; }
+.end .wm { font-size: 250px; margin-bottom: 40px; }
 .end .tag { font-size: 58px; font-style: italic; letter-spacing: .12em; color: var(--gold); }
-.end .url { margin-top: 30px; padding: 12px 40px 8px; font-size: 62px; letter-spacing: .05em; text-transform: none; background: var(--white); color: var(--ink); transform: skewX(-9deg); }
+/* the call to act: a gold slab, as the game's START button is */
+.end .dl { margin-top: 36px; padding: 16px 56px 10px; font-size: 64px; font-style: italic; letter-spacing: .06em; background: var(--gold); color: var(--ink); transform: skewX(-9deg); box-shadow: 0 10px 0 rgba(0, 0, 0, .45); }
+.end .dl > span { display: block; transform: skewX(9deg); }
+.end .url { margin-top: 34px; padding: 12px 40px 8px; font-size: 54px; letter-spacing: .05em; text-transform: none; background: var(--white); color: var(--ink); transform: skewX(-9deg); }
 .end .url > span { display: block; transform: skewX(9deg); }
 .end .built { margin-top: 40px; font-size: 36px; letter-spacing: .12em; color: rgba(255, 253, 245, .86); text-transform: none; }
 .end .fine { position: absolute; left: 0; right: 0; bottom: 44px; text-align: center; font-size: 25px; font-stretch: 87%; font-weight: 500; letter-spacing: .08em; color: rgba(255, 253, 245, .62); text-transform: none; line-height: 1.5; }
@@ -55,9 +58,11 @@ body { font-family: var(--font); font-stretch: 75%; font-weight: 700; color: var
 .v-top { position: absolute; left: 0; right: 0; top: 150px; text-align: center; }
 .v-top .wm { font-size: 190px; }
 .v-top .tag { margin-top: 26px; font-size: 44px; font-style: italic; letter-spacing: .1em; color: var(--white); text-shadow: 0 3px 0 rgba(0,0,0,.6); }
-.v-bot { position: absolute; left: 0; right: 0; bottom: 210px; text-align: center; }
+.v-bot { position: absolute; left: 0; right: 0; bottom: 170px; text-align: center; }
+.v-bot .dl { display: inline-block; margin-top: 22px; padding: 12px 40px 6px; font-size: 54px; font-style: italic; letter-spacing: .06em; background: var(--gold); color: var(--ink); }
+.v-bot .dl + br + .url, .v-bot .url { margin-top: 20px; }
 .v-bot .tag { font-size: 62px; font-style: italic; letter-spacing: .1em; color: var(--gold); text-shadow: 0 3px 0 rgba(0,0,0,.6); }
-.v-bot .url { display: inline-block; margin-top: 22px; padding: 10px 30px 6px; font-size: 42px; letter-spacing: .04em; text-transform: none; background: var(--white); color: var(--ink); }
+.v-bot .url { display: inline-block; margin-top: 22px; padding: 10px 30px 6px; font-size: 40px; letter-spacing: .04em; text-transform: none; background: var(--white); color: var(--ink); }
 `;
 
 app.whenReady().then(async () => {

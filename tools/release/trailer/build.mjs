@@ -3,6 +3,8 @@
 //
 //   node tools/release/trailer/build.mjs                 everything, into release/media/
 //   node tools/release/trailer/build.mjs --only trailer  one of: trailer, short, vertical, loop, thumbs, shots
+//   node tools/release/trailer/build.mjs --only site     the website's copies, from the trailer already built (never part of "everything")
+//   node tools/release/trailer/build.mjs --scratch .scratch/trailer2   the working folder shoot.mjs filmed into
 //   node tools/release/trailer/build.mjs --review        also: stills at every cut and caption (.scratch/trailer/review/)
 //   node tools/release/trailer/build.mjs --draft         a quick, rough encode (for looking at a cut)
 //   ... --ffmpeg <path to ffmpeg.exe>                    when it is not on PATH (or set FFMPEG)
@@ -21,6 +23,12 @@
 // The game has no looping sound by design (between a strike and a landing it is silent), so
 // the cut is quiet in places; --music <file> lays a bed of your own under it, low. One final
 // pass burns the captions in, levels the sound (EBU R128, linear) and encodes H.264 + AAC.
+// A stretch with no sound of its own (a flyover is filmed with the picture only) can be given
+// single sounds of the game by name (a timeline's `sfx`): files of public/arcade/sfx, laid in
+// once each, never looped.
+//
+// `site` writes the website's copies from what was just built: site/assets/video/trailer.mp4
+// (1280 x 720), its poster, and the hero's silent loop.
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
@@ -44,6 +52,9 @@ const MUSIC = flag('--music') ? path.resolve(flag('--music')) : null;
 const MUSIC_DB = +flag('--music-db', -24);     // a quick, rough encode for looking at the cut
 const OUT = path.resolve(repo, flag('--out', path.join('release', 'media')));
 const FPS = 60, W = 1920, H = 1080;
+// The address on the end card and the vertical cut, and nowhere else: change it here when the
+// site moves to a domain of its own. (cut.mjs writes {{SITE}} where it goes.)
+const SITE_ADDRESS = 'robertjackson-engage.github.io/sim-clash';
 
 const ffmpeg = findFfmpeg();
 if (!ffmpeg) {
@@ -104,7 +115,7 @@ function renderCards(cards) {
   fs.writeFileSync(stamp, body);
   return dir;
 }
-const cardsDir = renderCards(CUT.cards);
+const cardsDir = renderCards(CUT.cards.map((c) => ({ ...c, html: c.html.replaceAll('{{SITE}}', SITE_ADDRESS) })));
 const card = (id) => path.join(cardsDir, `${id}.png`);
 
 // ---------- one timeline ----------
@@ -175,6 +186,16 @@ function renderSound(name, segs, timeline) {
     const tail = Math.max(0, Math.min(s.tail ?? timeline.tail ?? 1.0, total - s.end, meta(clip).durationS - (from + s.dur) - 0.05));
     const data = pcm(indexed(ffmpeg, clip), from - lead, s.dur + lead + tail);
     add(data, s.start - lead, { gain: s.gain ?? 1, fadeIn: s.joinSound ? 0.005 : (lead ? Math.min(lead, 0.25) : 0.03), fadeOut: tail > 0.15 ? Math.min(tail, s.tailFade ?? 0.7) : 0.07 });
+  }
+  // single sounds of the game, by file name (public/arcade/sfx), where a picture has none of its own
+  for (const x of timeline.sfx || []) {
+    const seg = segs.find((k) => k.id === x.on);
+    if (!seg) throw new Error(`sfx '${x.file}': no segment with id '${x.on}' in ${name}`);
+    const file = path.join(repo, 'public', 'arcade', x.dir || 'sfx', `${x.file}.mp3`);
+    if (!fs.existsSync(file)) throw new Error(`sfx: no ${path.relative(repo, file)}`);
+    const at0 = seg.start + (x.offset || 0);
+    const data = pcm(file, x.from || 0, Math.min(x.dur || 12, total - at0));
+    add(data, at0, { gain: x.gain ?? 0.7, fadeIn: 0.005, fadeOut: x.fadeOut ?? 0.25 });
   }
   // a music bed of the owner's own, when one is named: low, under everything, faded at both ends
   let music = null;
@@ -297,23 +318,69 @@ if (want('vertical') && built.short) {
   built.vertical = { outFile: out, total };
 }
 
-if (want('loop')) {
-  // a silent clip that loops without a jump: the last half second is the first half second, cross-faded
-  const L = CUT.loop;
-  const a = at(L.clip, L.from), b = at(L.clip, L.to), dur = b - a, x = L.cross || 0.5;
-  const src = indexed(ffmpeg, L.clip);
-  const zoom = L.zoom ? `crop=iw/${L.zoom}:ih/${L.zoom}:(iw-iw/${L.zoom})*${L.zx ?? 0.5}:(ih-ih/${L.zoom})*${L.zy ?? 0.5},` : '';
-  const chain = `[0:v]fps=30,${zoom}scale=1280:720:flags=lanczos,format=yuv420p,trim=duration=${(dur + x).toFixed(3)},setpts=PTS-STARTPTS,split[p][q];[p]trim=start=${x}:duration=${dur.toFixed(3)},setpts=PTS-STARTPTS[main];[q]trim=duration=${x},setpts=PTS-STARTPTS[head];[main][head]xfade=transition=fade:duration=${x}:offset=${(dur - x).toFixed(3)},format=yuv420p[v]`;
-  const input = ['-ss', a.toFixed(3), '-t', (dur + x + 0.2).toFixed(3), '-i', src, '-filter_complex', chain, '-map', '[v]', '-an', '-t', dur.toFixed(3)];
-  const mp4 = path.join(OUT, 'sim-clash-loop.mp4'), webm = path.join(OUT, 'sim-clash-loop.webm');
-  const budget = Math.floor((2.8 * 8000) / dur);   // kbit/s that keeps the file under 3 MB
-  const log = path.join(WORK, 'loop-2pass');
+// a silent clip that loops without a jump: its stretches are joined with plain cuts, and the
+// end is cross-faded into the start (the file begins where that fade leaves off)
+function buildLoop(L, { width, height, fps, maxMB, mp4, webm, tag }) {
+  const parts = (L.segments || [L]).map((p) => ({ clip: p.clip, a: at(p.clip, p.from), b: at(p.clip, p.to), zoom: p.zoom, zx: p.zx, zy: p.zy }));
+  const x = L.cross || 0.5;
+  const dir = path.join(WORK, 'seg', `loop-${tag}`);
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.mkdirSync(dir, { recursive: true });
+  const cut = (p, from, d, out) => {
+    const zoom = p.zoom ? `crop=iw/${p.zoom}:ih/${p.zoom}:(iw-iw/${p.zoom})*${p.zx ?? 0.5}:(ih-ih/${p.zoom})*${p.zy ?? 0.5},` : '';
+    run(ffmpeg, ['-ss', from.toFixed(3), '-t', (d + 0.2).toFixed(3), '-i', indexed(ffmpeg, p.clip), '-vf', `fps=${fps},${zoom}scale=${width}:${height}:flags=lanczos,format=yuv420p,trim=duration=${d.toFixed(3)},setpts=PTS-STARTPTS`, '-an', '-r', String(fps), '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '10', '-pix_fmt', 'yuv420p', '-g', '15', out]);
+    return out;
+  };
+  const snap = (v) => Math.round(v * fps) / fps;
+  for (const p of parts) p.d = snap(p.b - p.a);
+  const files = parts.map((p, i) => cut(p, p.a, p.d, path.join(dir, `${i}.mkv`)));
+  files.push(cut(parts[0], parts[0].a, x, path.join(dir, 'head.mkv')));   // the start again: what the end fades into
+  const list = path.join(dir, 'list.txt');
+  fs.writeFileSync(list, files.map((f) => `file '${f.replace(/\\/g, '/')}'`).join('\n'));
+  const joined = path.join(dir, 'joined.mkv');
+  run(ffmpeg, ['-f', 'concat', '-safe', '0', '-i', list, '-c', 'copy', joined]);
+  const dur = parts.reduce((n, p) => n + p.d, 0);
+  const chain = `[0:v]split[p][q];[p]trim=start=${x}:end=${dur.toFixed(3)},setpts=PTS-STARTPTS[main];[q]trim=start=${dur.toFixed(3)}:end=${(dur + x).toFixed(3)},setpts=PTS-STARTPTS[head];[main][head]xfade=transition=fade:duration=${x}:offset=${(dur - 2 * x).toFixed(3)},format=yuv420p[v]`;
+  const out = dur - x;
+  const input = ['-i', joined, '-filter_complex', chain, '-map', '[v]', '-an', '-t', out.toFixed(3)];
+  const budget = Math.floor((maxMB * 0.95 * 8000) / out);   // kbit/s that keeps the file under maxMB
+  const log = path.join(WORK, `loop-${tag}-2pass`);
   run(ffmpeg, [...input, '-c:v', 'libx264', '-preset', 'slow', '-b:v', `${budget}k`, '-pass', '1', '-passlogfile', log, '-f', 'null', '-']);
   run(ffmpeg, [...input, '-c:v', 'libx264', '-preset', 'slow', '-b:v', `${budget}k`, '-pass', '2', '-passlogfile', log, '-profile:v', 'high', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', mp4]);
-  run(ffmpeg, [...input, '-c:v', 'libvpx-vp9', '-pix_fmt', 'yuv420p', '-b:v', `${budget}k`, '-deadline', 'good', '-cpu-used', '2', '-row-mt', '1', '-pass', '1', '-passlogfile', `${log}-vp9`, '-f', 'null', '-']);
-  run(ffmpeg, [...input, '-c:v', 'libvpx-vp9', '-pix_fmt', 'yuv420p', '-b:v', `${budget}k`, '-deadline', 'good', '-cpu-used', '2', '-row-mt', '1', '-pass', '2', '-passlogfile', `${log}-vp9`, webm]);
-  for (const f of [mp4, webm]) console.log(`  ${path.relative(repo, f)}: ${dur.toFixed(2)} s, ${(fs.statSync(f).size / 1e6).toFixed(2)} MB (silent, loops)`);
-  built.loop = { dur, mp4, webm };
+  if (webm) {
+    run(ffmpeg, [...input, '-c:v', 'libvpx-vp9', '-pix_fmt', 'yuv420p', '-b:v', `${budget}k`, '-deadline', 'good', '-cpu-used', '2', '-row-mt', '1', '-pass', '1', '-passlogfile', `${log}-vp9`, '-f', 'null', '-']);
+    run(ffmpeg, [...input, '-c:v', 'libvpx-vp9', '-pix_fmt', 'yuv420p', '-b:v', `${budget}k`, '-deadline', 'good', '-cpu-used', '2', '-row-mt', '1', '-pass', '2', '-passlogfile', `${log}-vp9`, webm]);
+  }
+  for (const f of [mp4, webm].filter(Boolean)) console.log(`  ${path.relative(repo, f)}: ${out.toFixed(2)} s, ${width} x ${height}, ${(fs.statSync(f).size / 1e6).toFixed(2)} MB (silent, loops)`);
+  return { dur: out, mp4, webm };
+}
+if (want('loop')) built.loop = buildLoop(CUT.loop, { width: 1280, height: 720, fps: 30, maxMB: 3.4, mp4: path.join(OUT, 'sim-clash-loop.mp4'), webm: path.join(OUT, 'sim-clash-loop.webm'), tag: 'media' });
+
+// ---------- the website's copies (site/assets/video), as site/README.md asks for them ----------
+if (ONLY.includes('site')) {
+  const dir = path.join(repo, 'site', 'assets', 'video');
+  const src = path.join(OUT, 'sim-clash-trailer.mp4');
+  if (!fs.existsSync(src)) throw new Error('site: build the trailer first (release/media/sim-clash-trailer.mp4)');
+  const probe = run(ffmpeg, ['-i', src], { allowFail: true }).stderr || '';
+  const d = /Duration: (\d+):(\d+):([\d.]+)/.exec(probe);
+  const total = d ? (+d[1]) * 3600 + (+d[2]) * 60 + (+d[3]) : 90;
+  // the lightbox's trailer: 1280 x 720, 30 fps, two passes to a size the site takes (under 14 MB)
+  const kbps = Math.floor((13.0 * 8000) / total - 104);
+  const log = path.join(WORK, 'site-2pass');
+  const v = ['-vf', 'fps=30,scale=1280:720:flags=lanczos,format=yuv420p', '-c:v', 'libx264', '-profile:v', 'high', '-preset', 'slow', '-b:v', `${kbps}k`, '-g', '60'];
+  const web = path.join(dir, 'trailer.mp4');
+  run(ffmpeg, ['-i', src, ...v, '-an', '-pass', '1', '-passlogfile', log, '-f', 'null', '-']);
+  run(ffmpeg, ['-i', src, ...v, '-maxrate', `${Math.round(kbps * 1.8)}k`, '-bufsize', `${kbps * 3}k`, '-pass', '2', '-passlogfile', log, '-c:a', 'aac', '-b:a', '96k', '-ar', '48000', '-movflags', '+faststart', web]);
+  console.log(`  ${path.relative(repo, web)}: ${total.toFixed(2)} s, 1280 x 720, ${(fs.statSync(web).size / 1e6).toFixed(2)} MB`);
+  // the picture the lightbox shows while the video loads: a frame of the cut
+  const sharp = require('sharp');
+  const frame = path.join(WORK, 'site-poster.png');
+  run(ffmpeg, ['-ss', String(CUT.site.posterAt), '-i', src, '-frames:v', '1', frame]);
+  const poster = path.join(dir, 'trailer-poster.webp');
+  await sharp(frame).resize(1280, 720).webp({ quality: 82 }).toFile(poster);
+  console.log(`  ${path.relative(repo, poster)}: 1280 x 720, ${(fs.statSync(poster).size / 1e3).toFixed(0)} kB`);
+  // the hero's loop: smaller than the media one (the home page's budget counts it)
+  buildLoop(CUT.site.loop || CUT.loop, { width: 960, height: 540, fps: 24, maxMB: 2.3, mp4: path.join(dir, 'loop.mp4'), webm: null, tag: 'site' });
 }
 
 if (want('thumbs')) {
@@ -340,6 +407,11 @@ if (want('shots')) {
     'Made by `tools/release/trailer/` (`shoot.mjs` films, `build.mjs` cuts). Every picture and every sound is the game itself,',
     'captured from a hidden window on a private server; the swings were sent by a script through the game\'s Open Connect port',
     '(the way a launch monitor\'s software sends them). No music was added.', '',
+    ...(['trailer', 'short'].some((n) => (CUT.timelines[n].sfx || []).length) ? [
+      'The flyovers were filmed with the picture only (the interface hidden, nothing playing). Under them, and where a screen',
+      'makes no sound of its own, the cut lays single sound files of the game (`public/arcade/sfx`, `public/arcade/voice`),',
+      `each played once: ${[...new Set(['trailer', 'short'].flatMap((n) => (CUT.timelines[n].sfx || []).map((x) => `\`${x.file}\``)))].join(', ')}.`, '',
+    ] : []),
     '## Raw clips', '', '| Clip | Scene | Length | Frame rate (page) | Swings and moments (seconds into the clip) |', '| --- | --- | --- | --- | --- |'];
   for (const f of fs.readdirSync(RAW).filter((x) => x.endsWith('.json')).sort()) {
     const m = JSON.parse(fs.readFileSync(path.join(RAW, f), 'utf8'));
@@ -357,7 +429,7 @@ if (want('shots')) {
     const caps = (CUT.timelines[name].captions || []);
     if (caps.length) lines.push('', `Captions: ${caps.map((c) => `"${CUT.cardText[c.card] || c.card}" (over \`${c.on}\`)`).join('; ')}.`);
   }
-  lines.push('', '## The loop', '', `\`${CUT.loop.clip}\` from \`${CUT.loop.from}\` to \`${CUT.loop.to}\`, silent, the end cross-faded into the start.`,
+  lines.push('', '## The loop', '', `${(CUT.loop.segments || [CUT.loop]).map((p) => `\`${p.clip}\` from \`${p.from}\` to \`${p.to}\``).join('; ')}: silent, the end cross-faded into the start.`,
     '', '## Thumbnails', '', ...CUT.thumbnails.map((t) => `- \`${t.file}\`: \`${t.clip}\` at \`${t.at}\`${t.card ? `, lettering "${CUT.cardText[t.card] || t.card}"` : ''}`), '');
   fs.writeFileSync(path.join(OUT, 'shots.md'), lines.join('\n'));
   console.log(`  ${path.relative(repo, path.join(OUT, 'shots.md'))}`);

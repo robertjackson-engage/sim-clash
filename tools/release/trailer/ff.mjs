@@ -8,7 +8,9 @@ import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
 export const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-export const SCRATCH = path.join(repo, '.scratch', 'trailer');
+// the working folder: --scratch <dir> (as shoot.mjs takes it) or TRAILER_SCRATCH, else .scratch/trailer
+const scratchArg = (() => { const i = process.argv.indexOf('--scratch'); return (i >= 0 && process.argv[i + 1]) || process.env.TRAILER_SCRATCH || path.join('.scratch', 'trailer'); })();
+export const SCRATCH = path.resolve(repo, scratchArg);
 export const RAW = path.join(SCRATCH, 'raw');
 export const WORK = path.join(SCRATCH, 'work');
 

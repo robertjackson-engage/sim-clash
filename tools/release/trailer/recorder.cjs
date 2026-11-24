@@ -33,6 +33,7 @@ const SCENES = path.resolve(flag('--scenes', path.join(__dirname, 'scenes.mjs'))
 const ONLY = (flag('--only', '') || '').split(',').map((s) => s.trim()).filter(Boolean);
 const W = +flag('--width', 1920), H = +flag('--height', 1080), FPS = +flag('--fps', 60);
 const MODE = flag('--window', 'osr');           // 'osr' (offscreen rendering) | 'hidden' (a never-shown window)
+const GFX = flag('--gfx', 'high');             // the graphics tier every page is filmed at (never Auto: a slow moment would drop it mid-take)
 const INPUT = flag('--input', 'connector');     // 'connector' (Open Connect, as a launch monitor's software does) | 'test-shot'
 let windSeed = flag('--wind-seed', 'trailer-1');
 const FAST = has('--fast');                    // rehearse: no recording, no waiting for the picture (the server plays a swing at once)
@@ -253,7 +254,7 @@ function makeContext() {
       for (let attempt = 0; ; attempt++) {
         try {
           if (!win || win.isDestroyed() || win.webContents.isCrashed()) { try { win && !win.isDestroyed() && win.destroy(); } catch (_) { /* gone */ } createWindow(); }
-          await win.loadURL(BASE + pathAndQuery);
+          await win.loadURL(BASE + (/[?&]gfx=/.test(pathAndQuery) ? pathAndQuery : `${pathAndQuery}${pathAndQuery.includes('?') ? '&' : '?'}gfx=${GFX}`));
           break;
         } catch (error) {
           if (attempt >= 2) throw error;
@@ -264,6 +265,8 @@ function makeContext() {
         }
       }
       await evaluate('new Promise((r) => { const go = () => (window.__birdie ? r(true) : setTimeout(go, 100)); go(); })');
+      // every frame at full resolution: the game's dynamic resolution would trade pixels for frame rate in the middle of a take
+      await evaluate("(() => { const s = window.__birdie.scene; if (!s) return false; s._resScale = 1; s._resScaleSet = true; s._resPending = null; s._resIntervals = { push() {}, length: 0 }; s.resize(); return true; })()");
       // the game makes its AudioContext on the first gesture: give it one that no screen reacts to
       // (a bare 'pointerdown' on window: only the audio layer listens there), so the sound
       // tap exists, and the samples are loading, before anything is recorded
