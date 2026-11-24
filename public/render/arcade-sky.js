@@ -9,6 +9,21 @@
 import * as THREE from 'three';
 import { horizonColorFromEquirect, horizonLinearFromEquirect } from './hdri-analyze.js';
 
+// A sky picture as the light of the scene (three's PMREM: scene.environment).
+// three's own prefilter shader makes Direct3D's compiler print five "cannot be represented
+// accurately in double precision" warnings the first time it is compiled on a PC, and three
+// passes the log on to the console. Nothing is wrong with the shader and none of it is
+// ours, so three's log check is off for exactly this compile (and only this one: a real
+// fault in any other program is still reported).
+export function prefilterEnvironment(renderer, equirect) {
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const debug = renderer.debug || {};
+  const check = debug.checkShaderErrors;
+  debug.checkShaderErrors = false;
+  try { return pmrem.fromEquirectangular(equirect).texture; }
+  finally { debug.checkShaderErrors = check; pmrem.dispose(); }
+}
+
 const RAD = Math.PI / 180;
 const srgbToLinear = (c) => (c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
 
@@ -155,9 +170,7 @@ export function paintedSkyEnvironment(renderer, spec, { width = 2048, height = 1
   equirect.wrapS = THREE.RepeatWrapping;
   equirect.generateMipmaps = false;
   equirect.needsUpdate = true;
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  const envTexture = pmrem.fromEquirectangular(equirect).texture;
-  pmrem.dispose();
+  const envTexture = prefilterEnvironment(renderer, equirect);
   const l = spec.light || {};
   const d = skyDirection(l.sunAzimuthDeg ?? 200, Math.max(8, l.sunAltitudeDeg ?? 45));
   const hl = horizonLinearFromEquirect(img.data, width, height);

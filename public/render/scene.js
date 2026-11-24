@@ -153,6 +153,20 @@ export function compileSceneAsync(renderer, scene, camera) {
   });
 }
 
+// The frame clock: seconds since the last getDelta() and the running total (elapsedTime),
+// the two things the scene used THREE.Clock for. three deprecated that class and says so in
+// the console on every start; this is the same arithmetic without the notice.
+class FrameClock {
+  constructor() { this.elapsedTime = 0; this._last = null; }
+  getDelta() {
+    const now = performance.now();
+    const dt = this._last == null ? 0 : (now - this._last) / 1000;
+    this._last = now;
+    this.elapsedTime += dt;
+    return dt;
+  }
+}
+
 export class GolfScene {
   constructor(container, { quality = 'auto', autoQuality = true, sky = 'midday', shotCam = 'follow', look = 'real' } = {}) {
     this.container = container;
@@ -254,7 +268,7 @@ export class GolfScene {
     this.ballSim = { x: 0, y: 0 };
     this.pinSim = { x: 0, y: 100 };
     this.aimDeg = 0;
-    this.clock = new THREE.Clock();
+    this.clock = new FrameClock();
 
     this._inputs();
     // overlay layer for floating distance markers projected from world space
@@ -448,12 +462,19 @@ export class GolfScene {
 
     // HDRI: image-based lighting + visible sky + ground horizon + sun direction.
     // One source of truth for the sun (this.sunDir) drives the light + _fitShadows.
-    this.envReady = this._applySky(this.skySetting);
+    // In the arcade look the sky belongs to the stage (its panorama, or its painted sky), and
+    // no stage is known yet: start under the sky inside the app instead of asking the server
+    // for the look's sky photo, which the game does not ship (a 404 and a warning on every
+    // start, for a sky the stage replaces a moment later). A course with no theme still gets
+    // the look's own sky when it loads (arcade-look.js lookCourse).
+    this._skyAwaitsCourse = this.look === 'arcade' && !!SKY_PRESETS[this.skySetting]?.hdri;
+    this.envReady = this._applySky(this._skyAwaitsCourse ? 'midday' : this.skySetting);
   }
 
   // Time of day (sky-presets.js): the sky photo plus the light that goes with it.
   // this.sunDir is updated IN PLACE — trees, turf and water hold that vector.
   setSky(setting) {
+    this._skyAwaitsCourse = false;
     this.skySetting = parseSkySetting(setting);
     this.envReady = this._applySky(this.skySetting);
     return this.envReady;

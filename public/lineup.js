@@ -242,6 +242,11 @@ export class Lineup {
 
   async refreshCarries() {
     try {
+      // nothing to ask for once the ball is in the hole (the server answers 409 HOLE_DONE,
+      // which a browser writes into the console as a failed request on every holed ball);
+      // a practice game always has a next ball
+      const st = this.state;
+      if (st && st.loaded && (st.holed || st.over) && !st.practice) throw new Error('the hole is done');
       const r = await fetch('/api/carries');
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       this.carries = await r.json();

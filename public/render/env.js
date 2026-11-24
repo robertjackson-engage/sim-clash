@@ -7,6 +7,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { sunSphericalFromEquirect, sunDirectionVec, horizonColorFromEquirect, horizonLinearFromEquirect, clampEquirectRadiance } from './hdri-analyze.js';
 import { RENDER_CONFIG } from './config.js';
 import { ASSETS } from './assets.js';
+import { prefilterEnvironment } from './arcade-sky.js';
 
 // pure math lives in hdri-analyze (unit-tested for handedness, D3); wrap as Vector3 here
 const sunVec = (azimuth, altitude) => {
@@ -32,9 +33,7 @@ export async function loadHDRIEnvironment(renderer, {
   // keep the sun disc inside half-float range before the GPU sees it (hdri-analyze.js)
   if (clampEquirectRadiance(data)) equirect.needsUpdate = true;
 
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  const envTexture = pmrem.fromEquirectangular(equirect).texture;
-  pmrem.dispose();
+  const envTexture = prefilterEnvironment(renderer, equirect);
 
   const sph = {
     azimuth: ovAz != null ? THREE.MathUtils.degToRad(ovAz) : est.azimuth,

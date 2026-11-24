@@ -78,10 +78,24 @@ export function envSandMaps(repX = 1, repY = 1) {
   if (typeof document === 'undefined') return null;
   if (!sandBase) {
     const loader = new THREE.TextureLoader();
-    const mk = (file, srgb) => { const t = loader.load(ENV_BASE + file); t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t; };
+    const mk = (file, srgb) => {
+      const waiting = [];
+      // the picture is in: the clones made while it was on its way may upload now
+      const t = loader.load(ENV_BASE + file, () => { for (const c of waiting.splice(0)) c.needsUpdate = true; });
+      t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8;
+      return { base: t, waiting };
+    };
     sandBase = { map: mk('tex/sand_c.webp', true), normalMap: mk('tex/sand_n.webp', false) };
   }
-  const map = sandBase.map.clone(), normalMap = sandBase.normalMap.clone();
+  // A clone marks itself for upload. Made before the picture has arrived it would be drawn
+  // with nothing to upload, and three says so in the console on every frame until it comes:
+  // such a clone waits unmarked and is marked when the picture lands.
+  const share = ({ base, waiting }) => {
+    const t = base.clone();
+    if (!base.image) { t.version = 0; waiting.push(t); }
+    return t;
+  };
+  const map = share(sandBase.map), normalMap = share(sandBase.normalMap);
   for (const t of [map, normalMap]) t.repeat.set(repX, repY);
   return { map, normalMap };
 }

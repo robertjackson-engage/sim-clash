@@ -20,7 +20,7 @@
 // Nothing here runs in the real look, and a stage without a panorama keeps its sky photo or
 // painted sky exactly as before.
 import * as THREE from 'three';
-import { skyDirection } from './arcade-sky.js';
+import { skyDirection, prefilterEnvironment } from './arcade-sky.js';
 
 export const ENV_BASE = '/arcade/env/';
 export const FAR_LAYER_TYPES = Object.freeze({ mountains: 0, islands: 1, skyline: 2, dunes: 3, stacks: 4, cones: 5, mesas: 6 });
@@ -109,58 +109,59 @@ const FAR_GLSL = /* glsl */`
 
   // The ridge line of a layer at a point of its circle: p on the unit circle (so it joins
   // up all the way round), ang the same place as an angle 0..1. Returns its height 0..1.
+  // (One way out, at the bottom: with a return in each branch Direct3D's compiler warned
+  // "use of potentially uninitialized variable" on every start, and three prints that.)
   float ridge(int type, vec2 p, float ang, vec4 A, vec4 B, vec4 E, out float cell, out float fx) {
     cell = 0.0; fx = 0.5;
+    float prof = 0.0;
     vec2 q = p * A.w + B.x * 7.31;
     if (type == 0) {          // mountains: a jagged range, never a gap
       float n = fbm(q), r = 1.0 - abs(2.0 * nz(q * 2.7 + 3.3) - 1.0);
       float fine = 1.0 - abs(2.0 * nz(q * 9.0 + 1.1) - 1.0);
-      return clamp(0.18 + 0.62 * n + 0.34 * r * n + 0.07 * fine * E.w, 0.0, 1.2);
-    }
-    if (type == 1) {          // islands: humps with open sea between them
+      prof = clamp(0.18 + 0.62 * n + 0.34 * r * n + 0.07 * fine * E.w, 0.0, 1.2);
+    } else if (type == 1) {   // islands: humps with open sea between them
       float n = fbm(q);
       float k = smoothstep(1.0 - E.z, 1.0 - E.z + 0.3, n + 0.25 * nz(q * 0.37 + 9.0));
-      return k * (0.35 + 0.65 * nz(q * 3.1 + 2.0)) * (0.8 + 0.2 * nz(q * 11.0));
-    }
-    if (type == 3) {          // dunes: long soft backs, a sharp crest here and there
+      prof = k * (0.35 + 0.65 * nz(q * 3.1 + 2.0)) * (0.8 + 0.2 * nz(q * 11.0));
+    } else if (type == 3) {   // dunes: long soft backs, a sharp crest here and there
       float n = fbm(q * vec2(1.0, 1.0));
       float crest = 1.0 - abs(2.0 * nz(q * 1.7 + 4.0) - 1.0);
-      return 0.22 + 0.5 * n + 0.28 * crest * crest;
-    }
-    if (type == 6) {          // mesas: flat tops, a cap of cliff over a skirt of scree, a butte here and there
+      prof = 0.22 + 0.5 * n + 0.28 * crest * crest;
+    } else if (type == 6) {   // mesas: flat tops, a cap of cliff over a skirt of scree, a butte here and there
       float n = fbm(q * 0.8);
       float skirt = smoothstep(0.3, 0.46, n) * 0.34;                       // the talus: a long slope up to the wall
       float wall = smoothstep(0.455, 0.475, n) * 0.36;                     // the cliff itself, near sheer
       float step2 = smoothstep(0.585, 0.6, n) * 0.26;                      // a second tier on the big ones
       float notch = 0.035 * nz(q * 9.0) + 0.02 * nz(q * 23.0);             // a broken rim, gullies
-      return 0.07 + skirt + wall * (0.94 + notch) + step2;
+      prof = 0.07 + skirt + wall * (0.94 + notch) + step2;
+    } else {
+      // the cell kinds (a skyline, sea stacks, volcano cones) count round the circle
+      float n = max(3.0, floor(A.w));
+      float c = ang * n;
+      cell = floor(c); fx = fract(c);
+      float r1 = hash1(cell + B.x * 13.0), r2 = hash1(cell * 1.7 + B.x * 29.0 + 4.0);
+      if (type == 2) {        // skyline: towers of every height, a few gaps
+        float w = 0.5 - 0.42 * (0.55 + 0.45 * r2);
+        float inX = smoothstep(w - uPixel * n, w + uPixel * n, fx) * smoothstep(w - uPixel * n, w + uPixel * n, 1.0 - fx);
+        float h = mix(0.22, 1.0, r1 * r1) * step(0.12, r2);
+        // a setback: the top third is narrower
+        float w2 = w + 0.14 * step(0.5, hash1(cell + 7.0));
+        float inTop = smoothstep(w2 - uPixel * n, w2 + uPixel * n, fx) * smoothstep(w2 - uPixel * n, w2 + uPixel * n, 1.0 - fx);
+        prof = max(h * 0.72 * inX, h * inTop);
+      } else if (type == 4) { // sea stacks: lone leaning pillars
+        float on = step(1.0 - E.z, r2);
+        float x = (fx - 0.5) / (0.1 + 0.16 * r1);
+        float body = clamp(1.0 - x * x, 0.0, 1.0);
+        prof = on * pow(body, 0.35) * (0.45 + 0.55 * r1) * (0.85 + 0.3 * nz(vec2(ang * n * 9.0, B.x)));
+      } else {                // cones: volcanoes with a notched crater
+        float on = step(1.0 - E.z, r2);
+        float x = abs(fx - 0.5) / (0.3 + 0.18 * r1);
+        float cone = clamp(1.0 - pow(x, 0.8), 0.0, 1.0);
+        cone = min(cone, 0.82 + 0.1 * nz(vec2(ang * n * 14.0, 3.0)));   // the top blown off
+        prof = on * cone * (0.5 + 0.5 * r1);
+      }
     }
-    // the cell kinds (a skyline, sea stacks, volcano cones) count round the circle
-    float n = max(3.0, floor(A.w));
-    float c = ang * n;
-    cell = floor(c); fx = fract(c);
-    float r1 = hash1(cell + B.x * 13.0), r2 = hash1(cell * 1.7 + B.x * 29.0 + 4.0);
-    if (type == 2) {          // skyline: towers of every height, a few gaps
-      float w = 0.5 - 0.42 * (0.55 + 0.45 * r2);
-      float inX = smoothstep(w - uPixel * n, w + uPixel * n, fx) * smoothstep(w - uPixel * n, w + uPixel * n, 1.0 - fx);
-      float h = mix(0.22, 1.0, r1 * r1) * step(0.12, r2);
-      // a setback: the top third is narrower
-      float w2 = w + 0.14 * step(0.5, hash1(cell + 7.0));
-      float inTop = smoothstep(w2 - uPixel * n, w2 + uPixel * n, fx) * smoothstep(w2 - uPixel * n, w2 + uPixel * n, 1.0 - fx);
-      return max(h * 0.72 * inX, h * inTop);
-    }
-    if (type == 4) {          // sea stacks: lone leaning pillars
-      float on = step(1.0 - E.z, r2);
-      float x = (fx - 0.5) / (0.1 + 0.16 * r1);
-      float body = clamp(1.0 - x * x, 0.0, 1.0);
-      return on * pow(body, 0.35) * (0.45 + 0.55 * r1) * (0.85 + 0.3 * nz(vec2(ang * n * 9.0, B.x)));
-    }
-    // cones: volcanoes with a notched crater
-    float on = step(1.0 - E.z, r2);
-    float x = abs(fx - 0.5) / (0.3 + 0.18 * r1);
-    float cone = clamp(1.0 - pow(x, 0.8), 0.0, 1.0);
-    cone = min(cone, 0.82 + 0.1 * nz(vec2(ang * n * 14.0, 3.0)));   // the top blown off
-    return on * cone * (0.5 + 0.5 * r1);
+    return prof;
   }
 
   // The cloud sheet and the far layers over a sky colour (col), seen from cam along d
@@ -564,9 +565,7 @@ function buildPanoEnvironment(renderer, bitmap, entry, opts) {
   equirect.wrapS = THREE.RepeatWrapping;
   equirect.generateMipmaps = false;
   equirect.needsUpdate = true;
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  const envTexture = pmrem.fromEquirectangular(equirect).texture;
-  pmrem.dispose();
+  const envTexture = prefilterEnvironment(renderer, equirect);
   const hl = new THREE.Color(entry.horizon ?? '#8899aa').multiplyScalar(img.scale);
   return { envTexture, equirect, horizonColor: new THREE.Color(entry.horizon ?? '#8899aa').getHex(), horizonLinear: hl, envScale: img.scale };
 }

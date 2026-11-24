@@ -868,6 +868,9 @@ export function lookCourse(scene) {
   // the course's theme: its look replaces the last course's (the pin, the grade, the fill
   // light and the sky go with it; the scenery is being built from it right now)
   if (syncTheme(scene)) applyTheme(scene);
+  // a course with no theme, the first since the page opened: the look's own sky, which the
+  // scene held back until it knew whether a stage would bring one (scene._setupSkyAndLights)
+  else if (scene._skyAwaitsCourse && scene.renderer) scene.setSky(scene.skySetting);
   const L = lookOf(scene);
   if (L.character.courseDry != null) scene._courseDry = L.character.courseDry;
   if (L.character.fescue != null) scene._fescue = L.character.fescue;
