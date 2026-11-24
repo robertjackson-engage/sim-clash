@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Make it yours: add a hole, a ball or a game mode to Sim Clash with an AI assistant</title>
+<meta name="description" content="Sim Clash is open source and laid out so an AI coding assistant can work on it. How someone who is not a programmer can add a hole, a ball or a game mode: where things live, how to run it, and three example requests checked against the code.">
+<meta name="theme-color" content="#06080c">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; media-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; base-uri 'self'; form-action 'none'">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Make Sim Clash yours: build holes, balls and game modes with AI">
+<meta property="og:description" content="Clone the code, ask for what you want. Where holes, balls and modes live, and three example requests checked against the code.">
+<!-- gen:meta -->
+<link rel="canonical" href="https://robertjackson-engage.github.io/sim-clash/make-it-yours.html">
+<meta property="og:site_name" content="Sim Clash">
+<meta property="og:url" content="https://robertjackson-engage.github.io/sim-clash/make-it-yours.html">
+<meta property="og:image" content="https://robertjackson-engage.github.io/sim-clash/assets/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Sim Clash: a floodlit stadium full of spectators round a target green, seen from the tee.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://robertjackson-engage.github.io/sim-clash/assets/og.jpg">
+<!-- /gen:meta -->
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/boot.js"></script>
+</head>
+<body>
+<!-- gen:header -->
+<a class="skip" href="#main">Skip to content</a>
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="index.html"><img src="assets/icon.svg" alt="" width="36" height="36"><b><span class="p1">Sim</span> <span class="p2">Clash</span></b></a>
+    <nav class="nav" aria-label="Site">
+      <a href="index.html">Home</a>
+      <a href="whats-new.html" class="new">What's new</a>
+      <a href="install.html">Install</a>
+      <a href="connect.html">Connect</a>
+      <a href="play.html">How to play</a>
+      <a href="make-it-yours.html" aria-current="page">Make it yours</a>
+      <a href="faq.html">FAQ</a>
+      <a href="contribute.html">Contribute</a>
+    </nav>
+    <a class="btn btn-go btn-sm" data-gh="download" href="https://github.com/robertjackson-engage/sim-clash/releases/latest/download/Sim-Clash-Setup.exe"><span>Download</span></a>
+  </div>
+</header>
+<!-- /gen:header -->
+
+<main id="main">
+<section class="page-head pic">
+  <img class="bg" src="assets/shots/head-make.webp" width="1600" height="600" alt="" fetchpriority="high">
+  <div class="wrap">
+    <p class="kicker">Make it yours</p>
+    <h1>Ask for the hole you want</h1>
+    <p class="lead">You do not have to be a programmer to change this game. It is open source, and it is laid out so that an AI coding assistant can find its way round. This page is the practical version of that sentence.</p>
+  </div>
+</section>
+
+<div class="wrap doc">
+  <nav class="toc" aria-label="On this page">
+    <b>On this page</b>
+    <ol>
+      <li><a href="#idea">The idea</a></li>
+      <li><a href="#setup">Get set up, once</a></li>
+      <li><a href="#where">Where things live</a></li>
+      <li><a href="#examples">Three requests that work</a></li>
+      <li><a href="#asking">How to ask well</a></li>
+      <li><a href="#limits">What it will not do for you</a></li>
+      <li><a href="#share">Share what you build</a></li>
+    </ol>
+  </nav>
+
+  <div class="prose">
+    <section id="idea">
+      <h2>The idea</h2>
+      <blockquote style="margin:0 0 1.2em;padding:0 0 0 18px;border-left:5px solid var(--gold)">
+        <p class="lead"><q>It's amazing what AI can do these days, if you want to build your own holes, game matches, or anything like that just have Claude clone the code, and ask for what you want.</q></p>
+        <p class="muted" style="margin:0">The dad who built Sim Clash</p>
+      </blockquote>
+      <p>The repository is public under the MIT licence, and it is set up for exactly this: one file per hole, one list of balls, plain-language documents for every part of the game, an orientation file written for AI assistants (<code>CLAUDE.md</code>), and tests that say when something broke. So take your own copy and ask. A new hole for a birthday, a ball that does something silly, a house rule for your regular match.</p>
+      <p>Any AI assistant that can read and edit a folder of code and run commands in it will do. Nothing here is tied to one of them, and this project is not affiliated with any.</p>
+    </section>
+
+    <section id="setup">
+      <h2>Get set up, once</h2>
+      <ol class="steps">
+        <li><p><b>Install <a href="https://nodejs.org" rel="noopener">Node.js</a> 22 or newer, and Git.</b> Both are free. Node.js runs the game from its source; Git fetches the code.</p></li>
+        <li><p><b>Install an AI coding assistant</b> that works in a folder on your PC, the kind that can open files, change them and run commands.</p></li>
+        <li><p><b>Ask it to fetch and start the game.</b> Something like:</p>
+          <div class="prompt"><span class="who">You</span><p>Clone <span data-fill="clone-url">the Sim Clash repository from GitHub</span>, install it and start the game. Read CLAUDE.md and docs/README.md first so you know your way round.</p></div>
+          <p>Or do it by hand, one line at a time:</p>
+<pre><code>git clone <span data-fill="clone-url">(the repository address, from its GitHub page)</span>
+cd <span data-fill="repo-dir">sim-clash</span>
+npm install
+npm start</code></pre>
+        </li>
+        <li><p><b>Check it plays.</b> The game opens full screen. You do not need your launch monitor for this: press <kbd>T</kbd> on a stage for a test swing. <kbd>F11</kbd> leaves full screen.</p></li>
+        <li><p><b>Know the one command that keeps you honest:</b> <code>npm test</code>. It runs the project's tests. Ask the assistant to run it after every change, and not to call a job finished until it passes.</p></li>
+      </ol>
+      <div class="note">
+        <p><b>Your installed game is safe.</b> Nothing you change in the source folder changes an installed copy of the program; the two just cannot run at the same time, because they use the same ports. If an experiment goes wrong, delete the folder and clone again.</p>
+      </div>
+    </section>
+
+    <section id="where">
+      <h2>Where things live</h2>
+      <p>You do not need to read any of this code. It helps to know the names, so you can point the assistant at the right place and recognise what it tells you it changed.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>You want</th><th>It lives in</th><th>How it works</th></tr></thead>
+        <tbody>
+          <tr><td><b>A hole</b></td><td class="wrapok"><code>tools/arcade-holes/holes/*.js</code><br>explained in <code>docs/arcade-holes.md</code></td><td class="wrapok">One file per hole, plain geometry: the height of the ground as a function, shapes for fairway, green, sand and water, a list of trees and props, the par, the three routes. A builder turns it into a course the game loads and names anything wrong with it (a green too steep, a tee under water).</td></tr>
+          <tr><td><b>Things to hit</b></td><td class="wrapok">the hole's <code>gadgets</code> list<br>explained in <code>docs/gadgets.md</code></td><td class="wrapok">Boost rings, bounce pads, speed strips, geysers, bumpers, a warp pipe, a cannon, breakable walls, coin trails, multiplier rings: each a line of data with a position and a few numbers.</td></tr>
+          <tr><td><b>What lives on it</b></td><td class="wrapok"><code>tools/arcade-holes/life/&lt;hole&gt;.js</code><br>explained in <code>docs/living-world.md</code></td><td class="wrapok">Boats, trains, birds, fish, weather, a dragon: scenery that moves and reacts, and never touches the ball.</td></tr>
+          <tr><td><b>What stands on it</b></td><td class="wrapok">the hole's <code>props</code> list</td><td class="wrapok"><!-- gen:n-props -->63<!-- /gen:n-props --> kinds of prop are modelled: lighthouses, pyramids, castles, waterfalls, bridges, crowds, blimps. A hole's theme (<!-- gen:themes --><code>tropical</code>, <code>canyon</code>, <code>links</code>, <code>volcano</code>, <code>alpine</code>, <code>sakura</code>, <code>jungle</code>, <code>desert</code>, <code>neon</code>, <code>stadium</code><!-- /gen:themes -->) sets the sky, the ground, the trees and what the water is.</td></tr>
+          <tr><td><b>A ball or a trick</b></td><td class="wrapok"><code>lib/arcade.js</code>, the list called <code>POWERUPS</code><br>explained in <code>docs/arcade.md</code></td><td class="wrapok">Each ball is a few lines: a name, an emoji, a colour, a tagline, and a handful of numbers that bend the physics (drag, lift, gravity, wind, bounce, roll, the size of the cup). The physics that reads them is <code>lib/physics.js</code>.</td></tr>
+          <tr><td><b>A rule of the match</b></td><td class="wrapok"><code>lib/match.js</code><br>explained in <code>docs/match.md</code></td><td class="wrapok">Formats, knockout, the stroke cap, sudden death, undo: one file with no screen in it, so it is thoroughly tested.</td></tr>
+          <tr><td><b>A game mode</b></td><td class="wrapok"><code>public/arcade/shell-core.js</code> (the menu), <code>lib/solo.js</code>, <code>lib/practice.js</code>, <code>lib/bullseye-mode.js</code><br>explained in <code>docs/sim-clash-shell.md</code> and <code>docs/modes.md</code></td><td class="wrapok">The main menu is a list. A way of playing the stages alone is a kind of solo run; a mini game on the stage in play is a practice session; a game for two to four on the tour is a format of the match engine; and a game of its own, like Bullseye, is a mode: one file the server registers.</td></tr>
+          <tr><td><b>The announcer, the sounds</b></td><td class="wrapok"><code>public/arcade/voice/</code>, <code>public/arcade/sfx/</code><br>explained in <code>docs/arcade-voice.md</code></td><td class="wrapok">Short one-shot files and the table that says when each plays. Replacements must be yours to give away.</td></tr>
+        </tbody>
+      </table></div>
+      <p>The hole files that exist today, each a working example to copy from:</p>
+      <ul style="columns:2 280px;list-style:none;padding:0;font-size:15px"><!-- gen:hole-files --><li><code>bullseye-bay.js</code> Bullseye Bay, par 3, tropical</li><li><code>canyon-run.js</code> Canyon Run, par 4, canyon</li><li><code>dragons-spine.js</code> Dragon's Spine, par 4, volcano</li><li><code>frostbite-ridge.js</code> Frostbite Ridge, par 4, alpine</li><li><code>ice-pick.js</code> Ice Pick, par 3, alpine</li><li><code>lagoon-island.js</code> Lagoon Island, par 3, tropical</li><li><code>lighthouse-point.js</code> Lighthouse Point, par 4, links</li><li><code>midnight-mile.js</code> Midnight Mile, par 5, neon</li><li><code>pharaohs-gate.js</code> Pharaoh's Gate, par 4, desert</li><li><code>sakura-garden.js</code> Sakura Garden, par 3, sakura</li><li><code>sky-fortress.js</code> Sky Fortress, par 3, canyon</li><li><code>summit-express.js</code> Summit Express, par 5, alpine</li><li><code>temple-run.js</code> Temple Run, par 5, jungle</li><li><code>thunder-dome.js</code> Thunder Dome, par 3, stadium</li><li><code>volcano-drop.js</code> Volcano Drop, par 3, volcano</li><!-- /gen:hole-files --></ul>
+    </section>
+
+    <section id="examples">
+      <h2>Three requests that work</h2>
+      <p>Each of these was checked against the code as it is today: the pieces it needs exist, and the note says which. They are starting points. Change the words to what you actually want.</p>
+
+      <h3>A hole</h3>
+      <div class="prompt"><span class="who">You</span><p>Add a par 3 over a waterfall to the jungle world. Copy the style of the existing holes, give it a safe route and a risky one, build it and check it, then tell me how to play it.</p></div>
+      <p class="where">Lands in a new file in <code>tools/arcade-holes/holes/</code>. It works because <code>jungle</code> is one of the game's themes (Temple Run uses it), <code>waterfall</code> is one of the modelled props, and the builder validates the result: <code>node tools/arcade-holes/build.mjs --check --only &lt;its id&gt;</code>. Play it from PRACTICE &gt; FREE PLAY.</p>
+
+      <h3>A ball</h3>
+      <div class="prompt b"><span class="who">You</span><p>Add a Balloon ball that falls at half speed and gets pushed twice as far by the wind. Common rarity. Add it to the tests that check the list of balls.</p></div>
+      <p class="where">Lands as one new entry in <code>POWERUPS</code> in <code>lib/arcade.js</code>. It works because the physics already has both knobs: <code>gravityScale</code> (the Feather ball floats with it) and <code>windScale</code> (the Windcutter ball sets it to zero).</p>
+
+      <h3>A game</h3>
+      <div class="prompt c"><span class="who">You</span><p>Add a closest-to-the-pin tournament for four players: three balls each on an arena, the nearest ball wins. Model it on Bullseye.</p></div>
+      <p class="where">Lands as a new pair of files beside <code>lib/bullseye.js</code> and <code>lib/bullseye-mode.js</code>, one <code>registerMode</code> line in <code>server.js</code>, a screen modelled on <code>public/arcade/bullseye.js</code> and an entry in the main menu's list in <code>public/arcade/shell-core.js</code>. It works because Bullseye already is that shape (one to four players, every ball from an arena's tee, scored by where it finishes) and the game has a small registry for modes of this kind: <code>docs/modes.md</code>, "How a mode plugs in". This is the biggest of the three: expect a few rounds of playing and correcting.</p>
+
+      <div class="note warn">
+        <p><b>What is a bigger ask.</b> Anything that needs the game to do something it has no notion of yet. "A ball that splits into three on landing" sounds like the Balloon ball, but the game follows one ball per swing everywhere: the physics, the camera, the scoring. An assistant can still build it, but expect several rounds, and expect to be the one who notices what it broke.</p>
+      </div>
+    </section>
+
+    <section id="asking">
+      <h2>How to ask well</h2>
+      <ul>
+        <li><strong>Say what you want to see, not how to code it.</strong> "A short par 4 where the brave line is over a pirate ship" is a better request than anything with file names in it.</li>
+        <li><strong>Ask for one thing at a time,</strong> and play it before asking for the next.</li>
+        <li><strong>Make it prove its work.</strong> "Run the tests." "Build the hole and show me the map" (<code>node tools/arcade-holes/preview.mjs --only &lt;id&gt;</code> draws one). "Hit ten test shots at it and tell me where they finish": a running game accepts shots over a local address, which is how the project's own checks hit balls.</li>
+        <li><strong>Tell it what was wrong in plain words.</strong> "The green is hidden behind the cliff from the tee." "A normal drive goes in the water every time." The holes have house rules for exactly these things (wide fairways, big greens, hazards you can see), written down in <code>docs/arcade-holes.md</code>, and the assistant can read them.</li>
+        <li><strong>Keep what works.</strong> Ask it to save your progress with Git after each thing you are happy with, so a bad idea can be undone.</li>
+      </ul>
+    </section>
+
+    <section id="limits">
+      <h2>What it will not do for you</h2>
+      <ul>
+        <li><strong>It cannot tell you whether a hole is fun.</strong> Only hitting balls at it does that. Budget more time for playing than for building.</li>
+        <li><strong>It cannot test your launch monitor.</strong> Test swings stand in for one while you build; the real thing has to be tried in the bay.</li>
+        <li><strong>It should not borrow.</strong> No sounds, art, logos or course layouts from a commercial game, film or broadcast. Everything in this project has to be something it may give away, and that should go for your version too if you plan to share it.</li>
+        <li><strong>It costs what your assistant costs.</strong> The game is free; the AI assistant you use to change it has its own terms and prices.</li>
+      </ul>
+    </section>
+
+    <section id="share">
+      <h2>Share what you build</h2>
+      <p>If you make something you like, other people with a simulator would like it too.</p>
+      <ul>
+        <li><strong>A pull request</strong> on GitHub is the way a hole, a ball or a mode gets into the game for everyone. Your assistant can open one for you; a screenshot and a sentence about how it plays is enough of a description.</li>
+        <li><strong>An issue</strong> is the way to report a bug, or to say how your launch monitor got on: there is a form for each.</li>
+        <li>Engine fixes (physics, the renderer, the launch-monitor link) are worth sending to Open-Birdie too, the project Sim Clash is built on.</li>
+      </ul>
+      <div class="btn-row">
+        <a class="btn btn-go" data-gh="repo" href="contribute.html"><span>The code on GitHub</span></a>
+        <a class="btn btn-ghost" data-gh="new-issue" href="contribute.html"><span>Open an issue</span></a>
+        <a class="btn btn-ghost" href="contribute.html"><span>The contributor's guide</span></a>
+      </div>
+    </section>
+  </div>
+</div>
+
+</main>
+
+<!-- gen:footer -->
+<footer class="foot">
+  <div class="wrap foot-in">
+    <div>
+      <h2>Sim Clash</h2>
+      <p>A quick, video-game-style golf match for your launch monitor. A hobby project, free and open source under the MIT licence.</p>
+      <p>Built on Open-Birdie: the original by Rooj Rin (<a href="https://github.com/rroojrooj/Open-Birdie" rel="noopener">rroojrooj/Open-Birdie</a>) and the fork by jordan-shilts (<a href="https://github.com/jordan-shilts/Open-Birdie" rel="noopener">jordan-shilts/Open-Birdie</a>) that Sim Clash is built on.</p>
+    </div>
+    <nav aria-label="Pages">
+      <h2>Site</h2>
+      <ul>
+        <li><a href="whats-new.html">What's new</a></li>
+        <li><a href="install.html">Install</a></li>
+        <li><a href="connect.html">Connect your launch monitor</a></li>
+        <li><a href="play.html">How to play</a></li>
+        <li><a href="make-it-yours.html">Make it yours: build with AI</a></li>
+        <li><a href="faq.html">FAQ and troubleshooting</a></li>
+        <li><a href="contribute.html">Contribute</a></li>
+      </ul>
+    </nav>
+    <nav aria-label="Project">
+      <h2>Project</h2>
+      <ul>
+        <li><a data-gh="repo" href="contribute.html">GitHub repository</a></li>
+        <li><a data-gh="releases" href="install.html">Releases</a></li>
+        <li><a data-gh="issues" href="contribute.html">Issues</a></li>
+        <li><a data-gh="license" href="contribute.html#credits">MIT licence</a></li>
+        <li><a data-gh="disclaimer" href="contribute.html#credits">Disclaimer</a></li>
+      </ul>
+    </nav>
+    <p class="fine">Sim Clash is an independent open-source project. It is not affiliated with, endorsed by or sponsored by GSPro, Foresight Sports, Uneekor or any other company named on this site; their names are used only to say what the game works with, and all trademarks belong to their owners. The software is provided as is, with no warranty. Hitting golf balls indoors can hurt people and break things: swing at your own risk.</p>
+  </div>
+</footer>
+<script src="config.js"></script>
+<script src="site.js"></script>
+<!-- /gen:footer -->
+</body>
+</html>

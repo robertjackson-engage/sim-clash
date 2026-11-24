@@ -3,35 +3,49 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>How to play · Sim Clash</title>
+<title>How to play Sim Clash: the match rules, balls, keys and menus</title>
 <meta name="description" content="Starting a match, formats, knockout, sudden death, the stroke cap, the match menu, balls and tricks, rocket holes, wind, keys and camera modes.">
-<meta name="theme-color" content="#07090d">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; base-uri 'self'; form-action 'none'">
+<meta name="theme-color" content="#06080c">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; media-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; base-uri 'self'; form-action 'none'">
 <meta property="og:type" content="website">
 <meta property="og:title" content="How to play · Sim Clash">
 <meta property="og:description" content="Starting a match, formats, knockout, sudden death, the stroke cap, the match menu, balls and tricks, rocket holes, wind, keys and camera modes.">
+<!-- gen:meta -->
+<link rel="canonical" href="https://robertjackson-engage.github.io/sim-clash/play.html">
+<meta property="og:site_name" content="Sim Clash">
+<meta property="og:url" content="https://robertjackson-engage.github.io/sim-clash/play.html">
 <meta property="og:image" content="https://robertjackson-engage.github.io/sim-clash/assets/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Sim Clash: a floodlit stadium full of spectators round a target green, seen from the tee.">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://robertjackson-engage.github.io/sim-clash/assets/og.jpg">
+<!-- /gen:meta -->
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
 <link rel="stylesheet" href="assets/site.css">
+<script src="assets/boot.js"></script>
 </head>
 <body>
+<!-- gen:header -->
 <a class="skip" href="#main">Skip to content</a>
 <header class="top">
   <div class="wrap top-in">
     <a class="brand" href="index.html"><img src="assets/icon.svg" alt="" width="36" height="36"><b><span class="p1">Sim</span> <span class="p2">Clash</span></b></a>
     <nav class="nav" aria-label="Site">
       <a href="index.html">Home</a>
+      <a href="whats-new.html" class="new">What's new</a>
       <a href="install.html">Install</a>
       <a href="connect.html">Connect</a>
       <a href="play.html" aria-current="page">How to play</a>
+      <a href="make-it-yours.html">Make it yours</a>
       <a href="faq.html">FAQ</a>
       <a href="contribute.html">Contribute</a>
     </nav>
-    <a class="btn btn-go btn-sm" data-gh="download" href="install.html"><span>Download</span></a>
+    <a class="btn btn-go btn-sm" data-gh="download" href="https://github.com/robertjackson-engage/sim-clash/releases/latest/download/Sim-Clash-Setup.exe"><span>Download</span></a>
   </div>
 </header>
+<!-- /gen:header -->
 
 <main id="main">
 <section class="page-head">
@@ -49,11 +63,16 @@
       <li><a href="#start">Starting a match</a></li>
       <li><a href="#formats">Formats</a></li>
       <li><a href="#rules">The rules</a></li>
+      <li><a href="#putting">Putting</a></li>
       <li><a href="#menu">The match menu</a></li>
+      <li><a href="#drop">Drops and views</a></li>
       <li><a href="#balls">Balls and tricks</a></li>
       <li><a href="#rocket">Rocket holes</a></li>
       <li><a href="#wind">Wind</a></li>
       <li><a href="#scoring">Grades and callouts</a></li>
+      <li><a href="#gadgets">Course gadgets</a></li>
+      <li><a href="#more">Party, Bullseye, Duel</a></li>
+      <li><a href="#replay">Replays</a></li>
       <li><a href="#solo">Solo and practice</a></li>
       <li><a href="#settings">Settings</a></li>
       <li><a href="#keys">Keys</a></li>
@@ -66,32 +85,32 @@
       <h2>Starting a match</h2>
 <ol class="steps">
         <li><p><b>Start the game.</b> It opens on the title screen: press any key, click, or simply hit a ball.</p></li>
-        <li><p><b>Choose VERSUS</b> on the main menu. The menus work with the arrow keys and <kbd>Enter</kbd>, with the number keys, or with a mouse or touch screen; <kbd>Esc</kbd> goes back.</p></li>
-        <li><p><b>Pick the two players.</b> Tap a player slot to choose a name or type a new one. With nobody on the roster yet, <b>ONE TAP: PLAYER 1 VS PLAYER 2</b> fills both. Player one is always orange, player two always blue.</p></li>
-        <li><p><b>Pick a format</b>, and for a quick match a stage (or leave it on Random). <b>OPTIONS</b> holds the rest: what happens on a tied hole, power-ups, stage order, and whether a hazard loses the hole.</p></li>
+        <li><p><b>Choose VERSUS</b> on the main menu (two players; PARTY is the same for two to four). The menus work with the arrow keys and <kbd>Enter</kbd>, with the number keys, or with a mouse or touch screen; <kbd>Esc</kbd> goes back.</p></li>
+        <li><p><b>Pick the two players.</b> Tap a player slot to choose a name or type a new one. The lobby opens with two players ready: Player 1 and Player 2 are made on the spot when the roster has fewer than two. Player one is always orange, player two always blue.</p></li>
+        <li><p><b>Pick a format</b>, and for a quick match a stage (or leave it on Random). <b>OPTIONS</b> holds the rest: what happens on a tied hole (sudden death or halve), power-ups (loadout, unlimited or off), putting (easy, assisted or real), stage order (tour or shuffle), and whether a hazard loses the hole.</p></li>
         <li><p><b>Press START.</b> The VS screen flips a coin for who tees off, the stage introduces itself with its par, yards, wind and three routes, and the first player is called up. Any key or a click skips an intro.</p></li>
       </ol>
       <div class="grid g2">
         <figure class="shot">
-          <img src="assets/hud/title.webp" width="1280" height="720" loading="lazy" decoding="async" alt="The title screen: the SIM CLASH wordmark over a tropical hole, with the line: press any key, click, or hit a ball.">
+          <img src="assets/shots/title-640.webp" srcset="assets/shots/title-640.webp 640w, assets/shots/title-1280.webp 1280w" sizes="(max-width: 900px) 92vw, 820px" width="1280" height="720" loading="lazy" decoding="async" alt="The title screen: the SIM CLASH wordmark in orange and blue over Lagoon Island, with the line press any key, click, or hit a ball.">
           <figcaption>The title screen. A swing gets you past it.</figcaption>
         </figure>
         <figure class="shot">
-          <img src="assets/hud/main.webp" width="1280" height="720" loading="lazy" decoding="async" alt="The main menu: Versus, Solo, Practice, Players, Settings and How to play.">
+          <img src="assets/shots/menu-640.webp" srcset="assets/shots/menu-640.webp 640w, assets/shots/menu-1280.webp 1280w" sizes="(max-width: 900px) 92vw, 820px" width="1280" height="720" loading="lazy" decoding="async" alt="The main menu, pick a game: Versus, Party, Bullseye, Trick Shot Duel, Solo, Practice, Highlights, Players, Settings and How to play, over a view of Lagoon Island.">
           <figcaption>The main menu.</figcaption>
         </figure>
       </div>
       <figure class="shot">
-        <img src="assets/hud/lobby.webp" width="1280" height="720" loading="lazy" decoding="async" alt="The match setup screen, titled Clash Match: player one in orange versus player two in blue, the three formats, a row of stage cards and a START button.">
+        <img src="assets/shots/lobby-640.webp" srcset="assets/shots/lobby-640.webp 640w, assets/shots/lobby-1280.webp 1280w" sizes="(max-width: 900px) 92vw, 820px" width="1280" height="720" loading="lazy" decoding="async" alt="The match setup screen, titled Clash Match: Alex in orange versus Sam in blue, the three formats, a row of stage cards, an Options line and a big yellow START button.">
         <figcaption>Match setup. A match that is already in play shows here as RESUME / QUIT MATCH, so you cannot lose one by accident.</figcaption>
       </figure>
       <div class="grid g2">
         <figure class="shot">
-          <img src="assets/hud/vs.webp" width="1280" height="720" loading="lazy" decoding="async" alt="The VS screen: SAM in orange against ALEX in blue, best of 3, with the coin flip result: Sam tees off first.">
+          <img src="assets/shots/vs-640.webp" srcset="assets/shots/vs-640.webp 640w, assets/shots/vs-1280.webp 1280w" sizes="(max-width: 900px) 92vw, 820px" width="1280" height="720" loading="lazy" decoding="async" alt="The VS screen: ALEX in orange against SAM in blue, a quick match, with the coin flip result: Sam tees off first.">
           <figcaption>The coin flip.</figcaption>
         </figure>
         <figure class="shot">
-          <img src="assets/hud/stage-intro.webp" width="1280" height="720" loading="lazy" decoding="async" alt="The stage intro for Sakura Garden: hole 1, par 3, 136 yards, its three routes (The Moss Path, Over the Koi Pond, Off the Great Falls) and a wind chip reading 7 mph, helping.">
+          <img src="assets/shots/stage-intro-640.webp" srcset="assets/shots/stage-intro-640.webp 640w, assets/shots/stage-intro-1280.webp 1280w" sizes="(max-width: 900px) 92vw, 820px" width="1280" height="720" loading="lazy" decoding="async" alt="The stage intro for Lagoon Island: hole 1, par 3, 151 yards, its three routes and the wind for this hole, 9 mph hurting.">
           <figcaption>The stage intro: par, yards, routes and this hole's wind.</figcaption>
         </figure>
       </div>
@@ -108,7 +127,10 @@
         </tbody>
       </table></div>
       <p>The match ends the moment it is won. The winner screen hands out the awards (longest drive, closest to the pin, shot of the match, most perfects), trophies, coins and a chest of balls, and offers REMATCH, NEW MATCH or EXIT.</p>
-      <p>Matches are friendly by default. Trophies move you up the ranks (Rookie, Amateur, Pro, Expert, Master, Legend), and an optional stakes setting lets two players put in-game coins on a match. None of it is real money and nothing can be bought.</p>
+      <figure class="shot">
+        <img src="assets/shots/winner-640.webp" srcset="assets/shots/winner-640.webp 640w, assets/shots/winner-1280.webp 1280w" sizes="(max-width: 900px) 92vw, 820px" width="1280" height="720" loading="lazy" decoding="async" alt="The winner screen: ALEX WINS! one nil, won by knockout, in for birdie, with the match awards, the trophies and coins won, a chest with two balls, and the buttons Rematch, New match and Exit.">
+      </figure>
+      <p>Matches are friendly: there are no stakes. Trophies move you up the ranks (Rookie, Amateur, Pro, Expert, Master, Legend). None of it is real money and nothing can be bought.</p>
     </section>
 
     <section id="rules">
@@ -116,7 +138,7 @@
       <h3>Who plays</h3>
       <p>A coin decides the first tee. After that the winner of the last hole has the honour. Both players tee off, then whoever is <strong>farther from the hole</strong> plays. Once both balls are on the green, the player with <strong>fewer strokes</strong> putts first, which means the next putt is always for the win or to tie.</p>
       <figure class="shot">
-        <img src="assets/hud/turn.webp" width="1280" height="720" loading="lazy" decoding="async" alt="A match on Sakura Garden: an orange banner across the screen reads SAM, YOU'RE UP, tee shot, 136 yards, par 3.">
+        <img src="assets/shots/turn-640.webp" srcset="assets/shots/turn-640.webp 640w, assets/shots/turn-1280.webp 1280w" sizes="(max-width: 900px) 92vw, 820px" width="1280" height="720" loading="lazy" decoding="async" alt="A match on Lagoon Island: a blue banner across the screen reads SAM, YOU'RE UP, tee shot, 151 yards, par 3, above the row of power-up balls.">
         <figcaption>The turn banner. The header keeps both players' strokes and distances in view.</figcaption>
       </figure>
       <h3>Knockout</h3>
@@ -127,8 +149,17 @@
       <p>Par plus three. Reach it without holing out and you stop; your opponent wins the hole by holing out. If both players hit the cap, the hole is tied.</p>
       <h3>Tied hole: sudden death</h3>
       <p>A tied hole goes straight to an arena (Bullseye Bay, Thunder Dome or Ice Pick). One ball each, closest to the pin takes the hole. A ball in the water or out of bounds is a miss and loses to any ball on land. Both miss, or the two balls finish within a tenth of a foot of each other: go again. In the options you can choose to halve tied holes instead; then only a match that is level at the end goes to sudden death.</p>
-      <h3>Putting is easy on purpose</h3>
-      <p>Simulator putting is the least fun part of simulator golf, so on a green the game reads the putt for you and pulls your stroke toward the one that goes in. Anything stopping inside 8 feet is a tap-in, conceded for one stroke. A putt needs sensible pace more than a perfect line.</p>
+      <h3 id="putting">Putting is helped on purpose</h3>
+      <p>Launch monitors read putts poorly, so the game helps, and how much is a setting. It solves the putt that goes in, so a putt needs pace more than line: you do not have to aim for the break.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Level</th><th>A putt drops when</th><th>Where it is the default</th></tr></thead>
+        <tbody>
+          <tr><td><b>Easy</b></td><td class="wrapok">it starts within 4.5 degrees of the line and its pace is 80 % to 160 % of the right one</td><td class="wrapok">Solo and practice (SETTINGS &gt; PUTTING)</td></tr>
+          <tr><td><b>Assisted</b></td><td class="wrapok">within 2.5 degrees, pace 85 % to 140 %</td><td class="wrapok">A match (the lobby's OPTIONS)</td></tr>
+          <tr><td><b>Real</b></td><td class="wrapok">your own stroke, at the real cup</td><td></td></tr>
+        </tbody>
+      </table></div>
+      <p>A putt outside the window is a miss that finishes close, and a putt struck at three times the right pace never drops. <strong>Tap-ins given</strong> (off, 3, 5 or 8 feet; 8 by default) picks up a ball that close. On Assisted a must-make putt can be missed: an average putter holes about 4 in 10 from 30 feet.</p>
       <h3>Hazards and bad shots</h3>
       <p>Water or out of bounds costs a stroke and a drop, never a lost ball. (An option makes a hazard lose the hole outright, if you like it brutal.) Full shots get a little forgiveness too: your slice is still your slice, but smaller.</p>
       <h3>Conceding</h3>
@@ -137,7 +168,7 @@
 
     <section id="menu">
       <h2>The match menu</h2>
-      <p>Press <kbd>Esc</kbd>, or use the MENU tab under the header. The game is not paused: a swing still counts while the menu is open.</p>
+      <p>Press <kbd>Esc</kbd> or <kbd>M</kbd>, or use the MENU tab under the header. The game is not paused: a swing still counts while the menu is open.</p>
       <div class="tbl"><table>
         <thead><tr><th>Button</th><th>What it does</th></tr></thead>
         <tbody>
@@ -151,12 +182,24 @@
       </table></div>
       <p>The number keys press the buttons in the order they are shown; <kbd>Y</kbd> and <kbd>N</kbd> answer when it asks.</p>
       <figure class="shot">
-        <img src="assets/hud/menu.webp" width="1280" height="720" loading="lazy" decoding="async" alt="The match menu over a hole in play: large numbered buttons for Resume, Undo last shot, Restart hole, Restart match and Exit to main menu.">
+        <img src="assets/shots/match-menu-640.webp" srcset="assets/shots/match-menu-640.webp 640w, assets/shots/match-menu-1280.webp 1280w" sizes="(max-width: 900px) 92vw, 820px" width="1280" height="720" loading="lazy" decoding="async" alt="The match menu over a hole in play: large numbered buttons for Resume, Undo last shot, Restart hole, Restart match and Exit to main menu.">
       </figure>
       <h3>Stray ball?</h3>
       <p>Real bays have real accidents: a ball knocked off the mat, a practice waggle the monitor picked up. A swing under 40 mph from anywhere but a green, more than 40 yards from the pin, still counts, but the game asks <strong>STRAY BALL?</strong> at once. Press <kbd>U</kbd> to undo it or <kbd>C</kbd> to count it. Say nothing for eight seconds and it counts.</p>
-<h3>Drop on the line</h3>
-      <p>Stuck somewhere there is no shot from? The player who is up can take a drop from the match menu instead of swinging: the ball goes back onto mown ground on the hole's line, no nearer the hole, for <strong>one stroke</strong>. When the game judges the lie truly dead it offers a <strong>FREE DROP</strong> instead. The stroke counts like any other, so a drop can hit the stroke cap or lose a knockout, and Undo takes a drop back like a swing. There are no drops in sudden death.</p>
+      <figure class="shot">
+        <img src="assets/shots/stray-640.webp" srcset="assets/shots/stray-640.webp 640w, assets/shots/stray-1280.webp 1280w" sizes="(max-width: 900px) 92vw, 820px" width="1280" height="720" loading="lazy" decoding="async" alt="On a tee in a match, a panel in the middle of the screen: 8 mph, that counted as Sam's shot. STRAY BALL? with two buttons, U Undo and C Count it.">
+      </figure>
+<h3 id="drop">Drop on the line (key R)</h3>
+      <p>Stuck behind a cliff, in the trees or in deep rough? When the ball is at rest and it is your swing, a <strong>DROP ON THE LINE</strong> button appears at the left: the ball goes back onto fairway or tee turf on the hole's line of play, no nearer the hole. A marker on the ground shows where.</p>
+      <ul>
+        <li>It costs <strong>one stroke</strong>: press the button (or <kbd>R</kbd>) once to arm it, again to take it.</li>
+        <li>When the game judges the lie <strong>dead</strong> (no realistic swing gets out of it), the button turns green and reads <strong>FREE DROP</strong>: one press, no penalty.</li>
+        <li>There is none on the green, on the tee before the first swing, or in a sudden death.</li>
+        <li>In a match it is also in the match menu for the player who is up. The stroke counts like any other, so a drop can hit the stroke cap or lose a knockout, and Undo takes a drop back like a swing.</li>
+      </ul>
+      <h3 id="views">Seeing where you are hitting (key V)</h3>
+      <p>The stages are steep and full of scenery, so the camera behind the ball works to show you the target. It rises to look over ground that is in the way. Anything standing between the camera and the ball, or over the first part of the line, is drawn see-through until the shot is away: trees, statues, buildings.</p>
+      <p>When the green is over a ridge or far below, <strong>VIEW FROM ABOVE</strong> (the button at the top left, or <kbd>V</kbd>) flies the camera up to a high view of the way from the ball to the pin; press again to come back down. Holding <kbd>V</kbd> is a peek: up while it is held, down on release. When nothing behind the ball can see the target, the camera goes up by itself and the button says so. A ball struck while the camera is up is followed from wherever the camera is: it never delays a swing.</p>
     </section>
 
     <section id="balls">
@@ -274,7 +317,7 @@
       <p>Sky Fortress (par 3, 427 yards, 50 m up), Dragon's Spine (par 4, 604 yards) and Summit Express (par 5, 700 yards, 70 m up) cannot be played with a plain ball. On these stages every player's tee shot is a <strong>free Rocket ball</strong>: no charge, and a ball you armed yourself is kept for a later shot. A Rocket turns a normal drive into roughly a 500-yard one.</p>
       <p>Rocket holes come up in a quick match (pick one, or Random) and in a shuffled series. The Clash Tour proper is stages 1 to 9.</p>
       <figure class="shot">
-        <img src="assets/shots/fortress.webp" width="1280" height="720" loading="lazy" decoding="async" alt="Sky Fortress from the air: a long ramp of orange rock rising out of a lake to a green ringed by castle towers.">
+        <img src="assets/stages/sky-fortress-640.webp" srcset="assets/stages/sky-fortress-640.webp 640w, assets/stages/sky-fortress-960.webp 960w" sizes="(max-width: 900px) 92vw, 820px" width="960" height="540" loading="lazy" decoding="async" alt="Sky Fortress at sunset: a causeway across a canyon lake to a butte with a castle green on top, mesas all round.">
         <figcaption>Sky Fortress: 427 yards and fifty metres up. Bring a Rocket.</figcaption>
       </figure>
     </section>
@@ -306,19 +349,71 @@
       </table></div>
       <p>A shot blown off line by an opponent's Gust is never called TERRIBLE or SLICE HOUSE: you are graded on your swing, not on the sabotage.</p>
       <figure class="shot">
-        <img src="assets/hud/callout.webp" width="1280" height="720" loading="lazy" decoding="async" alt="A callout during a match on Sakura Garden: ON THE DANCE FLOOR! with the grade GREAT, plus 1,199 points and 130 coins, over a ball on the green.">
+        <img src="assets/shots/callout-640.webp" srcset="assets/shots/callout-640.webp 640w, assets/shots/callout-1280.webp 1280w" sizes="(max-width: 900px) 92vw, 820px" width="1280" height="720" loading="lazy" decoding="async" alt="After a shot in a match: the grade and the points it earned across the top of the screen, with the ball at rest by the green.">
+      </figure>
+    </section>
+
+    <section id="gadgets">
+      <h2>Course gadgets</h2>
+      <p>The stages have things on them that a real swing can hit. The stage intro lists the ones on that hole, and the lineup shows the ones ahead of you.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Piece</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td>Boost ring</td><td class="wrapok">A hoop in the air. A ball through it flies on faster.</td></tr>
+          <tr><td>Bounce pad</td><td class="wrapok">Throws a ball that lands or rolls on it back into the air.</td></tr>
+          <tr><td>Speed strip</td><td class="wrapok">Accelerates a rolling ball along its arrow.</td></tr>
+          <tr><td>Wind tunnel, geyser</td><td class="wrapok">Moving air that pushes a ball inside it; a vent that erupts on a cycle and throws a ball skyward.</td></tr>
+          <tr><td>Bumpers, rails, backboards</td><td class="wrapok">Pinball posts and low walls the ball kicks off; a board behind a green that kills its pace.</td></tr>
+          <tr><td>Funnel, ice, mud</td><td class="wrapok">A bowl that draws a rolling ball to its middle; ice that runs it on; mud that stops it dead.</td></tr>
+          <tr><td>Warp pipe, cannon</td><td class="wrapok">A ball into the mouth is fired out of the other end.</td></tr>
+          <tr><td>Breakables</td><td class="wrapok">Walls, crates, snowmen, a piñata. The number on a wall is the ball speed it takes to go through; a slower ball comes back off it.</td></tr>
+          <tr><td>Coins, multiplier rings</td><td class="wrapok">Coins hung along a line of flight; a ring on the ground that doubles or trebles the points of a shot that lands in it.</td></tr>
+        </tbody>
+      </table></div>
+      <p>They are the same for both players and never random. A putt is never touched by one. A boost does not flatter your grade: the distance score is what the same swing would have carried without it. A <strong>Ghost</strong> ball passes through anything solid and a <strong>Rocket</strong> smashes any breakable.</p>
+      <figure class="shot">
+        <img src="assets/shots/gadget-wall-640.webp" srcset="assets/shots/gadget-wall-640.webp 640w, assets/shots/gadget-wall-960.webp 960w" sizes="(max-width: 900px) 92vw, 820px" width="960" height="540" loading="lazy" decoding="async" alt="Canyon Run: a brick wall hanging over the fairway with 150 MPH painted on it, a boost ring and a trail of gold coins in the air beyond.">
+        <figcaption>Canyon Run. The wall wants 150 mph; the ring and the coins behind it are the reward.</figcaption>
+      </figure>
+    </section>
+
+    <section id="more">
+      <h2>Party, Bullseye, Trick Shot Duel</h2>
+      <h3>Party (2 to 4 players)</h3>
+      <p>Main menu, <strong>PARTY</strong>. Add up to four players, pick a format and how long (3, 6 or 9 holes):</p>
+      <ul>
+        <li><strong>Skins.</strong> The lowest score alone takes the hole's skin; a tie carries it over to the next.</li>
+        <li><strong>Stroke race.</strong> Every stroke counts; lowest total wins. A player who reaches the stroke cap stops, and the hole counts one more.</li>
+        <li><strong>Elimination.</strong> The highest score on each hole is out. A tie for the highest goes to an arena, where the farthest ball goes.</li>
+      </ul>
+      <p>The tee is played in the order of the last hole's scores, best first; after that whoever is farthest from the hole plays. Power-ups, tricks, undo and the stray-ball guard work as in a match.</p>
+      <h3 id="help">Handicaps: HELP</h3>
+      <p>In the Versus and Party lobbies each player has a HELP switch: <b>1</b> gives that player Easy putting and one more power-up charge, <b>2</b> adds a forward tee 20 % of the hole closer, <b>3</b> a forward tee 35 % closer and a second extra charge. The lobby suggests a level from the players' records; nothing is applied until you press it. Holes that are all carry have no forward tee.</p>
+      <h3>Bullseye (1 to 4 players)</h3>
+      <p>Main menu, <strong>BULLSEYE</strong>. Darts with a golf ball on an arena: every ball from the tee, scored by the ring it stops in (50 for the bullseye, down to 5 at the edge; water is a miss). <strong>High score</strong> is three, five or seven rounds of three balls, and scoring with every ball of a turn multiplies them (double, then treble). <strong>Countdown</strong> starts on 100, 200 or 300 and must finish on exactly zero. No power-up balls.</p>
+      <h3>Trick Shot Duel (2 players)</h3>
+      <p>Main menu, <strong>TRICK SHOT DUEL</strong>. The challenger hits any shot from the tee; the game calls what made it special (its carry, and the one or two things most its own: bend, how close, how high, a gadget). The other player gets one ball to match it or takes a letter. The roles swap every round. First to spell the word (CLASH, PIG or HORSE) loses. A ball in the water or a duff is no call.</p>
+    </section>
+
+    <section id="replay">
+      <h2>Replays and highlights</h2>
+      <p>A notable shot is shown again from another camera: a hole-out, a putt of 15 feet or more that drops, an epic callout, the ball that wins a hole, a sudden death or the match. In a match it plays by itself, once. In solo play it is offered: press <kbd>P</kbd>. Any key, a click or a swing skips it, and a real swing is always played at once.</p>
+      <p><strong>HIGHLIGHTS</strong> on the main menu keeps the notable shots of the last match and the best of the night, to play back.</p>
+      <figure class="shot">
+        <img src="assets/shots/replay-640.webp" srcset="assets/shots/replay-640.webp 640w, assets/shots/replay-1280.webp 1280w" sizes="(max-width: 900px) 92vw, 820px" width="1280" height="720" loading="lazy" decoding="async" alt="An instant replay: a REPLAY tag with the name of the camera, GREEN-SIDE CAM, over a low close view of the ball on the green, captioned 18 FT PUTT.">
       </figure>
     </section>
 
     <section id="solo">
       <h2>Solo and practice</h2>
       <h3>Solo</h3>
-      <p>One player, playing for a score against par. Pick who is playing, then a length: a <strong>Sprint</strong> of three stages, a <strong>Half tour</strong> of six, the <strong>Full tour</strong>, or any <strong>Single stage</strong> or arena. Every shot is graded just as in a match, the balls you earn with streaks and level-ups are yours to arm, and your best score at each length is kept.</p>
+      <p>One player, playing for a score against par. Pick who is playing, then a length: a <strong>Sprint</strong> of three stages, a <strong>Half tour</strong> of six, the <strong>Full tour</strong>, or any <strong>Single stage</strong> or arena. Every shot is graded just as in a match, the balls you earn with streaks and level-ups are yours to arm, and your best score at each length is kept, per player.</p>
+      <p>Strokes count as on a card. So that nobody is stuck on one hole for ever, a stage is picked up automatically at par plus six strokes (and then counts one more), or you can <strong>GIVE UP THIS STAGE</strong> from the pause menu (<kbd>Esc</kbd>), which costs the strokes so far plus one and never less than par plus four. There are no mulligans in a scored run.</p>
       <figure class="shot">
-        <img src="assets/hud/solo.webp" width="1280" height="720" loading="lazy" decoding="async" alt="The Solo menu: playing as Sam, then Sprint (3 stages), Half tour (6 stages), Full tour (12 stages) and Single stage.">
+        <img src="assets/shots/solo-640.webp" srcset="assets/shots/solo-640.webp 640w, assets/shots/solo-1280.webp 1280w" sizes="(max-width: 900px) 92vw, 820px" width="1280" height="720" loading="lazy" decoding="async" alt="The Solo menu: who is playing, then Sprint (3 stages), Half tour (6 stages), Full tour (12 stages) and Single stage.">
       </figure>
       <h3>Practice</h3>
-      <p>No score and no pressure. <strong>Free play</strong> puts you on any stage and tees it up again when you finish. <strong>Closest to the pin</strong> is five balls at a par 3, best one counts. The <strong>Putting challenge</strong> is nine putts from 3 to 40 feet, and <strong>Up and down</strong> is six chips from off the green.</p>
+      <p>No score and no pressure. <strong>Free play</strong> puts you on any stage and tees it up again when you finish. <strong>Closest to the pin</strong> is five balls at a par 3 or an arena, best one counts. The <strong>Putting challenge</strong> is nine putts from 3 to 40 feet, and <strong>Up and down</strong> is six chips from off the green.</p>
     </section>
 
     <section id="settings">
@@ -333,11 +428,13 @@
           <tr><td>Straighter shots</td><td class="wrapok">Off, A little, Normal, Full</td><td class="wrapok">How much a miss is pulled back toward the line.</td></tr>
           <tr><td>Tap-ins given</td><td class="wrapok">Off, 3 ft, 5 ft, 8 ft</td><td class="wrapok">A ball this close is holed for you, for one stroke.</td></tr>
           <tr><td>Graphics</td><td class="wrapok">Auto, Ultra, High, Low</td><td class="wrapok">Auto lowers the detail by itself to keep the frame rate.</td></tr>
-          <tr><td>Launch monitor</td><td class="wrapok"></td><td class="wrapok">Whether a monitor is connected, and what the game listens for.</td></tr>
+          <tr><td>World life</td><td class="wrapok">Full, Calm, Off</td><td class="wrapok">The boats, birds, weather and the world's reactions to a shot. Calm keeps the slow and the far; Off draws none of it.</td></tr>
+          <tr><td>World clock</td><td class="wrapok">Off, On</td><td class="wrapok">In a long match every hole is played a little later in the day. Off by default.</td></tr>
+          <tr><td>Launch monitor</td><td class="wrapok"></td><td class="wrapok">Whether a launch monitor is connected and what the game listens for, the Foresight bridge's panel and switch, and SET UP MY LAUNCH MONITOR, which runs the connection wizard again.</td></tr>
         </tbody>
       </table></div>
       <figure class="shot">
-        <img src="assets/hud/settings.webp" width="1280" height="720" loading="lazy" decoding="async" alt="The Settings screen: sound, volume, announcer, shot camera, putting, straighter shots, tap-ins given, graphics, launch monitor and credits.">
+        <img src="assets/shots/settings-640.webp" srcset="assets/shots/settings-640.webp 640w, assets/shots/settings-1280.webp 1280w" sizes="(max-width: 900px) 92vw, 820px" width="1280" height="720" loading="lazy" decoding="async" alt="The Settings screen: sound, volume, announcer, shot camera, putting, straighter shots, tap-ins given, graphics, launch monitor and credits.">
       </figure>
     </section>
 
@@ -348,17 +445,21 @@
         <thead><tr><th>Key</th><th>What it does</th></tr></thead>
         <tbody>
           <tr><td><kbd>←</kbd> <kbd>→</kbd></td><td class="wrapok">Aim left and right (hold <kbd>Shift</kbd> for bigger steps)</td></tr>
-          <tr><td><kbd>A</kbd></td><td class="wrapok">Auto aim</td></tr>
+          <tr><td><kbd>A</kbd> / <kbd>0</kbd></td><td class="wrapok">Auto aim / aim straight at the pin</td></tr>
           <tr><td><kbd>1</kbd> to <kbd>9</kbd></td><td class="wrapok">Arm a power-up ball from the dock (<kbd>Shift</kbd> for the next nine)</td></tr>
-          <tr><td><kbd>B</kbd></td><td class="wrapok">Open the ball tray</td></tr>
-          <tr><td><kbd>T</kbd></td><td class="wrapok">Test swing: play a shot without a launch monitor</td></tr>
-          <tr><td><kbd>V</kbd></td><td class="wrapok">View the hole from above</td></tr>
+          <tr><td><kbd>B</kbd></td><td class="wrapok">Open the ball bag, with what each ball does</td></tr>
+          <tr><td><kbd>R</kbd></td><td class="wrapok">Drop on the line (twice when it costs a stroke; once for a free drop)</td></tr>
+          <tr><td><kbd>T</kbd></td><td class="wrapok">Test swing: the list of swings, to play a shot without a launch monitor; <kbd>1</kbd> to <kbd>6</kbd> pick one while it is open</td></tr>
+          <tr><td><kbd>V</kbd></td><td class="wrapok">View from above (tap: up or back down; hold: a peek)</td></tr>
           <tr><td><kbd>F</kbd></td><td class="wrapok">Fly over the hole, tee to green</td></tr>
           <tr><td><kbd>D</kbd></td><td class="wrapok">Show or hide the shot data panels</td></tr>
+          <tr><td><kbd>P</kbd></td><td class="wrapok">Play the replay that is on offer (solo play)</td></tr>
           <tr><td><kbd>S</kbd></td><td class="wrapok">Sound on / off</td></tr>
-          <tr><td><kbd>Esc</kbd></td><td class="wrapok">The menu, and back</td></tr>
-          <tr><td><kbd>U</kbd> / <kbd>C</kbd></td><td class="wrapok">Undo / count a stray ball, while the prompt is up</td></tr>
-          <tr><td><kbd>F11</kbd></td><td class="wrapok">Full screen on / off</td></tr>
+          <tr><td><kbd>Esc</kbd></td><td class="wrapok">The match menu, or the pause menu in solo and practice; in the menus, one step back</td></tr>
+          <tr><td><kbd>M</kbd></td><td class="wrapok">The match menu (in a match); take the last shot back (in free play)</td></tr>
+          <tr><td><kbd>U</kbd> / <kbd>C</kbd></td><td class="wrapok">Undo / count a stray ball, while the prompt is up in a match</td></tr>
+          <tr><td><kbd>U</kbd></td><td class="wrapok">Unlimited balls on / off (outside a match)</td></tr>
+          <tr><td><kbd>F11</kbd> or <kbd>Alt</kbd>+<kbd>Enter</kbd></td><td class="wrapok">Full screen on / off</td></tr>
           <tr><td>Any key, or a click</td><td class="wrapok">Skip an intro screen</td></tr>
         </tbody>
       </table></div>
@@ -372,16 +473,16 @@
         <li><strong>Follow the ball</strong>: the simulator-style follow camera.</li>
         <li><strong>TV</strong>: covers the shot from the tee and from the landing area.</li>
       </ul>
-      <p>Time slows only when the ball comes by the pin; the landing always plays at full speed. After a shot in a match the picture stays on that ball for a couple of seconds before it cuts to the next player.</p>
+      <p>Time slows only when the ball comes by the pin; the landing always plays at full speed. After a shot in a match the picture stays on that ball for two seconds (longer for an epic one) before it cuts to the next player.</p>
       <p><kbd>S</kbd> switches all the game's sound on or off, and it remembers; Settings has the volume and an announcer switch. Nothing loops and nothing counts down: there is no shot clock, and nobody is hurried over a real ball.</p>
       <figure class="shot">
-        <img src="assets/shots/stadium.webp" width="1280" height="720" loading="lazy" decoding="async" alt="The last green of Midnight Mile at night: a fairway running into a stadium with stands full of spectators, under city towers.">
-        <figcaption>The stadium green at the end of Midnight Mile.</figcaption>
+        <img src="assets/shots/dome-960.webp" srcset="assets/shots/dome-960.webp 960w, assets/shots/dome-1440.webp 1440w" sizes="(max-width: 900px) 92vw, 820px" width="1440" height="810" loading="lazy" decoding="async" alt="A stand in Thunder Dome, close up: hundreds of individual spectators on their feet with their arms up and flags waving, under an LED ribbon reading SUDDEN DEATH.">
+        <figcaption>The crowd in Thunder Dome answers the play: it tenses in the slow motion by the pin, cheers a ball that sticks and groans at one in the water.</figcaption>
       </figure>
     </section>
 
     <div class="next">
-      <a class="btn btn-go" data-gh="download" href="install.html"><span>Download</span></a>
+      <a class="btn btn-go" data-gh="download" href="https://github.com/robertjackson-engage/sim-clash/releases/latest/download/Sim-Clash-Setup.exe"><span>Download</span></a>
       <a class="btn btn-ghost" href="faq.html"><span>FAQ and troubleshooting</span></a>
     </div>
   </div>
@@ -389,19 +490,22 @@
 
 </main>
 
+<!-- gen:footer -->
 <footer class="foot">
   <div class="wrap foot-in">
     <div>
       <h2>Sim Clash</h2>
-      <p>Arcade 1v1 golf for real launch monitors. Free and open source under the MIT licence.</p>
-      <p>Built on Open-Birdie: the original by Rooj Rin (<a href="https://github.com/rroojrooj/Open-Birdie">rroojrooj/Open-Birdie</a>) and the fork by jordan-shilts (<a href="https://github.com/jordan-shilts/Open-Birdie">jordan-shilts/Open-Birdie</a>) that Sim Clash is built on.</p>
+      <p>A quick, video-game-style golf match for your launch monitor. A hobby project, free and open source under the MIT licence.</p>
+      <p>Built on Open-Birdie: the original by Rooj Rin (<a href="https://github.com/rroojrooj/Open-Birdie" rel="noopener">rroojrooj/Open-Birdie</a>) and the fork by jordan-shilts (<a href="https://github.com/jordan-shilts/Open-Birdie" rel="noopener">jordan-shilts/Open-Birdie</a>) that Sim Clash is built on.</p>
     </div>
     <nav aria-label="Pages">
       <h2>Site</h2>
       <ul>
+        <li><a href="whats-new.html">What's new</a></li>
         <li><a href="install.html">Install</a></li>
         <li><a href="connect.html">Connect your launch monitor</a></li>
         <li><a href="play.html">How to play</a></li>
+        <li><a href="make-it-yours.html">Make it yours: build with AI</a></li>
         <li><a href="faq.html">FAQ and troubleshooting</a></li>
         <li><a href="contribute.html">Contribute</a></li>
       </ul>
@@ -412,8 +516,8 @@
         <li><a data-gh="repo" href="contribute.html">GitHub repository</a></li>
         <li><a data-gh="releases" href="install.html">Releases</a></li>
         <li><a data-gh="issues" href="contribute.html">Issues</a></li>
-        <li><a data-gh="license" href="contribute.html">MIT licence</a></li>
-        <li><a data-gh="disclaimer" href="contribute.html">Disclaimer</a></li>
+        <li><a data-gh="license" href="contribute.html#credits">MIT licence</a></li>
+        <li><a data-gh="disclaimer" href="contribute.html#credits">Disclaimer</a></li>
       </ul>
     </nav>
     <p class="fine">Sim Clash is an independent open-source project. It is not affiliated with, endorsed by or sponsored by GSPro, Foresight Sports, Uneekor or any other company named on this site; their names are used only to say what the game works with, and all trademarks belong to their owners. The software is provided as is, with no warranty. Hitting golf balls indoors can hurt people and break things: swing at your own risk.</p>
@@ -421,5 +525,6 @@
 </footer>
 <script src="config.js"></script>
 <script src="site.js"></script>
+<!-- /gen:footer -->
 </body>
 </html>

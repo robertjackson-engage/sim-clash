@@ -1,23 +1,34 @@
-// The ONE place to set where this site's GitHub links point.
+// The ONE place to set where this site's links point.
 //
 //   owner        the GitHub account or organisation that hosts the repository.
-//                Replace OWNER below; nothing else in site/ needs to change.
+//                Nothing else in site/ needs to change when it does.
 //   repo         the repository name (the site is served from https://<owner>.github.io/<repo>/)
 //   branch       the default branch, for links to files in the source tree
 //   downloadUrl  a direct link to the Windows installer, for the Download buttons.
 //                Leave it empty and they go to the repository's latest release page.
-//   bridgeUrl    the project page of Open Connect Bridge, a separate helper program some
-//                Foresight GC owners already use (the game no longer needs it: its own
-//                bridge is built in; the Connect page only says how the two get along),
-//                for example https://github.com/<account>/open-connect-bridge.
-//                Empty: the program is named but not linked. Set it once you have checked
-//                the address opens for someone who is not signed in.
+//                When it is set, every Download button is a plain link to it (it works with
+//                scripts off) and a click also opens the "Your download has started" panel.
+//   downloadSize optional. The installer's size as the panel shows it ("about 160 MB").
+//   youtubeUrl   optional. A YouTube address for the trailer (a watch, share or embed link).
+//                Empty: "Watch the trailer" plays the site's own file, assets/video/trailer.mp4.
+//                Set: the same button plays the YouTube video in the lightbox instead (the
+//                player is only requested when a visitor presses the button).
+//   release      the version the site describes, as shown on the What's new page.
 //
-// site.js reads this and fills every link marked data-gh="..." and every text marked data-fill="...".
+// site.js reads this in the browser and fills every link marked data-gh="..." and every text
+// marked data-fill="...". dev/refresh.mjs reads it too, for the things a link preview or a
+// search engine needs as plain HTML: the absolute addresses in each page's <head>, sitemap.xml
+// and the address of every Download button.
+// After changing owner, repo, release or downloadUrl, run:  node site/dev/refresh.mjs
 window.SIMCLASH_SITE = {
   owner: 'robertjackson-engage',
   repo: 'sim-clash',
   branch: 'main',
   downloadUrl: 'https://github.com/robertjackson-engage/sim-clash/releases/latest/download/Sim-Clash-Setup.exe',
-  bridgeUrl: '',
+  downloadSize: '',
+  youtubeUrl: '',
+  release: '1.0.0-beta.2',
+  // shown as a bar at the top of every page while the download is still the previous version;
+  // set to '' once the release named above is out
+  notice: 'Version 1.0.0-beta.2 is coming this week. Everything on this site shows it. Today’s download is beta.1, which does not have the new look, the course gadgets or the party modes yet.',
 };

@@ -3,272 +3,292 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sim Clash: arcade 1v1 golf for real launch monitors</title>
-<meta name="description" content="Sim Clash is a free, open-source arcade 1v1 golf game for real launch monitors. Two players, one bay, real balls: 12 themed holes, 15 power-up balls, sudden death. Windows.">
-<meta name="theme-color" content="#07090d">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; base-uri 'self'; form-action 'none'">
+<title>Sim Clash: a quick, video-game-style golf match for your launch monitor</title>
+<meta name="description" content="Sim Clash is a free, open-source arcade golf game for real launch monitors. Two players, one bay, real swings: 12 worlds, power-up balls, sudden death in a full stadium. A hobby project from a dad with a simulator. Windows.">
+<meta name="theme-color" content="#06080c">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; media-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; frame-src https://www.youtube-nocookie.com; base-uri 'self'; form-action 'none'">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Sim Clash: arcade 1v1 golf for real launch monitors">
-<meta property="og:description" content="Two players, one bay, real balls. 12 themed holes, 15 power-up balls, sudden death. Free and open source.">
+<meta property="og:title" content="Sim Clash: a quick, video-game-style golf match for your launch monitor">
+<meta property="og:description" content="Two players, one bay, real swings. 12 worlds, power-up balls, sudden death in a full stadium. Free and open source.">
+<!-- gen:meta -->
+<link rel="canonical" href="https://robertjackson-engage.github.io/sim-clash/">
+<meta property="og:site_name" content="Sim Clash">
+<meta property="og:url" content="https://robertjackson-engage.github.io/sim-clash/">
 <meta property="og:image" content="https://robertjackson-engage.github.io/sim-clash/assets/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Sim Clash: a floodlit stadium full of spectators round a target green, seen from the tee.">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://robertjackson-engage.github.io/sim-clash/assets/og.jpg">
+<!-- /gen:meta -->
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
 <link rel="stylesheet" href="assets/site.css">
+<script src="assets/boot.js"></script>
 </head>
 <body>
+<!-- gen:header -->
 <a class="skip" href="#main">Skip to content</a>
 <header class="top">
   <div class="wrap top-in">
     <a class="brand" href="index.html"><img src="assets/icon.svg" alt="" width="36" height="36"><b><span class="p1">Sim</span> <span class="p2">Clash</span></b></a>
     <nav class="nav" aria-label="Site">
       <a href="index.html" aria-current="page">Home</a>
+      <a href="whats-new.html" class="new">What's new</a>
       <a href="install.html">Install</a>
       <a href="connect.html">Connect</a>
       <a href="play.html">How to play</a>
+      <a href="make-it-yours.html">Make it yours</a>
       <a href="faq.html">FAQ</a>
       <a href="contribute.html">Contribute</a>
     </nav>
-    <a class="btn btn-go btn-sm" data-gh="download" href="install.html"><span>Download</span></a>
+    <a class="btn btn-go btn-sm" data-gh="download" href="https://github.com/robertjackson-engage/sim-clash/releases/latest/download/Sim-Clash-Setup.exe"><span>Download</span></a>
   </div>
 </header>
+<!-- /gen:header -->
 
 <main id="main">
 
-<section class="hero">
+<section class="hero" data-loop>
+  <figure class="hero-media">
+    <img src="assets/hero/hero-960.webp" srcset="assets/hero/hero-960.webp 960w, assets/hero/hero-1280.webp 1280w" sizes="100vw" width="1280" height="720" fetchpriority="high" alt="Thunder Dome from the tee: a floodlit stadium bowl packed with thousands of spectators round a ringed target green, with SUDDEN DEATH on the big screens.">
+    <video muted loop playsinline preload="none" poster="assets/hero/hero-960.webp" aria-hidden="true" tabindex="-1">
+      <source src="assets/video/loop.mp4" type="video/mp4">
+    </video>
+  </figure>
   <div class="wrap hero-in">
     <div class="hero-text">
-      <p class="kicker">Real swings · over-the-top golf</p>
+      <p class="kicker">Real swings · video-game golf</p>
       <h1 class="wordmark"><span class="w1">Sim</span> <span class="w2">Clash</span></h1>
-      <p class="tagline">Arcade 1v1 golf for real launch monitors</p>
-      <p class="lead">Two players, one simulator bay, real balls. Take turns hitting into twelve loud little worlds, arm a Rocket ball, sabotage your mate's putt and settle ties with sudden death. Free and open source.</p>
+      <p class="tagline">A quick, video-game-style golf match for your launch monitor. <em>Free and open source.</em></p>
       <div class="btn-row">
-        <a class="btn btn-go" data-gh="download" href="install.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 5.2 10.5 4v7.5H3zM11.5 3.9 21 2.5v9h-9.5zM3 12.5h7.5V20L3 18.8zM11.5 12.5H21v9l-9.5-1.4z"/></svg><span>Download for Windows</span></a>
-        <a class="btn btn-ghost" data-gh="repo" href="contribute.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.6 9.6 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z"/></svg><span>View on GitHub</span></a>
+        <a class="btn btn-go" data-gh="download" href="https://github.com/robertjackson-engage/sim-clash/releases/latest/download/Sim-Clash-Setup.exe"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 5.2 10.5 4v7.5H3zM11.5 3.9 21 2.5v9h-9.5zM3 12.5h7.5V20L3 18.8zM11.5 12.5H21v9l-9.5-1.4z"/></svg><span>Download for Windows</span></a>
+        <a class="btn btn-play" href="assets/video/trailer.mp4" data-trailer data-poster="assets/video/trailer-poster.webp"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 4.5v15l13-7.5z"/></svg><span>Watch the trailer</span></a>
+        <a class="btn btn-ghost" data-gh="repo" href="contribute.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.6 9.6 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z"/></svg><span>GitHub</span></a>
       </div>
-      <p class="hero-note">Windows PC · takes shots over GSPro Open Connect (TCP 921) · <a href="connect.html#no-monitor">no launch monitor? Try it with test swings.</a></p>
+      <p class="hero-note">Built by a dad for quick matches with his son. Takes shots from a real launch monitor; <a href="connect.html#no-monitor">no launch monitor? Try it with test swings.</a></p>
     </div>
-    <figure class="screen" data-clip="assets/shots/hero-clip.webp">
-      <div class="screen-in">
-        <img src="assets/shots/hero.webp" srcset="assets/shots/hero-800.webp 800w, assets/shots/hero.webp 1600w" sizes="(max-width: 940px) 94vw, 640px" width="1600" height="900" fetchpriority="high" alt="Sim Clash ball cam: a Rocket ball climbs out of a red canyon toward a castle green on top of a butte, with a blimp, a lake and fireworks around it.">
-      </div>
-      <figcaption>
-        <span>Ball cam on Sky Fortress, a rocket hole: the free Rocket ball has 50 m to climb. Captured in the game.</span>
-        <button type="button" class="clip-toggle" data-clip-toggle aria-pressed="false" hidden>Play clip</button>
-      </figcaption>
-    </figure>
-  </div>
-</section>
-
-<section class="stats" aria-label="The game in numbers">
-  <div class="wrap">
-    <ul>
-      <li><span class="num"><!-- gen:n-stages -->12<!-- /gen:n-stages --></span><span>match holes</span></li>
-      <li><span class="num"><!-- gen:n-arenas -->3<!-- /gen:n-arenas --></span><span>sudden-death arenas</span></li>
-      <li><span class="num"><!-- gen:n-balls -->15<!-- /gen:n-balls --></span><span>power-up balls</span></li>
-      <li><span class="num"><!-- gen:n-tricks -->3<!-- /gen:n-tricks --></span><span>sabotage tricks</span></li>
-      <li><span class="num">30</span><span>shot callouts</span></li>
-      <li><span class="num">$0</span><span>free, MIT licence</span></li>
-    </ul>
-  </div>
-</section>
-
-<section class="sec" id="modes">
-  <div class="wrap">
-    <div class="sec-head">
-      <p class="kicker">It starts like a game</p>
-      <h2>Press any key. Or hit a ball.</h2>
-      <p class="lead">Sim Clash opens on a title screen, not a settings page, and a real swing is enough to get past it. Then pick a game.</p>
-    </div>
-    <div class="grid g2">
-      <figure class="shot tilt-l">
-        <img src="assets/hud/title.webp" width="1280" height="720" loading="lazy" decoding="async" alt="The title screen: the SIM CLASH wordmark in orange and blue over a tropical island hole, with the line: press any key, click, or hit a ball.">
-      </figure>
-      <figure class="shot tilt-r">
-        <img src="assets/hud/main.webp" width="1280" height="720" loading="lazy" decoding="async" alt="The main menu, pick a game: Versus, Solo, Practice, Players, Settings and How to play, over a view of Lagoon Island.">
-      </figure>
-    </div>
-    <div class="grid g3" style="margin-top:36px">
-      <div class="card mode m-vs"><h3>Versus</h3><p>Two players, head to head, taking turns in one bay. A quick match, a best of 3 or a tournament.</p></div>
-      <div class="card mode m-solo"><h3>Solo</h3><p>One player and the tour for a score against par: a three-stage sprint, a half tour, the full tour, or any single stage. Your best is kept.</p></div>
-      <div class="card mode m-prac"><h3>Practice</h3><p>Free play on any stage, closest to the pin, a putting challenge, and up and down. Nothing counts.</p></div>
+    <div class="hero-tools">
+      <span class="hero-cap">Every picture on this site is the game itself.</span>
+      <button type="button" class="clip-toggle" data-loop-toggle aria-pressed="false" hidden>Play clip</button>
     </div>
   </div>
 </section>
 
-<section class="sec sec-alt" id="what">
-  <div class="wrap split">
+<section class="why" id="why" aria-labelledby="why-h">
+  <div class="wrap why-in">
     <div>
-      <p class="kicker">What it is</p>
-      <h2>Your launch monitor. A video game.</h2>
-      <p class="lead" style="margin-top:18px">Sim Clash is not a simulator round. It is a fast head-to-head game for the launch monitor you already own: every hole is settled in a handful of swings, every shot is graded and shouted about, and nobody waits around.</p>
-      <ul class="ticks">
-        <li><b>Real ball data in.</b> Ball speed, launch and spin come from your monitor over the GSPro Open Connect protocol, and the flight is real physics: drag, lift, wind, bounce and roll.</li>
-        <li><b>Arcade rules on top.</b> Easy putting, automatic tap-ins, a little forgiveness on your slice and openly overpowered balls keep it fun for the worst golfer in the room. Each one is a setting, all the way down to real putting.</li>
-        <li><b>One loud callout per shot.</b> Points, coins and streaks, a crowd, and an announcer who has opinions.</li>
-        <li><b>Hot seat.</b> Both players share the bay. The game says who is up and what the swing is for: PUTT IN TO WIN.</li>
-      </ul>
+      <p class="kicker" id="why-h">Why I built it</p>
+      <blockquote>
+        <p class="said">Built this for my son and I to play and it's been great fun.</p>
+        <div class="more">
+          <p><q>I ultimately wanted a quick video game style match for my son and I.</q></p>
+          <p><q>Totally free and open source if you want to play around with making new features.</q></p>
+        </div>
+      </blockquote>
+      <p class="sig">The dad who built it, about his own simulator bay. That is the whole story: this is a hobby project, not a product. It has been played on one rig so far, and this site says so wherever it matters.</p>
     </div>
-    <figure class="shot tilt-r">
-      <img src="assets/hud/callout.webp" width="1280" height="720" loading="lazy" decoding="async" alt="A match on Sakura Garden: the callout ON THE DANCE FLOOR! with the grade GREAT, plus 1,199 points and 130 coins, over a ball on the green near the flag. The header shows Sam versus Alex and the dock shows Sam's power-up balls and the tricks aimed at Alex.">
-      <figcaption>A short iron to inside 25 feet in a best of 3. Every shot gets a grade, points, coins and, when it has earned one, a callout.</figcaption>
+    <figure>
+      <img src="assets/shots/turn-640.webp" srcset="assets/shots/turn-640.webp 640w, assets/shots/turn-1280.webp 1280w" sizes="(max-width: 900px) 90vw, 520px" width="1280" height="720" loading="lazy" decoding="async" alt="A match on Lagoon Island: a blue banner across the screen reads SAM, YOU'RE UP, tee shot, 151 yards, par 3, above the row of power-up balls.">
+      <figcaption>Two players share the bay. The game calls each one up by name and says what the swing is for.</figcaption>
     </figure>
   </div>
 </section>
 
-<section class="sec" id="stages">
+<section class="newstrip" aria-label="New in this release">
+  <div class="wrap newstrip-in">
+    <b class="tag">New in <!-- gen:release -->1.0.0-beta.2<!-- /gen:release --></b>
+    <ul>
+      <li>Every world rebuilt: new skies, far horizons, ground, water and trees</li>
+      <li>Thunder Dome is a full stadium, with a crowd that reacts</li>
+      <li>Things to hit on every stage: boost rings, bounce pads, a cannon, walls to smash</li>
+      <li>A living world, with a dragon that watches your ball</li>
+      <li>Party for 2 to 4, handicaps, Bullseye, Trick Shot Duel, instant replays</li>
+    </ul>
+    <a class="more" href="whats-new.html">See the before and after</a>
+  </div>
+</section>
+
+<section class="sec" id="worlds">
   <div class="wrap">
     <div class="sec-head">
-      <p class="kicker">The stages</p>
+      <p class="kicker">The worlds</p>
       <h2>One hole, one world</h2>
-      <p class="lead">Every match hole is its own stage with its own theme, sky and wind, and three ways to play it: safe, risky, or with a Rocket ball. Holes 1 to 9 are the Clash Tour. Holes 10 to 12 are rocket holes: everyone gets a free Rocket ball on the tee, because a normal ball cannot get up there.</p>
+      <p class="lead">Every match hole is its own stage, with its own sky, its own wind and three ways to play it: safe, risky, or with a Rocket ball. Holes 1 to 9 are the Clash Tour. Holes 10 to 12 are rocket holes: everyone gets a free Rocket ball on the tee, because a plain ball cannot get up there. Point at a picture, or tap <b>3 routes</b>, for the ways in.</p>
     </div>
-    <div class="grid g3">
+    <p class="swipe-hint" aria-hidden="true">Swipe for more →</p>
+    <div class="worlds" tabindex="0" role="group" aria-label="The twelve match holes">
       <!-- gen:stages -->
-      <article class="stage" style="--a:#16d9c2;--b:#0b62d6">
-        <div class="stage-img"><img src="assets/stages/lagoon-island.webp" width="800" height="450" loading="lazy" decoding="async" alt="Lagoon Island from the air: a tee on a headland, a turquoise lagoon with a rock tower standing in it, and the island green beyond.">
+      <article class="stage rise" id="stage-lagoon-island" style="--a:#16d9c2;--b:#0b62d6">
+        <div class="stage-img"><img src="assets/stages/lagoon-island-640.webp" srcset="assets/stages/lagoon-island-640.webp 640w, assets/stages/lagoon-island-960.webp 960w" sizes="(max-width: 640px) 94vw, (max-width: 1020px) 47vw, 400px" width="960" height="540" loading="lazy" decoding="async" alt="Lagoon Island from the air: a tee on a rock headland, a turquoise lagoon with a tall rock stack standing in it, the island green beyond, boats and far islands under afternoon clouds.">
           <span class="stage-no" aria-hidden="true">01</span>
+          <ul class="routes" id="routes-lagoon-island" aria-label="The three routes on Lagoon Island"><li class="r-safe"><b>safe</b><span>Turtle Bar</span><small>Right, down to the sandbar: no water to carry. Pitch on along the bar.</small></li><li class="r-risky"><b>risky</b><span>The Lagoon</span><small>Straight at the flag, all carry. Skull Rock is six metres left of the line.</small></li><li class="r-rocket"><b>rocket</b><span>Over Skull Rock</span><small>A Rocket lob clears the 60 metre rock: the hidden left of the green is all yours.</small></li></ul>
+          <button type="button" class="routes-btn" aria-expanded="false" aria-controls="routes-lagoon-island">3 routes</button>
         </div>
         <div class="stage-body">
           <h3>Lagoon Island</h3>
           <ul class="chips"><li class="chip par">Par 3</li><li class="chip yd">151 yd</li><li class="chip">Wind 2–9 mph</li><li class="chip"><span class="pips" role="img" aria-label="Difficulty 1 of 3"><i class="on"></i><i></i><i></i></span></li></ul>
           <p>Over the lagoon to an island green: round by the sandbar, or a Rocket over Skull Rock.</p>
-          <ul class="routes" aria-label="Routes"><li class="r-safe"><b>safe</b> Turtle Bar</li><li class="r-risky"><b>risky</b> The Lagoon</li><li class="r-rocket"><b>rocket</b> Over Skull Rock</li></ul>
         </div>
       </article>
-      <article class="stage" style="--a:#ff8a3a;--b:#8a2a12">
-        <div class="stage-img"><img src="assets/stages/canyon-run.webp" width="800" height="450" loading="lazy" decoding="async" alt="Canyon Run: striped orange canyon walls, a gorge with water at the bottom and a fairway along the rim.">
+      <article class="stage rise" id="stage-canyon-run" style="--a:#ff8a3a;--b:#8a2a12">
+        <div class="stage-img"><img src="assets/stages/canyon-run-640.webp" srcset="assets/stages/canyon-run-640.webp 640w, assets/stages/canyon-run-960.webp 960w" sizes="(max-width: 640px) 94vw, (max-width: 1020px) 47vw, 400px" width="960" height="540" loading="lazy" decoding="async" alt="Canyon Run at golden hour: a fairway running along the rim of a deep red gorge with a river at the bottom, mesas on the horizon.">
           <span class="stage-no" aria-hidden="true">02</span>
+          <ul class="routes" id="routes-canyon-run" aria-label="The three routes on Canyon Run"><li class="r-safe"><b>safe</b><span>The Canyon Floor</span><small>Wide fairway all the way, no carry. It leaves a mid iron uphill, up the ramp.</small></li><li class="r-risky"><b>risky</b><span>The East Rim</span><small>Carry the gorge, 185 yards, to the Porch on the far rim. A flick over the rock bridge from there.</small></li><li class="r-rocket"><b>rocket</b><span>Over the Top</span><small>A Rocket straight at the flag: 285 yards of carry, up onto the mesa. An eagle putt.</small></li></ul>
+          <button type="button" class="routes-btn" aria-expanded="false" aria-controls="routes-canyon-run">3 routes</button>
         </div>
         <div class="stage-body">
           <h3>Canyon Run</h3>
           <ul class="chips"><li class="chip par">Par 4</li><li class="chip yd">357 yd</li><li class="chip">Wind 5–14 mph</li><li class="chip"><span class="pips" role="img" aria-label="Difficulty 2 of 3"><i class="on"></i><i class="on"></i><i></i></span></li></ul>
           <p>Up the canyon floor, across to the East Rim, or a Rocket over the gorge to the mesa.</p>
-          <ul class="routes" aria-label="Routes"><li class="r-safe"><b>safe</b> The Canyon Floor</li><li class="r-risky"><b>risky</b> The East Rim</li><li class="r-rocket"><b>rocket</b> Over the Top</li></ul>
         </div>
       </article>
-      <article class="stage" style="--a:#7ed957;--b:#17705a">
-        <div class="stage-img"><img src="assets/stages/lighthouse-point.webp" width="800" height="450" loading="lazy" decoding="async" alt="Lighthouse Point: a fairway on top of sea cliffs curving round a blue cove, with a lighthouse on the far headland.">
+      <article class="stage rise" id="stage-lighthouse-point" style="--a:#7ed957;--b:#17705a">
+        <div class="stage-img"><img src="assets/stages/lighthouse-point-640.webp" srcset="assets/stages/lighthouse-point-640.webp 640w, assets/stages/lighthouse-point-960.webp 960w" sizes="(max-width: 640px) 94vw, (max-width: 1020px) 47vw, 400px" width="960" height="540" loading="lazy" decoding="async" alt="Lighthouse Point: a green on top of grey sea cliffs with a striped lighthouse beside it, a blue cove full of sea stacks and boats, white headlands far off.">
           <span class="stage-no" aria-hidden="true">03</span>
+          <ul class="routes" id="routes-lighthouse-point" aria-label="The three routes on Lighthouse Point"><li class="r-safe"><b>safe</b><span>The Links</span><small>Up the wide fairway inland of the cove, no carry. A mid iron west along the headland to finish.</small></li><li class="r-risky"><b>risky</b><span>Smugglers' Cut</span><small>Left over the corner of the cove: 220 yards of carry from the knoll. A wedge from the headland.</small></li><li class="r-rocket"><b>rocket</b><span>The Lighthouse Line</span><small>A Rocket straight at the flag: 280 yards of sea and a 31 metre cliff to clear.</small></li></ul>
+          <button type="button" class="routes-btn" aria-expanded="false" aria-controls="routes-lighthouse-point">3 routes</button>
         </div>
         <div class="stage-body">
           <h3>Lighthouse Point</h3>
           <ul class="chips"><li class="chip par">Par 4</li><li class="chip yd">354 yd</li><li class="chip">Wind 10–22 mph</li><li class="chip"><span class="pips" role="img" aria-label="Difficulty 2 of 3"><i class="on"></i><i class="on"></i><i></i></span></li></ul>
           <p>Clifftop links in the wind: round the cove, cut its corner, or a Rocket over it all.</p>
-          <ul class="routes" aria-label="Routes"><li class="r-safe"><b>safe</b> The Links</li><li class="r-risky"><b>risky</b> Smugglers' Cut</li><li class="r-rocket"><b>rocket</b> The Lighthouse Line</li></ul>
         </div>
       </article>
-      <article class="stage" style="--a:#ff4416;--b:#3b0a0a">
-        <div class="stage-img"><img src="assets/stages/volcano-drop.webp" width="800" height="450" loading="lazy" decoding="async" alt="Volcano Drop from the tee: a dark crater with glowing lava falls and a green on an island in the lava.">
+      <article class="stage rise" id="stage-volcano-drop" style="--a:#ff4416;--b:#3b0a0a">
+        <div class="stage-img"><img src="assets/stages/volcano-drop-640.webp" srcset="assets/stages/volcano-drop-640.webp 640w, assets/stages/volcano-drop-960.webp 960w" sizes="(max-width: 640px) 94vw, (max-width: 1020px) 47vw, 400px" width="960" height="540" loading="lazy" decoding="async" alt="Volcano Drop: island greens in a lake of crusted lava inside a crater, glowing lava falls on the walls and two tall rock fangs, under an ember sky.">
           <span class="stage-no" aria-hidden="true">04</span>
+          <ul class="routes" id="routes-volcano-drop" aria-label="The three routes on Volcano Drop"><li class="r-safe"><b>safe</b><span>The Ash Terrace</span><small>Left, to the wide shelf on the west wall: the shortest carry. Then a wedge across, round the Jaws.</small></li><li class="r-risky"><b>risky</b><span>Through the Jaws</span><small>Straight at the flag between the fangs: a 21 metre gate, 100 yards out. All carry.</small></li><li class="r-rocket"><b>rocket</b><span>Over the Jaws</span><small>Only a Rocket flies higher than the fangs. From up there the whole island is open.</small></li></ul>
+          <button type="button" class="routes-btn" aria-expanded="false" aria-controls="routes-volcano-drop">3 routes</button>
         </div>
         <div class="stage-body">
           <h3>Volcano Drop</h3>
           <ul class="chips"><li class="chip par">Par 3</li><li class="chip yd">191 yd</li><li class="chip">Wind 4–12 mph</li><li class="chip"><span class="pips" role="img" aria-label="Difficulty 3 of 3"><i class="on"></i><i class="on"></i><i class="on"></i></span></li></ul>
           <p>From the crater rim to an island in the lava: through the Jaws, or a Rocket over them.</p>
-          <ul class="routes" aria-label="Routes"><li class="r-safe"><b>safe</b> The Ash Terrace</li><li class="r-risky"><b>risky</b> Through the Jaws</li><li class="r-rocket"><b>rocket</b> Over the Jaws</li></ul>
         </div>
       </article>
-      <article class="stage" style="--a:#bfeeff;--b:#2b6fc0">
-        <div class="stage-img"><img src="assets/stages/frostbite-ridge.webp" width="800" height="450" loading="lazy" decoding="async" alt="Frostbite Ridge: a snow slope with pine trees and a chequered start gate above a frozen lake.">
+      <article class="stage rise" id="stage-frostbite-ridge" style="--a:#bfeeff;--b:#2b6fc0">
+        <div class="stage-img"><img src="assets/stages/frostbite-ridge-640.webp" srcset="assets/stages/frostbite-ridge-640.webp 640w, assets/stages/frostbite-ridge-960.webp 960w" sizes="(max-width: 640px) 94vw, (max-width: 1020px) 47vw, 400px" width="960" height="540" loading="lazy" decoding="async" alt="Frostbite Ridge: a fairway curling round a frozen lake in a bowl of snow and pines, with a wall of snow peaks behind.">
           <span class="stage-no" aria-hidden="true">05</span>
+          <ul class="routes" id="routes-frostbite-ridge" aria-label="The three routes on Frostbite Ridge"><li class="r-safe"><b>safe</b><span>The Ridge</span><small>Down the ski slope, left of the lake: a wide fairway, nothing to carry, a wedge in.</small></li><li class="r-risky"><b>risky</b><span>Over the Ice</span><small>Straight at the flag: 266 yards of carry to the shelf under the green. Short is on the ice.</small></li><li class="r-rocket"><b>rocket</b><span>The Glacier Cirque</span><small>A Rocket clears the lake, the green and the icefall. From the cirque it is a flick straight down.</small></li></ul>
+          <button type="button" class="routes-btn" aria-expanded="false" aria-controls="routes-frostbite-ridge">3 routes</button>
         </div>
         <div class="stage-body">
           <h3>Frostbite Ridge</h3>
           <ul class="chips"><li class="chip par">Par 4</li><li class="chip yd">388 yd</li><li class="chip">Wind 4–10 mph</li><li class="chip"><span class="pips" role="img" aria-label="Difficulty 2 of 3"><i class="on"></i><i class="on"></i><i></i></span></li></ul>
           <p>From the summit: ski the ridge, carry the frozen lake, or rocket into the glacier.</p>
-          <ul class="routes" aria-label="Routes"><li class="r-safe"><b>safe</b> The Ridge</li><li class="r-risky"><b>risky</b> Over the Ice</li><li class="r-rocket"><b>rocket</b> The Glacier Cirque</li></ul>
         </div>
       </article>
-      <article class="stage" style="--a:#ff9ccb;--b:#a8327a">
-        <div class="stage-img"><img src="assets/stages/sakura-garden.webp" width="800" height="450" loading="lazy" decoding="async" alt="Sakura Garden: pink blossom trees, red torii gates and a green under a cliff with waterfalls.">
+      <article class="stage rise" id="stage-sakura-garden" style="--a:#ff9ccb;--b:#a8327a">
+        <div class="stage-img"><img src="assets/stages/sakura-garden-640.webp" srcset="assets/stages/sakura-garden-640.webp 640w, assets/stages/sakura-garden-960.webp 960w" sizes="(max-width: 640px) 94vw, (max-width: 1020px) 47vw, 400px" width="960" height="540" loading="lazy" decoding="async" alt="Sakura Garden: cherry trees in full blossom across a green valley, a cliff with waterfalls behind the green and misty mountains beyond.">
           <span class="stage-no" aria-hidden="true">06</span>
+          <ul class="routes" id="routes-sakura-garden" aria-label="The three routes on Sakura Garden"><li class="r-safe"><b>safe</b><span>The Moss Path</span><small>Left of the flag: mown all the way in, and the fat half of the green behind it. No water to carry.</small></li><li class="r-risky"><b>risky</b><span>Over the Koi Pond</span><small>At the flag: 112 yards of carry, water short and right, the cliff behind. A putt for birdie if it comes off.</small></li><li class="r-rocket"><b>rocket</b><span>Off the Great Falls</span><small>A Rocket wedge hits the waterfall high above the green and comes down it to the flag. Only the line matters.</small></li></ul>
+          <button type="button" class="routes-btn" aria-expanded="false" aria-controls="routes-sakura-garden">3 routes</button>
         </div>
         <div class="stage-body">
           <h3>Sakura Garden</h3>
           <ul class="chips"><li class="chip par">Par 3</li><li class="chip yd">136 yd</li><li class="chip">Wind 0–7 mph</li><li class="chip"><span class="pips" role="img" aria-label="Difficulty 2 of 3"><i class="on"></i><i class="on"></i><i></i></span></li></ul>
           <p>A wedge through the blossom to a green wrapped in koi ponds, under the Great Falls.</p>
-          <ul class="routes" aria-label="Routes"><li class="r-safe"><b>safe</b> The Moss Path</li><li class="r-risky"><b>risky</b> Over the Koi Pond</li><li class="r-rocket"><b>rocket</b> Off the Great Falls</li></ul>
         </div>
       </article>
-      <article class="stage" style="--a:#3ed06a;--b:#0b4a2c">
-        <div class="stage-img"><img src="assets/stages/temple-run.webp" width="800" height="450" loading="lazy" decoding="async" alt="Temple Run: a jungle fairway crossing a river toward a stone temple on a hill.">
+      <article class="stage rise" id="stage-temple-run" style="--a:#3ed06a;--b:#0b4a2c">
+        <div class="stage-img"><img src="assets/stages/temple-run-640.webp" srcset="assets/stages/temple-run-640.webp 640w, assets/stages/temple-run-960.webp 960w" sizes="(max-width: 640px) 94vw, (max-width: 1020px) 47vw, 400px" width="960" height="540" loading="lazy" decoding="async" alt="Temple Run: a jungle fairway crossing two rivers toward a stepped stone temple, thick forest all round and karst peaks in the mist.">
           <span class="stage-no" aria-hidden="true">07</span>
+          <ul class="routes" id="routes-temple-run" aria-label="The three routes on Temple Run"><li class="r-safe"><b>safe</b><span>The Stepping Stones</span><small>Drive, cross each river at its ford or lay up on the island, then up to the terrace: never a forced carry.</small></li><li class="r-risky"><b>risky</b><span>In Two</span><small>After a good drive, a wood over both rivers and up onto the terrace. Short is wet, or under the stairs.</small></li><li class="r-rocket"><b>rocket</b><span>In One</span><small>A Rocket drive flies both rivers, the forecourt and the stairs and comes down on the green.</small></li></ul>
+          <button type="button" class="routes-btn" aria-expanded="false" aria-controls="routes-temple-run">3 routes</button>
         </div>
         <div class="stage-body">
           <h3>Temple Run</h3>
           <ul class="chips"><li class="chip par">Par 5</li><li class="chip yd">528 yd</li><li class="chip">Wind 3–10 mph</li><li class="chip"><span class="pips" role="img" aria-label="Difficulty 3 of 3"><i class="on"></i><i class="on"></i><i class="on"></i></span></li></ul>
           <p>Two rivers, a temple on a mountain. Three good swings get home; a Rocket in one.</p>
-          <ul class="routes" aria-label="Routes"><li class="r-safe"><b>safe</b> The Stepping Stones</li><li class="r-risky"><b>risky</b> In Two</li><li class="r-rocket"><b>rocket</b> In One</li></ul>
         </div>
       </article>
-      <article class="stage" style="--a:#ffcb5c;--b:#b5651d">
-        <div class="stage-img"><img src="assets/stages/pharaohs-gate.webp" width="800" height="450" loading="lazy" decoding="async" alt="Pharaoh's Gate from the tee: a desert fairway, a blue pool and pyramids behind the green.">
+      <article class="stage rise" id="stage-pharaohs-gate" style="--a:#ffcb5c;--b:#b5651d">
+        <div class="stage-img"><img src="assets/stages/pharaohs-gate-640.webp" srcset="assets/stages/pharaohs-gate-640.webp 640w, assets/stages/pharaohs-gate-960.webp 960w" sizes="(max-width: 640px) 94vw, (max-width: 1020px) 47vw, 400px" width="960" height="540" loading="lazy" decoding="async" alt="Pharaoh's Gate at sunset: pyramids and a carved temple wall behind a striped fairway and a blue pool, dunes rolling to the horizon.">
           <span class="stage-no" aria-hidden="true">08</span>
+          <ul class="routes" id="routes-pharaohs-gate" aria-label="The three routes on Pharaoh's Gate"><li class="r-safe"><b>safe</b><span>The Left Fairway</span><small>Wide and dry, round the Great Sand Sea: a hybrid or a drive, then a wedge.</small></li><li class="r-risky"><b>risky</b><span>Knock on the Gate</span><small>Straight at the flag: 246 yards of carry over the sand and the Gate Pool, and it runs on.</small></li><li class="r-rocket"><b>rocket</b><span>The Upper Court</span><small>A Rocket clears the lot and lands on top of the escarpment. A flick down from there.</small></li></ul>
+          <button type="button" class="routes-btn" aria-expanded="false" aria-controls="routes-pharaohs-gate">3 routes</button>
         </div>
         <div class="stage-body">
           <h3>Pharaoh's Gate</h3>
           <ul class="chips"><li class="chip par">Par 4</li><li class="chip yd">301 yd</li><li class="chip">Wind 6–14 mph</li><li class="chip"><span class="pips" role="img" aria-label="Difficulty 2 of 3"><i class="on"></i><i class="on"></i><i></i></span></li></ul>
           <p>Drivable par 4. Round the Great Sand Sea, over it, or rocket to the Upper Court.</p>
-          <ul class="routes" aria-label="Routes"><li class="r-safe"><b>safe</b> The Left Fairway</li><li class="r-risky"><b>risky</b> Knock on the Gate</li><li class="r-rocket"><b>rocket</b> The Upper Court</li></ul>
         </div>
       </article>
-      <article class="stage" style="--a:#d640ff;--b:#0c1a72">
-        <div class="stage-img"><img src="assets/stages/midnight-mile.webp" width="800" height="450" loading="lazy" decoding="async" alt="Midnight Mile from the rooftop tee: a neon-edged tee, a fairway and a city of lit towers under a purple sky.">
+      <article class="stage rise" id="stage-midnight-mile" style="--a:#d640ff;--b:#0c1a72">
+        <div class="stage-img"><img src="assets/stages/midnight-mile-640.webp" srcset="assets/stages/midnight-mile-640.webp 640w, assets/stages/midnight-mile-960.webp 960w" sizes="(max-width: 640px) 94vw, (max-width: 1020px) 47vw, 400px" width="960" height="540" loading="lazy" decoding="async" alt="Midnight Mile at night: a fairway winding between towers of lit windows to a stadium green, searchlights and an airship overhead.">
           <span class="stage-no" aria-hidden="true">09</span>
+          <ul class="routes" id="routes-midnight-mile" aria-label="The three routes on Midnight Mile"><li class="r-safe"><b>safe</b><span>The Boulevard</span><small>Right of the water all the way: up the street, along the Skyway, a wedge down into the stadium. No carry. Three shots.</small></li><li class="r-risky"><b>risky</b><span>The Docks</span><small>Straight at the flag: 215 yards of carry over the basin to the low quay, water on three sides. Then a mid iron over the moat for an eagle putt.</small></li><li class="r-rocket"><b>rocket</b><span>The Helipad</span><small>Rocket ball only: 11 degrees left to the lit roof in the harbour, 370 to 430 yards out. It leaves a wedge straight down at the flag.</small></li></ul>
+          <button type="button" class="routes-btn" aria-expanded="false" aria-controls="routes-midnight-mile">3 routes</button>
         </div>
         <div class="stage-body">
           <h3>Midnight Mile</h3>
           <ul class="chips"><li class="chip par">Par 5</li><li class="chip yd">548 yd</li><li class="chip">Wind 6–14 mph</li><li class="chip"><span class="pips" role="img" aria-label="Difficulty 3 of 3"><i class="on"></i><i class="on"></i><i class="on"></i></span></li></ul>
           <p>The finale. Rooftop tee, a harbour to cut, a stadium green behind a moat. Go big.</p>
-          <ul class="routes" aria-label="Routes"><li class="r-safe"><b>safe</b> The Boulevard</li><li class="r-risky"><b>risky</b> The Docks</li><li class="r-rocket"><b>rocket</b> The Helipad</li></ul>
         </div>
       </article>
-      <article class="stage" style="--a:#ff8a3a;--b:#8a2a12">
-        <div class="stage-img"><img src="assets/stages/sky-fortress.webp" width="800" height="450" loading="lazy" decoding="async" alt="Sky Fortress: a green ringed by castle towers on top of a red rock butte.">
+      <article class="stage rise" id="stage-sky-fortress" style="--a:#ff8a3a;--b:#8a2a12">
+        <div class="stage-img"><img src="assets/stages/sky-fortress-640.webp" srcset="assets/stages/sky-fortress-640.webp 640w, assets/stages/sky-fortress-960.webp 960w" sizes="(max-width: 640px) 94vw, (max-width: 1020px) 47vw, 400px" width="960" height="540" loading="lazy" decoding="async" alt="Sky Fortress at golden hour: a causeway across a canyon lake to a butte with a castle green on top, red mesas all round.">
           <span class="stage-no" aria-hidden="true">10</span><span class="stage-tag">Free rocket ball</span>
+          <ul class="routes" id="routes-sky-fortress" aria-label="The three routes on Sky Fortress"><li class="r-safe"><b>safe</b><span>The Siege Ramp</span><small>Up the scree a pitch at a time, by the Rampart ledge half way. Nothing to carry, nowhere to fall.</small></li><li class="r-risky"><b>risky</b><span>The Bastions</span><small>Miss the top left or right and a bastion 12 m down still holds: one pitch up the bank. Wider is wet.</small></li><li class="r-rocket"><b>rocket</b><span>Storm the Keep</span><small>The free Rocket straight at the flag: 315 yards of carry, 50 m up, into the courtyard.</small></li></ul>
+          <button type="button" class="routes-btn" aria-expanded="false" aria-controls="routes-sky-fortress">3 routes</button>
         </div>
         <div class="stage-body">
           <h3>Sky Fortress</h3>
           <ul class="chips"><li class="chip par">Par 3</li><li class="chip yd">427 yd</li><li class="chip">Wind 8–18 mph</li><li class="chip"><span class="pips" role="img" aria-label="Difficulty 3 of 3"><i class="on"></i><i class="on"></i><i class="on"></i></span></li></ul>
           <p>Rocket par 3: from the canyon floor to a fortress green 50 m up a butte in a lake.</p>
-          <ul class="routes" aria-label="Routes"><li class="r-safe"><b>safe</b> The Siege Ramp</li><li class="r-risky"><b>risky</b> The Bastions</li><li class="r-rocket"><b>rocket</b> Storm the Keep</li></ul>
         </div>
       </article>
-      <article class="stage" style="--a:#ff4416;--b:#3b0a0a">
-        <div class="stage-img"><img src="assets/stages/dragons-spine.webp" width="800" height="450" loading="lazy" decoding="async" alt="Dragon's Spine: a field of glowing lava between dark rock ridges, volcanoes on the horizon.">
+      <article class="stage rise" id="stage-dragons-spine" style="--a:#ff4416;--b:#3b0a0a">
+        <div class="stage-img"><img src="assets/stages/dragons-spine-640.webp" srcset="assets/stages/dragons-spine-640.webp 640w, assets/stages/dragons-spine-960.webp 960w" sizes="(max-width: 640px) 94vw, (max-width: 1020px) 47vw, 400px" width="960" height="540" loading="lazy" decoding="async" alt="Dragon's Spine: a field of glowing lava below dark crater walls with lava falls, a dragon on a ledge, volcano cones smoking on the horizon.">
           <span class="stage-no" aria-hidden="true">11</span><span class="stage-tag">Free rocket ball</span>
+          <ul class="routes" id="routes-dragons-spine" aria-label="The three routes on Dragon's Spine"><li class="r-safe"><b>safe</b><span>The Ash Road</span><small>Right of the lava, up the slope to the Ash Terrace, a pitch up the low rim and one down. Dry all the way.</small></li><li class="r-risky"><b>risky</b><span>Over the Crater Wall</span><small>From the Ash Terrace, one long shot over the rim at the flag. Short stays on the flank and costs a shot.</small></li><li class="r-rocket"><b>rocket</b><span>The Dragon's Spine</span><small>The free Rocket over the lava: 325 yards of carry, 45 m up to the rim, a wedge down to the flag.</small></li></ul>
+          <button type="button" class="routes-btn" aria-expanded="false" aria-controls="routes-dragons-spine">3 routes</button>
         </div>
         <div class="stage-body">
           <h3>Dragon's Spine</h3>
           <ul class="chips"><li class="chip par">Par 4</li><li class="chip yd">604 yd</li><li class="chip">Wind 6–15 mph</li><li class="chip"><span class="pips" role="img" aria-label="Difficulty 3 of 3"><i class="on"></i><i class="on"></i><i class="on"></i></span></li></ul>
           <p>Rocket par 4: over the lava and 45 m up to the crater rim, then down into the caldera.</p>
-          <ul class="routes" aria-label="Routes"><li class="r-safe"><b>safe</b> The Ash Road</li><li class="r-risky"><b>risky</b> Over the Crater Wall</li><li class="r-rocket"><b>rocket</b> The Dragon's Spine</li></ul>
         </div>
       </article>
-      <article class="stage" style="--a:#bfeeff;--b:#2b6fc0">
-        <div class="stage-img"><img src="assets/stages/summit-express.webp" width="800" height="450" loading="lazy" decoding="async" alt="Summit Express from the tee: two rockets flank the tee below a snow mountain studded with ice crystals.">
+      <article class="stage rise" id="stage-summit-express" style="--a:#bfeeff;--b:#2b6fc0">
+        <div class="stage-img"><img src="assets/stages/summit-express-640.webp" srcset="assets/stages/summit-express-640.webp 640w, assets/stages/summit-express-960.webp 960w" sizes="(max-width: 640px) 94vw, (max-width: 1020px) 47vw, 400px" width="960" height="540" loading="lazy" decoding="async" alt="Summit Express: a ribbon of fairways climbing a snow mountain from a pine valley to a summit ringed by giant ice crystals.">
           <span class="stage-no" aria-hidden="true">12</span><span class="stage-tag">Free rocket ball</span>
+          <ul class="routes" id="routes-summit-express" aria-label="The three routes on Summit Express"><li class="r-safe"><b>safe</b><span>The Snow Zigzag</span><small>From the Bench, left up the West Col round the head of the crevasse, then across the summit. No carry.</small></li><li class="r-risky"><b>risky</b><span>Leap the Crevasse</span><small>From the Bench or the valley, straight over the ice at the flag. Short is gone.</small></li><li class="r-rocket"><b>rocket</b><span>The Express</span><small>The free Rocket up the headwall into the hanging valley; a huge one reaches the Bench.</small></li></ul>
+          <button type="button" class="routes-btn" aria-expanded="false" aria-controls="routes-summit-express">3 routes</button>
         </div>
         <div class="stage-body">
           <h3>Summit Express</h3>
           <ul class="chips"><li class="chip par">Par 5</li><li class="chip yd">700 yd</li><li class="chip">Wind 10–22 mph</li><li class="chip"><span class="pips" role="img" aria-label="Difficulty 3 of 3"><i class="on"></i><i class="on"></i><i class="on"></i></span></li></ul>
           <p>Rocket par 5 up a mountain: the headwall, a hanging valley, a crevasse, the summit.</p>
-          <ul class="routes" aria-label="Routes"><li class="r-safe"><b>safe</b> The Snow Zigzag</li><li class="r-risky"><b>risky</b> Leap the Crevasse</li><li class="r-rocket"><b>rocket</b> The Express</li></ul>
         </div>
       </article>
     <!-- /gen:stages -->
     </div>
+  </div>
 
-    <div class="sec-head" style="margin-top:64px">
-      <h2 style="font-size:clamp(32px,5vw,52px)">Sudden-death arenas</h2>
-      <p class="lead">A tied hole goes straight to sudden death: one ball each on a reachable par 3, closest to the pin takes the hole.</p>
+  <div class="dome" id="thunder-dome">
+    <img src="assets/shots/dome-960.webp" srcset="assets/shots/dome-960.webp 960w, assets/shots/dome-1440.webp 1440w" sizes="100vw" width="1440" height="810" loading="lazy" decoding="async" alt="Inside Thunder Dome: two tiers of stands full of individual spectators in team colours, floodlights, LED boards and a big screen, round a green painted as a target.">
+    <div class="dome-text">
+      <div class="wrap">
+        <p class="kicker">Sudden death</p>
+        <h2>Thunder Dome</h2>
+        <p>A tied hole is settled at once on an arena: one ball each, closest to the pin takes it. Thunder Dome is a whole stadium bowl, and <!-- dome:crowd -->every seat in it is a person<!-- /dome:crowd --> who tenses as the ball comes down, cheers when it sticks and groans when it does not.</p>
+      </div>
     </div>
-    <div class="grid g3">
+  </div>
+
+  <div class="wrap" style="margin-top:clamp(30px,5vw,56px)">
+    <div class="sec-head">
+      <h2 style="font-size:clamp(32px,5vw,52px)">The three arenas</h2>
+      <p class="lead">Each a reachable par 3 with a bullseye for a green. Water or out of bounds is a miss; both miss, go again.</p>
+    </div>
+    <p class="swipe-hint" aria-hidden="true">Swipe for more →</p>
+    <div class="worlds" tabindex="0" role="group" aria-label="The three sudden-death arenas">
       <!-- gen:arenas -->
-      <article class="stage" style="--a:#16d9c2;--b:#0b62d6">
-        <div class="stage-img"><img src="assets/stages/bullseye-bay.webp" width="800" height="450" loading="lazy" decoding="async" alt="Bullseye Bay: a round target green painted in rings, on an island in a bay full of boats.">
-          <span class="stage-tag" style="background:#10141c">Sudden death</span>
+      <article class="stage rise" id="stage-bullseye-bay" style="--a:#16d9c2;--b:#0b62d6">
+        <div class="stage-img"><img src="assets/stages/bullseye-bay-640.webp" srcset="assets/stages/bullseye-bay-640.webp 640w, assets/stages/bullseye-bay-960.webp 960w" sizes="(max-width: 640px) 94vw, (max-width: 1020px) 47vw, 400px" width="960" height="540" loading="lazy" decoding="async" alt="Bullseye Bay: a round island green painted in target rings in a turquoise bay ringed by cliffs and waterfalls, boats at anchor.">
+          <span class="stage-tag sd">Sudden death</span>
         </div>
         <div class="stage-body">
           <h3>Bullseye Bay</h3>
@@ -276,9 +296,9 @@
           <p>Sudden death from the caldera rim: one ball each at a bullseye in the bay.</p>
         </div>
       </article>
-      <article class="stage" style="--a:#ffd21f;--b:#1b2b55">
-        <div class="stage-img"><img src="assets/stages/thunder-dome.webp" width="800" height="450" loading="lazy" decoding="async" alt="Thunder Dome from the tee: a floodlit stadium full of spectators around a target green.">
-          <span class="stage-tag" style="background:#10141c">Sudden death</span>
+      <article class="stage rise" id="stage-thunder-dome" style="--a:#ffd21f;--b:#1b2b55">
+        <div class="stage-img"><img src="assets/stages/thunder-dome-640.webp" srcset="assets/stages/thunder-dome-640.webp 640w, assets/stages/thunder-dome-960.webp 960w" sizes="(max-width: 640px) 94vw, (max-width: 1020px) 47vw, 400px" width="960" height="540" loading="lazy" decoding="async" alt="Thunder Dome from the tee: a floodlit stadium bowl with two tiers of spectators, big screens reading SUDDEN DEATH and a target green.">
+          <span class="stage-tag sd">Sudden death</span>
         </div>
         <div class="stage-body">
           <h3>Thunder Dome</h3>
@@ -286,9 +306,9 @@
           <p>Sudden death under the lights. Out of the tunnel, 140 yards, a full house.</p>
         </div>
       </article>
-      <article class="stage" style="--a:#bfeeff;--b:#2b6fc0">
-        <div class="stage-img"><img src="assets/stages/ice-pick.webp" width="800" height="450" loading="lazy" decoding="async" alt="Ice Pick from the tee: a ringed target on a frozen tarn far below, among pines and ice crystals.">
-          <span class="stage-tag" style="background:#10141c">Sudden death</span>
+      <article class="stage rise" id="stage-ice-pick" style="--a:#bfeeff;--b:#2b6fc0">
+        <div class="stage-img"><img src="assets/stages/ice-pick-640.webp" srcset="assets/stages/ice-pick-640.webp 640w, assets/stages/ice-pick-960.webp 960w" sizes="(max-width: 640px) 94vw, (max-width: 1020px) 47vw, 400px" width="960" height="540" loading="lazy" decoding="async" alt="Ice Pick: a target painted in rings on a frozen tarn, snow slopes, pines and giant ice crystals all round, under a pink evening sky.">
+          <span class="stage-tag sd">Sudden death</span>
         </div>
         <div class="stage-body">
           <h3>Ice Pick</h3>
@@ -304,42 +324,71 @@
 <section class="sec sec-alt" id="match">
   <div class="wrap">
     <div class="sec-head">
-      <p class="kicker">The match</p>
-      <h2>No dead swings</h2>
-      <p class="lead">Pick two players, a format and a stage, and hit. A hole is over the moment it is decided, so a match runs at the pace of a fighting game, not a four-ball.</p>
+      <p class="kicker">How a match plays</p>
+      <h2>Four beats, a few minutes</h2>
+      <p class="lead">Two players take turns at the same simulator. A hole is over the moment it is decided, so a match runs at the pace of a video game, not a four-ball.</p>
     </div>
-    <div class="grid g3">
-      <div class="fmt on"><h3>Quick match</h3><span class="sub">One hole</span><p>One hole. Winner takes it.</p></div>
-      <div class="fmt"><h3>Best of 3</h3><span class="sub">First to 2</span><p>Three stages. First to two.</p></div>
-      <div class="fmt"><h3>Tournament</h3><span class="sub">Best of 9</span><p>The whole Clash Tour. First to five.</p></div>
+    <ol class="beats">
+      <li class="beat rise">
+        <figure><img src="assets/shots/vs-640.webp" srcset="assets/shots/vs-640.webp 640w, assets/shots/vs-1280.webp 1280w" sizes="(max-width: 760px) 92vw, 590px" width="1280" height="720" loading="lazy" decoding="async" alt="The VS screen: ALEX in orange against SAM in blue, split on a diagonal, a quick match, with the coin flip result: Sam tees off first."></figure>
+        <h3>Pick two players. Flip the coin.</h3>
+        <p>Title screen, VERSUS, START: three presses from launch to the first tee. A quick match is one hole; there is a best of 3 and a best-of-9 tournament when you have longer, and Party when there are more than two of you.</p>
+      </li>
+      <li class="beat rise">
+        <figure><img src="assets/shots/ballcam-640.webp" srcset="assets/shots/ballcam-640.webp 640w, assets/shots/ballcam-1280.webp 1280w" sizes="(max-width: 760px) 92vw, 590px" width="1280" height="720" loading="lazy" decoding="async" alt="The ball cam on Lagoon Island: the camera flies just behind a ball in the air over the lagoon, with the island green, a times-three ring and a backboard ahead."></figure>
+        <h3>Hit a real ball. Fly with it.</h3>
+        <p>Your launch monitor measures the shot; the flight is real physics with drag, lift, wind, bounce and roll. The ball cam chases it all the way, then every shot gets a grade, points and a callout.</p>
+      </li>
+      <li class="beat rise">
+        <figure><img src="assets/shots/stake-640.webp" srcset="assets/shots/stake-640.webp 640w, assets/shots/stake-1280.webp 1280w" sizes="(max-width: 760px) 92vw, 590px" width="1280" height="720" loading="lazy" decoding="async" alt="On the green at Lagoon Island a banner across the screen reads ALEX'S UP, PUTT IN TO WIN, above the row of power-up balls; the header shows Alex lying 1 at 18 feet and Sam lying 2."></figure>
+        <h3>Putt in to win.</h3>
+        <p>The game always says what the next swing is for: PUTT IN TO WIN, CHIP IN TO TIE, MUST MAKE THIS. Putting is helped on purpose, because launch monitors read putts poorly; how much is a setting, down to real putting.</p>
+      </li>
+      <li class="beat rise">
+        <figure><img src="assets/shots/sudden-640.webp" srcset="assets/shots/sudden-640.webp 640w, assets/shots/sudden-1280.webp 1280w" sizes="(max-width: 760px) 92vw, 590px" width="1280" height="720" loading="lazy" decoding="async" alt="Sudden death in Thunder Dome: a banner reads ALEX, YOU'RE UP, CLOSEST TO THE PIN, over the tee view of a floodlit stadium full of spectators."></figure>
+        <h3>Tied? Sudden death.</h3>
+        <p>No halved holes. Straight to an arena, one ball each, closest to the pin wins the hole, with the whole stadium watching.</p>
+      </li>
+    </ol>
+    <div class="facts">
+      <div><h3>Knockout</h3><p>Your opponent is in and you have already taken as many strokes? The hole is over, no swing needed. One behind, you get exactly one swing, and it must drop.</p></div>
+      <div><h3>Wind per hole</h3><p>A fresh wind is rolled for every hole inside that stage's own range, the same for both players. The stage intro shows it big.</p></div>
+      <div><h3>Undo and the stray-ball guard</h3><p>The match menu undoes the last shot, restarts the hole or the match, or quits. A swing under 40 mph from a full-shot lie asks STRAY BALL? so a dropped ball never costs a hole.</p></div>
+      <div><h3>Drop on the line</h3><p>Stuck behind a cliff or in the trees? Take a drop back on the hole's line for a stroke. If the game judges the lie dead, the drop is free.</p></div>
+      <div><h3>See the target</h3><p>A view from above when the green is over a ridge, and scenery that turns see-through when it stands between the camera and the ball.</p></div>
+      <div><h3>No shot clock</h3><p>Nothing times a player standing over a real ball, and no sound loops while you set up. The stroke cap (par plus three) keeps a bad hole short.</p></div>
     </div>
-    <div class="rules">
-      <div><h3>Knockout</h3><p>Your opponent is in the cup and you have already taken as many strokes? You have lost the hole, no swing needed. One stroke behind, you get exactly one swing, and it must drop.</p></div>
-      <div><h3>Sudden death</h3><p>A tied hole is settled at once on an arena: one ball each, nearest the pin wins. Water or out of bounds is a miss. Both miss, go again.</p></div>
-      <div><h3>Stroke cap</h3><p>Par plus three and you are out of the hole. Nobody watches a bunker saga.</p></div>
-      <div><h3>Wind</h3><p>A fresh wind is rolled for every hole, the same for both players, and it leans stronger late in a series.</p></div>
-      <div><h3>Whose shot</h3><p>A coin flip on hole one, then whoever is farther from the hole. On the green the player with fewer strokes putts first, so the next putt is always to win or to tie.</p></div>
-      <div><h3>Match menu</h3><p>Undo the last shot, restart the hole, restart the match or quit. A swing under 40 mph a long way from the pin asks STRAY BALL? so a dropped ball never costs a hole.</p></div>
-    </div>
-    <div class="grid g3" style="margin-top:40px">
-      <figure class="shot">
-        <img src="assets/hud/lobby.webp" width="1280" height="720" loading="lazy" decoding="async" alt="The match setup screen, titled Clash Match: player one in orange versus player two in blue, the three formats, a row of stage cards and a big yellow START button.">
-        <figcaption>Set up: two players, a format, a stage (or let it surprise you).</figcaption>
-      </figure>
-      <figure class="shot">
-        <img src="assets/hud/turn.webp" width="1280" height="720" loading="lazy" decoding="async" alt="A match on Sakura Garden: an orange banner across the screen reads SAM, YOU'RE UP, tee shot, 136 yards, par 3, above the row of power-up balls.">
-        <figcaption>Hot seat: the game calls each player up by name.</figcaption>
-      </figure>
-      <figure class="shot">
-        <img src="assets/hud/winner.webp" width="1280" height="720" loading="lazy" decoding="async" alt="The winner screen: SAM WINS! in huge letters, the match awards (closest to the pin, shot of the match), the trophies and coins won, and a chest with two power-up balls.">
-        <figcaption>The winner gets the screen, trophies and a chest of balls. Friendly by default; no real money anywhere.</figcaption>
-      </figure>
-    </div>
-    <p style="margin-top:34px"><a class="btn btn-ghost" href="play.html"><span>All the rules</span></a></p>
+    <p style="margin-top:34px"><a class="btn btn-ghost" href="play.html"><span>All the rules and keys</span></a></p>
   </div>
 </section>
 
-<section class="sec" id="balls">
+<section class="sec" id="front-door">
+  <div class="wrap split">
+    <div>
+      <p class="kicker">It starts like a game</p>
+      <h2>Press any key. Or hit a ball.</h2>
+      <p class="lead" style="margin-top:18px">Sim Clash opens on a title screen, not a settings page, and a real swing is enough to get past it.</p>
+      <ul class="ticks">
+        <li><b>Versus.</b> Two players, head to head, one bay.</li>
+        <li><b>Party, Bullseye, Trick Shot Duel.</b> Games for two to four, darts with a golf ball, and call-your-shot.</li>
+        <li><b>Solo.</b> A tour of 3, 6 or all 12 stages for a score against par, or any single stage. Your best is kept.</li>
+        <li><b>Practice.</b> Free play on any stage, closest to the pin, a putting challenge, up and down.</li>
+        <li><b>Highlights, Players, Settings.</b> The best shots of the night to watch again; a roster with ranks and trophies; sound, camera, putting, graphics and your launch monitor.</li>
+        <li><b>A first-run wizard.</b> The first time, the game asks which launch monitor you have and shows the steps for that one, with a live status light. Or skip it and play with test swings.</li>
+      </ul>
+    </div>
+    <div class="grid" style="gap:26px">
+      <figure class="shot tilt-l">
+        <img src="assets/shots/title-640.webp" srcset="assets/shots/title-640.webp 640w, assets/shots/title-1280.webp 1280w" sizes="(max-width: 900px) 92vw, 620px" width="1280" height="720" loading="lazy" decoding="async" alt="The title screen: the SIM CLASH wordmark in orange and blue over Lagoon Island, with the line press any key, click, or hit a ball.">
+      </figure>
+      <figure class="shot tilt-r">
+        <img src="assets/shots/menu-640.webp" srcset="assets/shots/menu-640.webp 640w, assets/shots/menu-1280.webp 1280w" sizes="(max-width: 900px) 92vw, 620px" width="1280" height="720" loading="lazy" decoding="async" alt="The main menu, pick a game: Versus, Party, Bullseye, Trick Shot Duel, Solo, Practice, Highlights, Players, Settings and How to play, over a view of Lagoon Island.">
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section class="sec sec-alt" id="balls">
   <div class="wrap">
     <div class="sec-head">
       <p class="kicker">Balls and tricks</p>
@@ -425,7 +474,7 @@
       </li>
     <!-- /gen:balls -->
     </ul>
-    <h3 style="margin:44px 0 16px;font-size:34px;font-style:italic">Sabotage tricks</h3>
+    <h3 class="sub-h">Sabotage tricks</h3>
     <ul class="balls">
       <!-- gen:tricks -->
       <li class="ball trick" style="--c:#9fe0ff">
@@ -445,61 +494,142 @@
       </li>
     <!-- /gen:tricks -->
     </ul>
-    <figure class="shot" style="max-width:860px;margin-top:44px">
-      <img src="assets/hud/tray.webp" width="1280" height="720" loading="lazy" decoding="async" alt="The loadout panel open during a match: fifteen ball icons with their number keys, the three sabotage tricks aimed at the opponent, and the Rocket ball's description.">
-      <figcaption>The loadout: number keys arm a ball, B opens the lot.</figcaption>
-    </figure>
+    <ul class="shouts" aria-label="Some of the callouts a shot can earn">
+      <li class="epic">Pin seeker!</li><li>Nice shot!</li><li class="funny">Slice house!</li><li class="epic">Absolute bomb!</li><li class="bad">Terrible!</li><li class="funny">Worm burner!</li><li>On the dance floor!</li><li class="bad">In the drink!</li><li class="funny">Beach day!</li><li class="epic">Hole in one!!!</li>
+    </ul>
   </div>
 </section>
 
-<section class="sec sec-alt" id="show">
-  <div class="wrap split flip">
-    <figure class="shot tilt-l">
-      <img src="assets/shots/neon-flight.webp" width="1280" height="720" loading="lazy" decoding="async" alt="Ball cam over Midnight Mile at night: the camera flies behind a ball above a green fairway between glowing skyscrapers.">
-      <figcaption>Midnight Mile, the tour finale, from the ball cam.</figcaption>
-    </figure>
-    <div>
-      <p class="kicker">Camera and sound</p>
-      <h2>It flies with the ball</h2>
-      <ul class="ticks">
-        <li><b>Ball cam.</b> The camera leaves the tee and chases the ball, behind and above it all the way, banking into the curve with the hole laid out ahead. It never flips round.</li>
-        <li><b>Pin cam.</b> A close one eases in behind the ball with the cup ahead of it, and a ball that drops gets a close-up of it falling into the cup.</li>
-        <li><b>Slow motion only by the pin.</b> The landing, the bounce and the check play at full speed. Time slows when the ball comes by the hole, and never anywhere else.</li>
-        <li><b>An announcer and a crowd.</b> Over a hundred announcer lines, one-shot effects for every strike, splash and cup, and a crowd that rises as the ball tracks at the hole. Nothing loops, ever.</li>
-      </ul>
-      <ul class="shouts" aria-label="Some of the callouts">
-        <li class="epic">Pin seeker!</li><li>Nice shot!</li><li class="funny">Slice house!</li><li class="epic">Absolute bomb!</li><li class="bad">Terrible!</li><li class="funny">Worm burner!</li><li>On the dance floor!</li><li class="bad">In the drink!</li><li class="funny">Beach day!</li><li class="epic">Hole in one!!!</li>
-      </ul>
+<section class="sec" id="new">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="kicker">Also new</p>
+      <h2>More to hit. More to play.</h2>
+      <p class="lead">The same release that rebuilt the worlds filled them with things a real swing can hit, and added games for a whole family or a full bay.</p>
+    </div>
+    <div class="grid g3 feats">
+      <article class="feat rise">
+        <img src="assets/shots/gadget-wall-640.webp" srcset="assets/shots/gadget-wall-640.webp 640w, assets/shots/gadget-wall-960.webp 960w" sizes="(max-width: 640px) 92vw, (max-width: 1020px) 46vw, 390px" width="960" height="540" loading="lazy" decoding="async" alt="Canyon Run: a brick wall hanging over the fairway with 150 MPH painted on it, a boost ring and a trail of gold coins in the air beyond.">
+        <h3>Course gadgets</h3>
+        <p><!-- gen:n-gadgets -->76<!-- /gen:n-gadgets --> pieces across the stages: boost rings in the air, bounce pads, speed strips, geysers, pinball bumpers, a warp pipe, a cannon, coin trails, rings that double or treble a shot's points. And walls that only a hard-hit ball goes through: the number painted on one is the ball speed it takes.</p>
+      </article>
+      <article class="feat rise">
+        <img src="assets/shots/dragon-640.webp" srcset="assets/shots/dragon-640.webp 640w, assets/shots/dragon-960.webp 960w" sizes="(max-width: 640px) 92vw, (max-width: 1020px) 46vw, 390px" width="960" height="540" loading="lazy" decoding="async" alt="A green and red dragon sitting on a rock ledge between dark crater walls, looking toward the camera.">
+        <h3>A living world</h3>
+        <p>Boats, a train, cable cars, a camel caravan, birds, fish, and a dragon that turns its head to follow your ball. The world answers the play: a Rocket sets the volcano off, a ball in the water brings up the fish (or a crocodile), a duffed one earns a tumbleweed. Windmills and flags show the hole's real wind.</p>
+      </article>
+      <article class="feat rise">
+        <img src="assets/shots/party-640.webp" srcset="assets/shots/party-640.webp 640w, assets/shots/party-1280.webp 1280w" sizes="(max-width: 640px) 92vw, (max-width: 1020px) 46vw, 390px" width="1280" height="720" loading="lazy" decoding="async" alt="The Party lobby: slots for up to four players in four colours, each with a HELP switch, the three formats Skins, Stroke race and Elimination, and 3, 6 or 9 holes.">
+        <h3>Party, and handicaps</h3>
+        <p>Two to four players on one bay: <b>Skins</b> (ties carry over), <b>Stroke race</b> or <b>Elimination</b>, over 3, 6 or 9 holes. Each player can be given <b>HELP</b>, three levels of handicap: easier putting, an extra power-up, a forward tee. So a beginner can play a good golfer.</p>
+      </article>
+      <article class="feat rise">
+        <img src="assets/shots/bullseye-640.webp" srcset="assets/shots/bullseye-640.webp 640w, assets/shots/bullseye-1280.webp 1280w" sizes="(max-width: 640px) 92vw, (max-width: 1020px) 46vw, 390px" width="1280" height="720" loading="lazy" decoding="async" alt="The Bullseye lobby: darts with a golf ball for 1 to 4 players, three arenas each drawn as a target, the games High score and Countdown, and 3, 5 or 7 rounds.">
+        <h3>Bullseye</h3>
+        <p>Darts with a golf ball, for one to four, on the arenas' target greens. The ring your ball stops in is your score and the bullseye is 50. Play for the high score, or a countdown you have to finish exactly.</p>
+      </article>
+      <article class="feat rise">
+        <img src="assets/shots/duel-640.webp" srcset="assets/shots/duel-640.webp 640w, assets/shots/duel-1280.webp 1280w" sizes="(max-width: 640px) 92vw, (max-width: 1020px) 46vw, 390px" width="1280" height="720" loading="lazy" decoding="async" alt="The Trick Shot Duel lobby: Alex against Sam, the word to spell (CLASH, PIG or HORSE) and the three rules of the game.">
+        <h3>Trick Shot Duel</h3>
+        <p>Call your shot, match it or take a letter. One player hits anything; the game reads what made it special (its carry, its bend, how close, how high) and the other gets one ball to match it. First to spell CLASH loses.</p>
+      </article>
+      <article class="feat rise">
+        <img src="assets/shots/replay-640.webp" srcset="assets/shots/replay-640.webp 640w, assets/shots/replay-1280.webp 1280w" sizes="(max-width: 640px) 92vw, (max-width: 1020px) 46vw, 390px" width="1280" height="720" loading="lazy" decoding="async" alt="An instant replay: a REPLAY tag with the name of the camera, GREEN-SIDE CAM, over a low close view of the ball on the green, captioned 18 FT PUTT.">
+        <h3>Instant replay</h3>
+        <p>A hole-out, a long putt, the ball that wins the match: shown again at once from another camera, and kept on a reel under HIGHLIGHTS. A real swing ends a replay on the spot. Nothing ever makes a player wait.</p>
+      </article>
+    </div>
+    <p style="margin-top:30px"><a class="btn btn-ghost" href="whats-new.html"><span>Everything that is new</span></a></p>
+  </div>
+</section>
+
+<section class="sec" id="works-with">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="kicker">Works with</p>
+      <h2>Your launch monitor, honestly</h2>
+      <p class="lead">The game listens where GSPro's Open API listens (GSPro Open Connect, TCP port <!-- gen:lm-port -->921<!-- /gen:lm-port -->), and has a bridge for Foresight GC units built in. That is not the same as "anything that works with GSPro". Of the <!-- gen:lm-n-total -->30<!-- /gen:lm-n-total --> launch monitors we know about, <b><!-- gen:lm-n-tested -->1<!-- /gen:lm-n-tested --> has been tested on a real rig</b>: the developer's own. The rest are sorted by how sure we are.</p>
+    </div>
+    <div class="tiers">
+      <!-- gen:lm-summary -->
+      <div class="tier t-tested">
+        <h3>Tested <span>1</span></h3>
+        <p>Works on a real rig.</p>
+        <ul><li>Foresight GCQuad</li></ul>
+      </div>
+      <div class="tier t-expected">
+        <h3>Expected to work <span>8</span></h3>
+        <p>Its own connector is documented to send Open Connect, or it is the same connector as a tested unit. Nobody has tried it with this game yet.</p>
+        <ul><li>Foresight GC3 / GCHawk / QuadMAX / Falcon</li><li>Bushnell Launch Pro</li><li>Square Golf (Home)</li><li>NVisage N1</li><li>Bullseye LM</li><li>GolfIn Idra</li><li>PiTrac</li><li>OpenFlight</li></ul>
+      </div>
+      <div class="tier t-community">
+        <h3>Community / unofficial <span>12</span></h3>
+        <p>Needs an unofficial helper program between the launch monitor and the game. Untested here.</p>
+        <ul><li>Foresight GC2</li><li>Uneekor EYE XO / XO2 / EYE MINI / QED</li><li>Garmin Approach R10</li><li>Garmin Approach R50</li><li>FlightScope Mevo+ / Mevo Gen2 / Xi</li><li>SkyTrak / SkyTrak+</li><li>Rapsodo MLM2PRO</li><li>Square Golf Omni</li><li>Full Swing KIT</li><li>TrackMan</li><li>Voice Caddie Swing Caddie SC4 / SC4 Pro</li><li>TruGolf Apogee</li></ul>
+      </div>
+      <div class="tier t-unsupported">
+        <h3>Not supported yet <span>9</span></h3>
+        <p>No way in that we know of. You can still play with test swings.</p>
+        <ul><li>FlightScope X3 / X2 / Mevo (original)</li><li>ProTee VX</li><li>OpenLaunch NOVA</li><li>OptiShot Nova / BallFlight / Orbit</li><li>Golfzon WAVE</li><li>GolfJoy GDS / GR / Spica</li><li>VTrack</li><li>Bluetees RAINMAKER</li><li>Ernest Sports ES16 / ES Tour Plus</li></ul>
+      </div>
+    <!-- /gen:lm-summary -->
+    </div>
+    <div class="note" style="margin-top:22px;max-width:900px">
+      <p><b>Foresight owners.</b> If you have GSPro with a Foresight unit, open the GSPro connector and everything else is built in: no extra program to install. It is experimental, and it needs your own GSPro installation, with GSPro itself closed.</p>
+    </div>
+    <div class="btn-row" style="margin-top:24px">
+      <a class="btn btn-ghost" href="connect.html"><span>Connect your launch monitor</span></a>
+      <a class="btn btn-ghost" href="connect.html#no-monitor"><span>Try it without one</span></a>
     </div>
   </div>
 </section>
 
-<section class="sec sec-alt band" id="open">
+<section class="sec sec-alt" id="make-it-yours">
   <div class="wrap split">
     <div>
-      <p class="kicker">Free and open source</p>
-      <h2>MIT licensed. Built on Open-Birdie.</h2>
-      <p class="lead" style="margin-top:18px">Sim Clash costs nothing and its whole source is on GitHub under the MIT licence. Read it, change it, build your own holes.</p>
-      <p>It stands on <strong>Open-Birdie</strong>, the open-source golf simulator: the original project by Rooj Rin (<a href="https://github.com/rroojrooj/Open-Birdie">rroojrooj/Open-Birdie</a>) and the actively developed fork by jordan-shilts (<a href="https://github.com/jordan-shilts/Open-Birdie">jordan-shilts/Open-Birdie</a>) that Sim Clash is forked from. The ball physics, the renderer and the launch-monitor link are theirs; the arcade game is built on top.</p>
-      <p class="muted">Sound effects come from Kenney's audio packs and freesound.org recordings, all CC0, plus stings and an announcer generated for this project. Skies and textures are CC0 from Poly Haven and ambientCG. Nothing is taken from any commercial game.</p>
-      <div class="btn-row" style="margin-top:24px">
-        <a class="btn btn-ghost" data-gh="repo" href="contribute.html"><span>Source on GitHub</span></a>
-        <a class="btn btn-ghost" href="contribute.html"><span>Contribute</span></a>
+      <p class="kicker">Make it yours</p>
+      <h2>Ask for the hole you want</h2>
+      <blockquote style="margin:18px 0 0;padding:0">
+        <p class="lead"><q>It's amazing what AI can do these days, if you want to build your own holes, game matches, or anything like that just have Claude clone the code, and ask for what you want.</q></p>
+      </blockquote>
+      <p style="margin-top:14px">The whole game is on GitHub under the MIT licence, and it is written so that an AI coding assistant can find its way round: one file per hole, one list of balls, tests that say when something broke. You do not have to be a programmer. You do have to play what it builds and say what is wrong with it.</p>
+      <div class="btn-row" style="margin-top:22px">
+        <a class="btn btn-go" href="make-it-yours.html"><span>How to do it</span></a>
+        <a class="btn btn-ghost" data-gh="repo" href="contribute.html"><span>The code</span></a>
       </div>
     </div>
-    <figure class="shot tilt-r">
-      <img src="assets/shots/rocket-tee.webp" width="1280" height="720" loading="lazy" decoding="async" alt="The tee of Summit Express: two red and white rockets stand either side of the tee box, below a snow mountain with giant ice crystals.">
-      <figcaption>Summit Express, a 700-yard par 5 up a mountain. The rockets are a hint.</figcaption>
-    </figure>
+    <div>
+      <div class="prompt"><span class="who">Ask for a hole</span><p>Add a par 3 over a waterfall to the jungle world.</p></div>
+      <div class="prompt b"><span class="who">Ask for a ball</span><p>Add a Balloon ball that falls at half speed and gets pushed twice as far by the wind.</p></div>
+      <div class="prompt c"><span class="who">Ask for a game</span><p>Add a closest-to-the-pin tournament for four players: three balls each on an arena, nearest ball wins.</p></div>
+      <p class="where">Each of these was checked against the code. <a href="make-it-yours.html#examples">Where each one lands, and why it works.</a></p>
+    </div>
+  </div>
+</section>
+
+<section class="sec band" id="credits">
+  <div class="wrap" style="max-width:980px">
+    <p class="kicker">Free and open source</p>
+    <h2>Standing on Open-Birdie</h2>
+    <p class="lead" style="margin-top:18px">Sim Clash costs nothing and its whole source is public under the MIT licence. It is a fork of <strong>Open-Birdie</strong>, the open-source golf simulator. The ball physics, the renderer and the launch-monitor link are theirs; the arcade game is built on top.</p>
+    <div class="people">
+      <div class="person"><b>Rooj Rin</b><span>The original Open-Birdie</span><a href="https://github.com/rroojrooj/Open-Birdie" rel="noopener">rroojrooj/Open-Birdie</a></div>
+      <div class="person"><b>jordan-shilts</b><span>The actively developed fork Sim Clash is built on</span><a href="https://github.com/jordan-shilts/Open-Birdie" rel="noopener">jordan-shilts/Open-Birdie</a></div>
+    </div>
+    <p class="muted">Sound effects are CC0 (Kenney's audio packs and freesound.org recordings) plus stings and an announcer generated for this project. The stage skies and ground textures were generated for it with an AI image model, the trees are grown by code in the repository, and the props were modelled for it. The full list, with licences, is in <code>CREDITS.md</code> and <code>ASSETS.md</code>. Nothing is taken from any commercial game.</p>
+    <div class="btn-row" style="margin-top:24px">
+      <a class="btn btn-ghost" data-gh="repo" href="contribute.html"><span>Source on GitHub</span></a>
+      <a class="btn btn-ghost" href="contribute.html"><span>Contribute</span></a>
+    </div>
   </div>
 </section>
 
 <section class="sec cta">
   <div class="wrap">
-    <h2>Grab a mate. Hit balls.</h2>
-    <p class="lead">Install it, point your launch monitor at it, and the first match is five minutes away.</p>
+    <h2>Pick an opponent. Hit balls.</h2>
+    <p class="lead">Install it, open your launch monitor's connector, and the first match is a few minutes away.</p>
     <div class="btn-row">
-      <a class="btn btn-go" data-gh="download" href="install.html"><span>Download for Windows</span></a>
+      <a class="btn btn-go" data-gh="download" href="https://github.com/robertjackson-engage/sim-clash/releases/latest/download/Sim-Clash-Setup.exe"><span>Download for Windows</span></a>
       <a class="btn btn-ghost" href="install.html"><span>Install guide</span></a>
       <a class="btn btn-ghost" href="connect.html"><span>Connect your monitor</span></a>
     </div>
@@ -507,20 +637,22 @@
 </section>
 
 </main>
-
+<!-- gen:footer -->
 <footer class="foot">
   <div class="wrap foot-in">
     <div>
       <h2>Sim Clash</h2>
-      <p>Arcade 1v1 golf for real launch monitors. Free and open source under the MIT licence.</p>
-      <p>Built on Open-Birdie: the original by Rooj Rin (<a href="https://github.com/rroojrooj/Open-Birdie">rroojrooj/Open-Birdie</a>) and the fork by jordan-shilts (<a href="https://github.com/jordan-shilts/Open-Birdie">jordan-shilts/Open-Birdie</a>) that Sim Clash is built on.</p>
+      <p>A quick, video-game-style golf match for your launch monitor. A hobby project, free and open source under the MIT licence.</p>
+      <p>Built on Open-Birdie: the original by Rooj Rin (<a href="https://github.com/rroojrooj/Open-Birdie" rel="noopener">rroojrooj/Open-Birdie</a>) and the fork by jordan-shilts (<a href="https://github.com/jordan-shilts/Open-Birdie" rel="noopener">jordan-shilts/Open-Birdie</a>) that Sim Clash is built on.</p>
     </div>
     <nav aria-label="Pages">
       <h2>Site</h2>
       <ul>
+        <li><a href="whats-new.html">What's new</a></li>
         <li><a href="install.html">Install</a></li>
         <li><a href="connect.html">Connect your launch monitor</a></li>
         <li><a href="play.html">How to play</a></li>
+        <li><a href="make-it-yours.html">Make it yours: build with AI</a></li>
         <li><a href="faq.html">FAQ and troubleshooting</a></li>
         <li><a href="contribute.html">Contribute</a></li>
       </ul>
@@ -531,8 +663,8 @@
         <li><a data-gh="repo" href="contribute.html">GitHub repository</a></li>
         <li><a data-gh="releases" href="install.html">Releases</a></li>
         <li><a data-gh="issues" href="contribute.html">Issues</a></li>
-        <li><a data-gh="license" href="contribute.html">MIT licence</a></li>
-        <li><a data-gh="disclaimer" href="contribute.html">Disclaimer</a></li>
+        <li><a data-gh="license" href="contribute.html#credits">MIT licence</a></li>
+        <li><a data-gh="disclaimer" href="contribute.html#credits">Disclaimer</a></li>
       </ul>
     </nav>
     <p class="fine">Sim Clash is an independent open-source project. It is not affiliated with, endorsed by or sponsored by GSPro, Foresight Sports, Uneekor or any other company named on this site; their names are used only to say what the game works with, and all trademarks belong to their owners. The software is provided as is, with no warranty. Hitting golf balls indoors can hurt people and break things: swing at your own risk.</p>
@@ -540,5 +672,6 @@
 </footer>
 <script src="config.js"></script>
 <script src="site.js"></script>
+<!-- /gen:footer -->
 </body>
 </html>
