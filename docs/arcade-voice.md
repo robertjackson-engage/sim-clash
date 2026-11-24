@@ -460,9 +460,8 @@ and nothing else: no crowd, no tune, levelled 2 to 6 LU under what it shares the
 
 `docs/modes.md` lists these ids as the ones each mode would like; all of them exist (the
 cue in the mix, the file, the line in the pack) and the screens call them: the last column
-says what each replaced. **Two are still waiting for a caller**: `be-perfect-turn` (the
-page does not count the bullseyes of a turn) and `replay-offer` (no replay chip is drawn:
-a replay cuts in by itself). Nobody has listened to the modes with these in.
+says what each replaced. **One is still waiting for a caller**: `be-perfect-turn` (the
+page does not count the bullseyes of a turn). Nobody has listened to the modes with these in.
 
 | Id | What it is | Where it is called (what it replaced) |
 | --- | --- | --- |

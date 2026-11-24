@@ -45,7 +45,7 @@ body:
     id: version
     attributes:
       label: Game version
-      description: The number in the installer's file name (Sim-Clash-Setup-1.0.0-beta.1.exe), or in Windows Settings > Apps > Sim Clash. From source, the commit.
+      description: The number in the installer's file name (Sim-Clash-Setup-1.0.0-beta.2.exe), or in Windows Settings > Apps > Sim Clash. From source, the commit.
     validations:
       required: true
   - type: dropdown

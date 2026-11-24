@@ -3,6 +3,141 @@
 All notable changes to Sim Clash are documented here. Sim Clash is a fork of Open-Birdie;
 Open-Birdie's own changelog, as it stood when this fork was made, follows below the line.
 
+## [1.0.0-beta.2] - 2026-11-24
+
+The second public build. Same engine, same holes, same rules: every stage has been rebuilt
+to look like the game it wanted to be, the stadium is full of people, the stages have
+things on them a real swing can hit, the worlds are alive, and there are four new ways to
+play.
+
+### The look
+- **A sky for every stage**: eleven panoramas (a tropical afternoon, a canyon sunset, a
+  moonlit skyline, an ember-lit ash sky ...), each lighting its own hole: the light, the
+  reflections, the sun's place and the haze all come from the picture
+  (`public/render/far-world.js`, `public/arcade/env/sky`, `docs/arcade-look.md`).
+- **A far world** of up to three layers of silhouettes from 1.5 to 11 km out (islands, snow
+  peaks, mesas, dunes, a lit skyline) that slide past each other as the ball cam travels;
+  an island stage runs down a beach into a sea that goes on all round.
+- **Real ground**: eight tiling materials (grass, rough, sand, rock, snow, basalt, ice,
+  earth) with nap on the mown cut, ripples in the sand and layered rock on the cliffs
+  (`public/render/env-materials.js`, `public/arcade/env/tex`).
+- **Water worth looking at**: caustics on a shallow bed, a foam line at the bank, sparkle on
+  the sun's path, rings where a ball goes in; lava with a crust riding the flow; scratched,
+  frosted ice.
+- **Air and lens**: haze that takes its colour from the sky's own horizon, a grade for each
+  theme, depth of field on the pin close-up, motion blur in the ball cam at speed
+  (`public/render/postfx.js`).
+- Graphics tiers follow the new work: SETTINGS > GRAPHICS has Low, and Auto drops to it by
+  itself on a modest graphics card.
+
+### The stadium and its crowd
+- **Thunder Dome is a full bowl** built from a kit of stand sections: a pitch wall, two
+  tiers, tunnels, a truss roof with floodlights, LED boards, big screens and a players'
+  tunnel; Midnight Mile's finishing green has an arc of the same stands
+  (`public/render/stadium-kit.js`, eight new models in `public/arcade/props`).
+- **About 25,000 spectators, each one a figure**, dressed in a share of the players'
+  colours, who follow the play: they tense in the slow motion by the pin, cheer a ball that
+  drops, groan at a lip-out, do a wave on the sudden-death intro, and get confetti, flame
+  jets and fireworks when the match is decided (`public/render/crowd.js`,
+  `stadium-fx.js`). The big screens carry the word for each reaction.
+
+### Trees
+- **Every world has its own modelled species** (28 of them, each with a higher-detail hero
+  for the trees by a tee or a green) with painted leaves and bark and an understory at
+  their feet: coconut and fan palms, kapok and strangler fig, wind-bent pines, spruce and
+  larch with snow on the boughs, cherry in blossom, charred snags lit by the lava
+  (`public/render/tree-models.js`, `public/arcade/trees`).
+
+### Course gadgets
+- **76 pieces on the stages that a real swing can hit**, in sixteen kinds: boost rings,
+  bounce pads, speed strips, a wind tunnel, geysers, bumpers and rails, backboards, funnels,
+  ice and mud, a warp pipe, a cannon, breakable walls (150 mph goes through, 149 comes
+  back), coin trails and multiplier rings. Each has real physics, a look, a sound, a
+  callout and a payoff; each is on the stage's intro card and in the lineup
+  (`lib/gadgets.js`, `public/render/gadgets.js`, `docs/gadgets.md`).
+- Deterministic and the same for both players; a putt is never touched; nothing solid
+  within 12 m of the ball can trap it; the swing is graded, not the gadget.
+- **They are live in practice too**: free play, closest to the pin and up and down meet a
+  stage's gadgets as a match does.
+
+### A living world
+- **The stages are inhabited** (158 entries across the fifteen): boats and dolphins, a rain
+  squall on the horizon, a cable car and skaters, koi, crocodiles, a camel caravan, an
+  elevated train and traffic, flocks and perched birds, and a dragon on four stages
+  (`public/render/world-events.js`, `world-life.js`, `docs/living-world.md`).
+- **The hole's real wind, visible**: windmills face it and turn as hard as it blows,
+  windsocks and flags point downwind.
+- **The world answers the game**: a shock ring and every bird up for a Rocket off the tee,
+  flares or fireworks for a great shot, fish or a crocodile at a splash, a tumbleweed for a
+  duff, the lights of the whole stage dipped for sudden death; pennants, the balloon and
+  the airship take the leader's colour.
+- Scenery only: nothing changes where a ball goes or stands between the camera and the
+  ball. SETTINGS > WORLD LIFE has Full, Calm and Off; WORLD CLOCK (off by default) moves the
+  day on through a long match.
+
+### New ways to play
+- **PARTY for two to four players**: skins, a stroke race over 3, 6 or 9 stages, and
+  elimination, with everything a match has (power-ups and tricks, knockout, sudden death,
+  undo, the stray-ball guard) and a colour and a mark for each of four players
+  (`lib/match.js`, `public/arcade/party.js`, `docs/modes.md`).
+- **Handicaps**: HELP 1 to 3 for any player, in Versus and in Party: easy putting, extra
+  power-ups and, from HELP 2, a forward tee.
+- **BULLSEYE**: darts with a golf ball for one to four players on any arena, high score or
+  countdown (`lib/bullseye.js`, `public/arcade/bullseye.js`).
+- **TRICK SHOT DUEL**: call a shot, the other player has to match it or takes a letter
+  (`lib/duel.js`, `public/arcade/duel.js`).
+- **Instant replays and HIGHLIGHTS**: a notable shot is shown again from another camera, the
+  shot of the match gets a button on the winner screen, and the night's best are kept on a
+  reel (`lib/highlights.js`, `public/arcade/replay.js`, `highlights.js`).
+
+### Sound and voice
+- **56 new sound effects and 116 new announcer takes** (150 effect files and 330 takes in
+  all): every gadget, the living world's fourteen reactions, the party games, Bullseye, the
+  duel and the replays have their own sounds and lines (`public/arcade/audio.js`,
+  `docs/arcade-voice.md`). All chosen and levelled by measurement; see the known issues.
+
+### Connecting
+- Nothing changed in how a launch monitor connects: the catalogue, the wizard and the
+  Foresight bridge are as in 1.0.0-beta.1.
+- **The website's Download buttons download**: each is a plain link to the installer and a
+  click opens a short "Your download has started" panel (where the file is, the Windows
+  warning, the T key for test swings). The site itself is new (`site/`).
+
+### Fixed
+- **One bad pixel could black out the picture.** A NaN or an Inf from any shader, in one
+  pixel of one frame, was spread by the bloom over four fifths of the screen (Midnight
+  Mile's tee view went almost black in some captures; the shader that did it, a stadium
+  beam's, is fixed). Every pass that reads the frame now sanitises it first: a bad pixel is
+  a black dot for a frame (`public/render/postfx.js`, `docs/arcade-look.md`).
+- **White birds no longer circle on the ball's line.** The older bird-flock props could be
+  taken for a ball in flight (clearest at address on Canyon Run and Volcano Drop): no bird
+  of a flock now comes within 60 m of the line from tee to pin, the rule the living world
+  keeps for its gulls (`tools/arcade-holes/lib.js`).
+- **The console is clean on every start**, at High and at Low graphics: no request for a
+  sky photo or an icon the game does not have, no deprecation notice, no texture or shader
+  warnings; a holed ball no longer asks the server a question it answers 409 to.
+- **Three things that lay on top of each other**: the second row of gadget chips on a
+  stage's intro card lay under the series score (and, in a party, under the four players'
+  scores); the party lobby's one-tap button lay over the player cards; the FOR THE WIN stamp
+  lay across the winner's row of the hole result (`public/arcade/match.css`, `party.css`).
+- The package verifier checks every file of the asset folders (props and the stadium kit,
+  skies, ground sets, trees, sounds, voice) and every mode's module
+  (`tools/release/verify-package.cjs`).
+
+### Known issues
+- See "Known issues" in `docs/arcade-v2.md`.
+- **Nobody has listened to the new sounds**, or to the game with them in: they were chosen
+  with the speakers off. One Bullseye line (PERFECT TURN!) has no caller yet.
+- **The new modes have been played with test swings only**, in a headless browser: no four
+  people in a bay yet. The help levels and Bullseye's numbers come from arithmetic.
+- **On Volcano Drop the boost ring hangs above the tee view**: the tee is 34 m above the
+  green and the ring is on the Rocket's line, higher than the frame, so only its lower edge
+  shows at address. It is on the aim map, in GADGETS AHEAD and in the view from above (V).
+- The installer is not code-signed: Windows SmartScreen warns on first run.
+- Tested with one launch monitor (a Foresight GCQuad); see `docs/launch-monitors.md`.
+- The installed game's window has still not been seen on a second PC
+  (`docs/dev/install-test.md`).
+
 ## [1.0.0-beta.1] - unreleased
 
 The first public build of Sim Clash: an arcade 1v1 golf game for real launch monitors,

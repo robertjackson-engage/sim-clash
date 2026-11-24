@@ -61,7 +61,7 @@ npm run dist
 Check the result (it should say `Valid` and name the publisher):
 
 ```
-Get-AuthenticodeSignature .\dist\Sim-Clash-Setup-1.0.0-beta.1.exe | Format-List Status, SignerCertificate
+Get-AuthenticodeSignature .\dist\Sim-Clash-Setup-1.0.0-beta.2.exe | Format-List Status, SignerCertificate
 ```
 
 **Not tested.** None of these routes has been run for this project: there is no

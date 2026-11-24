@@ -195,8 +195,9 @@ goes up.
 
 Each beat asks for at most ONE cue, through the existing guarded `audio.cue(name, {
 intensity })` (`scene.worldEvents.audio` is the game's `ArcadeAudio`; a throw is swallowed).
-`cue()` ignores a name the mix does not know, so today all of these are **silent**. They are
-for the sound stream to record and place in `CUE_CATEGORY` (suggested: `feel`, none looping):
+`cue()` ignores a name the mix does not know. All fourteen are recorded and in the mix (the
+`world` category of `public/arcade/audio.js`: one beat of the world at a time, ranked as the
+reactions are; `docs/arcade-voice.md` has the sources). Nobody has listened to them yet:
 
 | Cue | Asked for by |
 |---|---|
@@ -358,8 +359,8 @@ hooks in the shared files.
 
 ## Not done, not verified
 
-- **Sound.** The fourteen cue names are asked for and are silent: `audio.cue()` ignores a name
-  it does not know. They need the sound stream's files and a row each in `CUE_CATEGORY`.
+- **Sound.** The fourteen cues are recorded and mixed (`docs/arcade-voice.md`), chosen by
+  measurement: nobody has heard them over a stage yet.
 - **The grass does not ripple** under a Rocket's shock wave: the ring crosses it, the blades
   (the look stream's field) do not bend to it.
 - **The stage's own banners do not change colour.** The `flag-banner` props are the props

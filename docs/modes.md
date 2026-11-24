@@ -313,8 +313,8 @@ node tools/arcade-dev/party-e2e.mjs            # its own server on 8358 / 9988, 
 
 Guarded calls to the existing audio API only. Existing cues and lines are reused wherever
 they fit (`m-for-the-win`, `m-must-hole`, `m-youre-up`, `m-sudden-death`, `m-all-square`,
-`fanfare-hole`, `fanfare-win`, `sting-knockout`, `sting-fail`, ...). Ids a party asks for that
-do not exist yet (each call is harmless until they do): voice `p-skins`, `p-stroke-race`,
+`fanfare-hole`, `fanfare-win`, `sting-knockout`, `sting-fail`, ...). A party's own lines are in
+the announcer pack since the second release (`docs/arcade-voice.md`): voice `p-skins`, `p-stroke-race`,
 `p-elimination`, `p-to-stay-alive`, `p-for-the-skins`, `p-takes-the-skin`, `p-skin-carries`,
 `p-is-out`, `p-the-final`, `p-farthest-is-out`, `p-wins-the-game`, and `m-player-3`,
 `m-player-4`, `m-player-3-wins`, `m-player-4-wins` for nameless players in slots 3 and 4.
@@ -517,7 +517,9 @@ bullseye), `sting-fail` (a bust), `whoosh` (the end-of-round board), `fanfare-wi
 `confetti-pop`; voice `m-youre-up`, `dart` (a bullseye), `m-closest-to-the-pin`,
 `m-new-record`, `m-champion`. The arcade's own callouts and gallery play as always.
 
-New ids that would make it better (none is called yet):
+The mode's own ids, recorded for the second release and called by the screen in place of the
+borrowed ones above (`docs/arcade-voice.md`, "Bullseye, the duel, replays"; only
+`be-perfect-turn` still has no caller):
 
 | Kind | Id | For |
 | --- | --- | --- |
@@ -709,7 +711,8 @@ letter), `whoosh`, `fanfare-win`; voice `m-get-ready` (your call), `m-youre-up` 
 `m-player-1-wins`, `m-player-2-wins`, `m-all-square`. The arcade's own callouts and gallery
 play as always.
 
-New ids that would make it better (none is called yet):
+The mode's own ids, recorded for the second release and called by the screen in place of the
+borrowed ones above (`docs/arcade-voice.md`, "Bullseye, the duel, replays"):
 
 | Kind | Id | For |
 | --- | --- | --- |
@@ -835,8 +838,9 @@ turn it round); `topdown` keeps one heading for the whole shot; `greenside` stan
 **Time.** A replay plays the path as live play re-times it (`feel.js warpShot`) with one
 difference: no hit-stop at impact. Slow motion only by the pin (`replaySim`).
 
-**Sound.** One guarded cue at each cut (the existing `whoosh`). No shot sounds, no crowd,
-nothing that loops.
+**Sound.** One guarded cue at each cut (`replay-in`, `replay-out`: a tape whip, forwards and
+backwards), and the announcer says what it is (`m-replay`, `m-shot-of-the-match`). No shot
+sounds, no crowd, nothing that loops.
 
 Tests (`test/replay-camera.test.mjs`) film all three cameras over the sixteen real shots of
 `test/helpers/camera-shots.mjs` (the cliff, the butte, the Rocket drive, the lip-out ...): the
@@ -920,11 +924,11 @@ empty reel says how to fill it.
 
 ### Audio and voice ids this would like
 
-It plays today with existing cues only (`whoosh` at the cuts; `lobby-open`, `ui-tick`,
-`ui-confirm`, `ui-back`, `ui-error` on the HIGHLIGHTS screen), all through guarded calls.
-Wanted: cues `replay-in` and `replay-out` (a short tape-style whip, in place of `whoosh`),
-`replay-offer` (a soft tick as the chip appears); voice lines `m-replay` ("Let's see that
-again"), `m-shot-of-the-match` ("The shot of the match"), `m-highlights` ("Tonight's best").
+All through guarded calls, and all recorded (`docs/arcade-voice.md`): cues `replay-in` and
+`replay-out` (a short tape-style whip at the cuts), `replay-offer` (a soft pluck as the chip
+appears), `lobby-open`, `ui-tick`, `ui-confirm`, `ui-back`, `ui-error` on the HIGHLIGHTS
+screen; voice lines `m-replay` ("Let's see that again"), `m-shot-of-the-match` ("The shot of
+the match"), `m-highlights` ("Tonight's best").
 
 ### Limits
 

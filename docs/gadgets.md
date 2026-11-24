@@ -147,14 +147,15 @@ for the distance score, ABSOLUTE BOMB!, CHUNK CITY! and the carry challenges.
 | `stuck` | STUCK IN THE MUD! | funny | stopped by mud |
 
 They live in `GADGET_CALLOUTS` (`lib/gadgets.js`, also `lib/arcade.js GADGET_CALLOUTS`),
-beside the contract's thirty and not among them: **their voice lines are not recorded
-yet** (voice id = callout id). The banner shows; the voice queue skips a line with no clip.
+beside the contract's thirty and not among them. Their voice lines (voice id = callout id)
+are in the announcer pack (`docs/arcade-voice.md`).
 
 ### Sound cues
 
 Called through the guarded API only (`audio?.cue?.(name)`), from `scene.gadgets.onHit` in
-`public/app.js`, mapped by `cueFor` in `public/render/gadget-core.js`. **None of the files
-exists yet**; a cue the mix table does not know is silent. Nothing loops.
+`public/app.js`, mapped by `cueFor` in `public/render/gadget-core.js`. Every one has its
+recording and its place in the mix (`public/arcade/sfx/`, `docs/arcade-voice.md`: coins and
+bumpers come in runs, so they have three takes and cut each other off). Nothing loops.
 
 | Cue | When |
 | --- | --- |

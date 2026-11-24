@@ -197,13 +197,14 @@ build PC.
 ## Testing an install without opening the game
 
 Useful on a PC where the game must not appear on screen. Everything here was done for
-1.0.0-beta.1; the part only a person can do is `docs/dev/install-test.md`.
+1.0.0-beta.1 and again for 1.0.0-beta.2; the part only a person can do is
+`docs/dev/install-test.md`.
 
 PowerShell, from the repository root (use a folder that does not exist yet):
 
 ```
 $dest = "$PWD\.scratch\install-test"
-Start-Process -Wait .\dist\Sim-Clash-Setup-1.0.0-beta.1.exe -ArgumentList '/S', "/D=$dest"
+Start-Process -Wait .\dist\Sim-Clash-Setup-1.0.0-beta.2.exe -ArgumentList '/S', "/D=$dest"
 Get-ChildItem $dest
 Get-ChildItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall' | Get-ItemProperty | Where-Object DisplayName -like '*Clash*' | Format-List DisplayName, DisplayVersion, Publisher, QuietUninstallString
 ```
@@ -250,7 +251,7 @@ move it away first and put it back afterwards.
 
 ## A first look at the real window (on the build PC, without sound)
 
-Not done yet for 1.0.0-beta.1: the bay was in use each time. It needs the screen, the three
+Not done yet for 1.0.0-beta.1 or 1.0.0-beta.2: the bay was in use each time. It needs the screen, the three
 ports and about three minutes.
 
 `SIMCLASH_MUTE=1` in the environment mutes the game window itself

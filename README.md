@@ -9,11 +9,12 @@ open source.
 
 Sim Clash is a video game you play with a real golf club. You hit a real ball into your
 simulator screen or net, your launch monitor measures it, and the game does the rest: a
-head-to-head match on fantasy holes, with power-up balls, tricks to play on your opponent,
-a crowd, an announcer, and sudden death when a hole is tied. It is built to be loud, quick
+match on fantasy holes for two to four players, with power-up balls, tricks to play on your
+opponent, things on the course to hit, a stadium crowd, an announcer, and sudden death when
+a hole is tied. It is built to be loud, quick
 and friendly to a bad swing. It is not a golf simulator: there are no real courses in it.
 
-- **Status:** beta (`1.0.0-beta.1`). Windows. It has been played on one simulator bay so
+- **Status:** beta (`1.0.0-beta.2`). Windows. It has been played on one simulator bay so
   far; reports from other launch monitors are very welcome.
 - **Price:** nothing. No account, no real money, nothing to buy.
 - **Licence:** MIT. Built on [Open-Birdie](#built-on-open-birdie).
@@ -22,6 +23,11 @@ and friendly to a bad swing. It is not a golf simulator: there are no real cours
 
 - **Versus on one bay.** Two players take turns at the same simulator. Quick match (one
   hole), best of 3, or a best-of-9 tournament.
+- **Party, for two to four.** Skins, a stroke race or elimination, with a colour and a mark
+  for each player. **Handicaps** (HELP 1 to 3: easy putting, extra power-ups, a forward tee)
+  let a beginner play a good golfer.
+- **Bullseye and the Trick Shot Duel.** Darts with a golf ball on any of the arenas, for one
+  to four players; and a duel where one player calls a shot and the other has to match it.
 - **15 stages.** Twelve match holes, each its own world (a lagoon, a canyon, a volcano
   crater, an ice ridge, a cherry-blossom garden, a temple, a desert gate, a neon city at
   midnight and more) and three sudden-death arenas. Three of the twelve are "rocket holes"
@@ -31,9 +37,16 @@ and friendly to a bad swing. It is not a golf simulator: there are no real cours
 - **15 power-up balls and 3 tricks.** Rocket, Sticky, Magnet, Ghost, Skipper, Fireball and
   the rest change what your ball does; Gust, Tiny Cup and Fog are played on your opponent's
   next swing.
+- **Course gadgets.** 76 things on the stages that a real swing can hit: boost rings, bounce
+  pads, speed strips, geysers, bumpers, a warp pipe, a cannon, coin trails, and walls that
+  a ball launched at 150 mph goes through and a slower one comes back off.
+- **Worlds that are alive.** Every stage has its own sky, far horizon, ground, water and
+  trees; boats, trains, birds, a dragon; windmills and flags that show the hole's real wind;
+  and a stadium with about 25,000 spectators who follow the play.
 - **Every shot gets a verdict.** Graded from the launch data, with a callout banner, points,
   coins, streaks and a crowd that rises as the ball tracks at the hole.
-- **A ball cam** that flies with the ball and cuts to the pin to watch it arrive.
+- **A ball cam** that flies with the ball and cuts to the pin to watch it arrive, **instant
+  replays** of the notable shots from another camera, and a highlights reel of the night.
 - **An announcer and a full sound pack**, all short one-shots. Nothing loops and there is no
   shot clock: take your time over a real ball.
 - **Easy putting on purpose.** Launch monitors read putts poorly, so the game reads the

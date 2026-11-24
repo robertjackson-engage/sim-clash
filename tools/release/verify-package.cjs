@@ -7,7 +7,9 @@
 //   1. every file inside resources/app.asar is byte-identical to the same file in the repo
 //      (a file edited WHILE electron-builder was packing shifts every later file in the
 //      archive: this catches it);
-//   2. everything the arcade needs at run time is in the archive, and dev-only weight is not;
+//   2. everything the arcade needs at run time is in the archive (the game's scripts and
+//      modes, every file of its asset folders: props and the stadium kit, the stage skies
+//      and ground sets, the trees, the sounds, the voice), and dev-only weight is not;
 //   3. the bundled arcade stages (resources/arcade-data) are complete and match their checksums.
 //
 // Exit code 0: the package is sound. 1: it is not (the reasons are printed).
@@ -64,6 +66,20 @@ for (const need of [
   'main.js', 'server.js', 'package.json', 'public/index.html', 'public/app.js', 'public/product.json', 'lib/product.js',
   'lib/arcade.js', 'lib/match.js', 'lib/arcade-bundle.js', 'lib/voice.js', 'lib/openconnect.js', 'lib/app-shell.js', 'lib/app-log.js',
   'public/arcade/arcade.js', 'public/arcade/match.js', 'public/arcade/audio.js',
+  // the game's shell and the modes of the second release: party play, Bullseye, the
+  // trick-shot duel, replays and highlights (docs/modes.md), each with its server half
+  'public/arcade/shell.js', 'public/arcade/shell-core.js', 'public/arcade/connect.js',
+  'public/arcade/party.js', 'public/arcade/party.css', 'public/arcade/bullseye.js', 'public/arcade/bullseye.css',
+  'public/arcade/duel.js', 'public/arcade/duel.css', 'public/arcade/replay.js', 'public/arcade/replay-core.js', 'public/arcade/replay.css',
+  'public/arcade/highlights.js',
+  'lib/solo.js', 'lib/bullseye.js', 'lib/bullseye-mode.js', 'lib/duel.js', 'lib/duel-mode.js', 'lib/highlights.js', 'lib/highlights-mode.js',
+  // course gadgets (docs/gadgets.md), the living world (docs/living-world.md), the stadium
+  // and its crowd, the far world and the ground materials (docs/arcade-look.md)
+  'lib/gadgets.js', 'lib/playability.js', 'public/render/gadgets.js', 'public/render/gadget-core.js',
+  'public/render/world-events.js', 'public/render/world-life.js', 'public/render/world-fx.js', 'public/render/world-models.js',
+  'public/render/crowd.js', 'public/render/stadium-kit.js', 'public/render/stadium-fx.js',
+  'public/render/far-world.js', 'public/render/env-materials.js', 'public/render/tree-models.js', 'public/render/tree-species.js',
+  'public/arcade/props/manifest.json', 'public/arcade/env/manifest.json', 'public/arcade/trees/manifest.json',
   'public/arcade/sfx/manifest.json', 'public/arcade/voice/announcer/manifest.json',
   'public/assets/hdri/puresky_4k.hdr',
   'node_modules/three/build/three.module.js', 'node_modules/three/examples/jsm/loaders/GLTFLoader.js', 'node_modules/pngjs/package.json',
@@ -74,6 +90,36 @@ const onDisk = (dir, rx) => fs.readdirSync(path.join(repo, dir)).filter((f) => r
 for (const [dir, rx] of [['public/arcade', /^(?!.*demo).*\.(js|css|json)$/], ['public/arcade/props', /\.glb$/], ['public/arcade/sfx', /\.mp3$/], ['public/arcade/voice/announcer', /\.mp3$/], ['public/render', /\.js$/], ['lib', /\.js$/]]) {
   for (const f of onDisk(dir, rx)) if (!has.has(`${dir}/${f}`)) bad(`missing from the archive: ${dir}/${f}`);
 }
+// every asset file under the arcade's asset folders, at any depth: a model, a picture, a
+// sound or a voice clip that is in the tree but not in the archive is a hole in the game
+// (a new folder of clips or models is covered the day it appears, with no line added here)
+const ASSET_RX = /\.(glb|gltf|bin|ktx2|webp|png|jpg|jpeg|svg|hdr|mp3|ogg|wav|m4a|json|woff2?)$/i;
+const walkDisk = (dir) => fs.readdirSync(path.join(repo, dir), { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walkDisk(`${dir}/${e.name}`) : [`${dir}/${e.name}`]));
+const assetCount = {};
+for (const dir of ['public/arcade/props', 'public/arcade/env', 'public/arcade/trees', 'public/arcade/sfx', 'public/arcade/voice']) {
+  const onDiskAll = walkDisk(dir).filter((p) => ASSET_RX.test(p));
+  assetCount[dir] = onDiskAll.length;
+  for (const p of onDiskAll) if (!has.has(p)) bad(`missing from the archive: ${p}`);
+}
+// the prop models (the stadium kit among them): every file the props manifest names is in
+// the archive at the manifest's size, and the stadium kit is whole
+let propNote = null;
+try {
+  const kinds = (JSON.parse(fs.readFileSync(path.join(repo, 'public', 'arcade', 'props', 'manifest.json'), 'utf8')).kinds) || {};
+  let n = 0;
+  for (const [kind, k] of Object.entries(kinds)) {
+    for (const file of new Set([k.file, ...(k.variants || [])].filter(Boolean))) {
+      const rel = `public/arcade/props/${file}`;
+      n++;
+      const entry = files.find((x) => x.path === rel);
+      if (!entry) { bad(`missing from the archive: ${rel} (the props manifest's ${kind})`); continue; }
+      if (file === k.file && Number.isFinite(k.bytes) && entry.size !== k.bytes) bad(`not the size the props manifest gives (${k.bytes}): ${rel} is ${entry.size}`);
+    }
+  }
+  const STADIUM_KIT = ['stand-section', 'stand-corner', 'led-board', 'ad-board', 'barrier', 'camera-tower', 'tunnel', 'podium'];
+  for (const kind of STADIUM_KIT) if (!kinds[kind] || !kinds[kind].file) bad(`the props manifest has no model for the stadium kit's ${kind}`);
+  propNote = `${Object.keys(kinds).length} kinds in the props manifest (${n} model files; the stadium kit: ${STADIUM_KIT.filter((k) => kinds[k]).length} of ${STADIUM_KIT.length})`;
+} catch (error) { bad(`public/arcade/props/manifest.json is missing or unreadable: ${error.message}`); }
 for (const f of files) {
   if (/^(test|docs|data|site|\.scratch|\.claude)\//.test(f.path)) bad(`dev-only file in the archive: ${f.path}`);
   if (/^tools\//.test(f.path) && f.path !== 'tools/uneekor-watch.js') bad(`dev-only tool in the archive: ${f.path}`);
@@ -205,6 +251,8 @@ if (bundle && tour) console.log(`arcade stages   ${bundle.courses.length} course
 if (skies) console.log(skies.files.length ? `sky photos      ${skies.files.length} bundled (${skies.files.map((f) => `${f.file.replace(/_4k\.hdr$/, '')} for ${(f.stages || []).join(', ')}`).join('; ')}), ${mb(skyBytes)}` : 'sky photos      none bundled (every stage has its own panorama)');
 if (envNote) console.log(`stage world     ${envNote}`);
 if (treeNote) console.log(`stage trees     ${treeNote}`);   // v3:tree-realism
+if (propNote) console.log(`prop models     ${propNote}`);
+console.log(`asset folders   ${Object.entries(assetCount).map(([d, n]) => `${d.replace('public/arcade/', '')} ${n}`).join(', ')}: every file in the tree is in the archive`);
 console.log(`signature       ${signature}`);
 if (problems.length) {
   console.error(`\nNOT SOUND: ${problems.length} problem(s)`);

@@ -208,8 +208,8 @@ The installer and its checksum:
 
 ```
 Get-ChildItem .\dist\*.exe | Select-Object Name, Length
-Get-FileHash .\dist\Sim-Clash-Setup-1.0.0-beta.1.exe -Algorithm SHA256
-Get-AuthenticodeSignature .\dist\Sim-Clash-Setup-1.0.0-beta.1.exe | Select-Object Status
+Get-FileHash .\dist\Sim-Clash-Setup-1.0.0-beta.2.exe -Algorithm SHA256
+Get-AuthenticodeSignature .\dist\Sim-Clash-Setup-1.0.0-beta.2.exe | Select-Object Status
 ```
 
 Now do the install test on a second PC: `docs/dev/install-test.md`. Do not publish a
@@ -220,31 +220,38 @@ release that nobody has installed.
 In the fresh clone (it is exactly what was built):
 
 ```
-git tag -a v1.0.0-beta.1 -m "Sim Clash 1.0.0-beta.1"
-git push origin v1.0.0-beta.1
+git tag -a v1.0.0-beta.2 -m "Sim Clash 1.0.0-beta.2"
+git push origin v1.0.0-beta.2
 ```
 
 ## 7. Publish the release
 
-Paste the SHA-256 from step 5 into `docs/dev/release-notes-1.0.0-beta.1.md` where it says
+Paste the SHA-256 from step 5 into `docs/dev/release-notes-1.0.0-beta.2.md` where it says
 so (edit a copy outside the repository if you do not want to commit it).
 
 With `gh`:
 
 ```
-gh release create v1.0.0-beta.1 ".\dist\Sim-Clash-Setup-1.0.0-beta.1.exe" --repo OWNER/sim-clash --title "Sim Clash 1.0.0-beta.1" --notes-file docs\dev\release-notes-1.0.0-beta.1.md --prerelease
+gh release create v1.0.0-beta.2 ".\dist\Sim-Clash-Setup-1.0.0-beta.2.exe" --repo OWNER/sim-clash --title "Sim Clash 1.0.0-beta.2" --notes-file docs\dev\release-notes-1.0.0-beta.2.md --prerelease
 ```
 
 In the browser: https://github.com/OWNER/sim-clash/releases/new. Choose the tag
-`v1.0.0-beta.1`, title `Sim Clash 1.0.0-beta.1`, paste the release notes, drag the `.exe`
+`v1.0.0-beta.2`, title `Sim Clash 1.0.0-beta.2`, paste the release notes, drag the `.exe`
 into the box at the bottom and wait for the upload to finish (about 160 MB), tick **Set as a
 pre-release**, press **Publish release**.
 
 Then download the installer from the release page in a browser and compare:
 
 ```
-Get-FileHash "$env:USERPROFILE\Downloads\Sim-Clash-Setup-1.0.0-beta.1.exe" -Algorithm SHA256
+Get-FileHash "$env:USERPROFILE\Downloads\Sim-Clash-Setup-1.0.0-beta.2.exe" -Algorithm SHA256
 ```
+
+**The website's Download buttons need two things of a release.** `downloadUrl` in
+`site/config.js` is `.../releases/latest/download/Sim-Clash-Setup.exe`: a fixed address that
+always fetches the newest installer. For it to work the release must carry the installer a
+second time under the plain name `Sim-Clash-Setup.exe` (attach both files: the versioned
+one and a copy with that name; `release/` holds both after a build), and it must NOT be
+ticked as a pre-release, because:
 
 GitHub's `/releases/latest` address skips pre-releases. The README links to the Releases
 page, which shows them; the site's Download buttons use `downloadUrl` in `site/config.js`

@@ -399,7 +399,7 @@ starts a browser page silent.
 
 ## Known issues
 
-Checked against the build of 23 November 2026. "Not re-checked" means the item was reported
+Checked against the build of 24 November 2026 (1.0.0-beta.2). "Not re-checked" means the item was reported
 during the integration playthrough and nobody has looked at it again since.
 
 Open, not fixed:
@@ -409,10 +409,15 @@ Open, not fixed:
   a headless browser; nobody has yet stood in a bay with four people and a launch monitor.
   The numbers that need real golfers to judge: the help levels, Bullseye's ring values and
   countdown targets, the duel's tolerances, how long a replay should hold the screen.
-- **The new voice lines do not exist yet.** The party, Bullseye, duel and replay screens ask
-  the announcer for lines that have not been recorded (`docs/modes.md` lists them); the
-  existing lines and sounds they share with a match do play. Player 3 and Player 4 have no
-  spoken name without your own ElevenLabs key.
+- **Nobody has listened to the new sounds.** The gadgets, the living world, the party games,
+  Bullseye, the duel and the replays have their own effects and announcer lines since
+  1.0.0-beta.2 (56 new effect files, 116 new takes), all chosen and levelled by measurement
+  with the speakers off (`docs/arcade-voice.md`, "Listen first"). One line has no caller yet
+  (PERFECT TURN! in Bullseye). A player's own name is still spoken only with your own
+  ElevenLabs key; without one the announcer says PLAYER ONE to PLAYER FOUR.
+- **On Volcano Drop the boost ring hangs above the tee view.** The tee is 34 m above the
+  green and the ring is on the Rocket's line, higher than the frame: only its lower edge
+  shows at address. It is on the aim map, in GADGETS AHEAD and in the view from above (V).
 - **A forward tee needs mown ground on the hole's line.** On the all-carry par 3s there is
   none, so HELP 2 and 3 are worth the same as HELP 1 there, plus the extra power-up.
 
