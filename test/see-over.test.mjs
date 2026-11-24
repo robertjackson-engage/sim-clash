@@ -372,3 +372,23 @@ test('the scene is wired for it: one pass-through, the x-ray line, the rig off u
   // and it never flies up on a guess
   assert.match(rig, /const sure = !!sc\._lineupPred;/);
 });
+
+// v3:vegetation the arcade look's trees are the modelled field (tree-models.js): the rig calls the
+// same setFadeLine on it, and it picks the trees on the line of the shot by the same rule
+test('the modelled tree field answers the pass-through as the classic one does', () => {
+  const read = (f) => fs.readFileSync(new URL(`../public/${f}`, import.meta.url), 'utf8');
+  const models = read('render/tree-models.js'), classic = read('render/trees.js'), rig = read('render/see-over-rig.js');
+  assert.match(rig, /sc\._treeField\?\.setFadeLine\(line \? \{ x: line\.x, z: -line\.y, ux: line\.ux, uz: -line\.uy, d: line\.d, len: line\.d \+ line\.aheadM, camY: line\.camZ, ballY: line\.ballZ, endY: line\.endZ \} : null\);/);
+  assert.match(models, /setFadeLine\(line\) \{/);
+  assert.match(models, /for \(const im of this\._ghosts \|\| \[\]\) im\.renderOrder = line \? 20 : 0;/);
+  // the rule on the line is the classic field's, expression for expression
+  for (const rule of [
+    'if (al > -FADE_HUG_M && al < fl.len + 15) {',
+    'const sight = a <= fl.d ? fl.camY + (fl.ballY - fl.camY) * (a / Math.max(1e-6, fl.d)) : fl.camY + (fl.endY - fl.camY) * (a / fl.len);',
+    'const near = Math.hypot(ax, az) < FADE_HUG_M * 0.85 && al > -(0.3 * treeH + 1) && mats[o + 13] + treeH > fl.camY - 3;',
+    'if (near || (al > -1 && al < fl.len && mats[o + 13] + treeH > sight - 0.5 && lat < 0.3 * treeH + 1.2 + 0.03 * al)) lod = 3;',
+  ]) {
+    assert.ok(classic.includes(rule), `trees.js no longer has: ${rule}`);
+    assert.ok(models.includes(rule), `tree-models.js has drifted from trees.js: ${rule}`);
+  }
+});

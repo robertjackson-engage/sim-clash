@@ -3,8 +3,10 @@
 // so nothing is hidden and nothing is wet. A real stadium: the tee is a stage at the mouth
 // of the players' tunnel, ten metres above the pitch; the pitch is a mown oval with one
 // big level green at its far end and scoring rings painted round the flag; and the stands
-// are TERRAIN, five terraces stepping up twenty metres all the way round, a block of crowd
-// on every step, roofed grandstands and floodlights on the rim, screens behind the green.
+// are TERRAIN, five terraces stepping up twenty metres all the way round, and ON them stands
+// the bowl (v3:stadium): eighteen sections of the stadium kit, two tiers and a cantilever roof
+// each, closing a ring from one side of the tunnel round to the other, a full house in every
+// seat; floodlight masts behind the roof, giant screens over the north stand.
 // Miss the green and the ball is on the pitch (or in one of two bunkers); miss the pitch
 // and it is on a terrace among the fans. Out of bounds only out in the city beyond the streets.
 // Local metres, x east, y north; the tee is the origin and the hole plays due north.
@@ -102,39 +104,62 @@ const props = [
   ...[6, 14, 24, 36].map((d) => P('target-ring', PIN[0], PIN[1], d)),
 ];
 
-// the crowd: a block on every terrace, all the way round, shoulder to shoulder
-for (let k = 0; k < TIER.n; k++) {
-  for (const { x, y } of along(tierD(k), 23.5, k % 2 ? 0.5 : 0)) {
-    if (nearTunnel(x, y, k < 3 ? 36 : 21)) continue;      // the stage juts through the three lower terraces
-    props.push(P('crowd', x, y, 5.5, inward(x, y)));
+// v3:stadium THE BOWL. Eighteen sections of the stadium kit on the foot of the pitch wall, from the east
+// side of the tunnel anticlockwise round the north end to its west side: they stand ON the
+// terraces (their raked tiers cover the grass steps: the terraces are still the ground a
+// ball lands on), share their side lines and close without a gap (L.standRing). Four are
+// corners with a floodlight pylon: the two that flank the tunnel and two at the shoulders
+// of the north end. The crowd in them spells the occasion across the upper tier.
+const GAP_X = 29;                                         // the tunnel gap: the stage and its banks stay open
+const GAP_DEG = Math.acos(GAP_X / BOWL[0]) / RAD;         // the ellipse's own angle where the ring ends, either side of south
+const SECTIONS = 18;
+const WORDS = ['', 'S', 'I', 'M', '', 'C', 'L', 'A', 'S', 'H', '', 'D', 'O', 'M', 'E', '', '', ''];   // west to east, as read from the pitch
+const TEAM = ['#1f5fd0', '#f4f4ee'];
+const BASE_Z = 1.45;                                      // the foot of the pitch wall: every section stands on the same level
+const bowl = L.standRing((deg) => ring(0, deg), {
+  from: -GAP_DEG, to: 180 + GAP_DEG, n: SECTIONS, z: BASE_Z, corners: [0, 5, 12, SECTIONS - 1],
+  endDirs: [[0.55, -1], [-0.55, -1]], text: (i) => WORDS[SECTIONS - 1 - i] || null, team: TEAM, id: 'bowl',
+});
+props.push(...bowl);
+// the south end, behind the stage: a small roofed stand on the rim either side of the tunnel, and
+// galleries on the two terraces of the bank below each (the same people, standing)
+for (const sx of [-1, 1]) {
+  props.push({ id: `flank-${sx < 0 ? 'w' : 'e'}`, kind: 'grandstand', x: sx * 27, y: -36, rotDeg: 180, heightM: 15.82, z: RIM_H - 0.3, team: TEAM });
+  for (const k of [3, 4]) {
+    let best = null;
+    for (let deg = -130; deg <= -50; deg += 0.1) { const q = ring(tierD(k), deg); if (!best || Math.abs(q[0] - sx * 21) < Math.abs(best[0] - sx * 21)) best = q; }
+    props.push(P('crowd', best[0], best[1], 4.3, inward(best[0], best[1])));
   }
 }
-// roofed grandstands on the rim, but for the three screens behind the green and the tunnel
+// giant screens over the north stand (their legs stand on the rim behind it), and two on the long sides for the crowd behind the tee
 const SCREENS = [62, 90, 118];
-for (const { deg, x, y } of along(CONCOURSE_D + 8, 27)) {
-  if (nearTunnel(x, y, 22) || SCREENS.some((s) => Math.abs(deg - s) < 9)) continue;
-  props.push(P('grandstand', x, y, 15, inward(x, y)));
-}
 for (const deg of SCREENS) {
-  const [x, y] = ring(CONCOURSE_D + 7, deg);
-  props.push(P('jumbotron', x, y, deg === 90 ? 24 : 19, L.facing(x, y, 0, 40)));
+  const [x, y] = ring(CONCOURSE_D + 12, deg);
+  props.push(P('jumbotron', x, y, deg === 90 ? 56 : 48, L.facing(x, y, 0, 40)));
 }
-// two more screens on the long sides, for the crowd behind the tee
-for (const deg of [4, 176]) { const [x, y] = ring(CONCOURSE_D + 15, deg); props.push(P('jumbotron', x, y, 15, L.facing(x, y, 0, 20))); }
-// the floodlight ring, behind the grandstands
+for (const deg of [4, 176]) { const [x, y] = ring(CONCOURSE_D + 13, deg); props.push(P('jumbotron', x, y, 44, L.facing(x, y, 0, 20))); }
+// the floodlight ring: masts behind the back wall, their heads over the roof
 for (let i = 0; i < 14; i++) {
   const [x, y] = ring(CONCOURSE_D + 16.5, i * (360 / 14) + 12.86);
   if (!nearTunnel(x, y, 12)) props.push(P('floodlight', x, y, 46, inward(x, y)));
 }
-// flags all round the rim's front edge, and round the foot of the pitch wall
-for (const { x, y } of along(CONCOURSE_D + 1.2, 20, 0.5)) if (!nearTunnel(x, y, 14)) props.push(P('flag-banner', x, y, 9, inward(x, y)));
+// flags round the outside of the bowl, and round the foot of the pitch wall
+for (const { x, y } of along(CONCOURSE_D + 11, 20, 0.5)) if (!nearTunnel(x, y, 14)) props.push(P('flag-banner', x, y, 9, inward(x, y)));
 for (const { x, y } of along(-3, 24)) if (!nearTunnel(x, y, 26)) props.push(P('flag-banner', x, y, 6, inward(x, y)));
+// broadcast: camera towers at the shoulders of the pitch, lit hoardings and crash barriers behind the green
+for (const deg of [22, 158, 204, 336]) { const [x, y] = ring(-7, deg); props.push(P('camera-tower', x, y, 11.4, inward(x, y))); }
+for (const deg of [58, 74, 106, 122]) { const [x, y] = ring(-6.5, deg); props.push(P('ad-board', x, y, 2.4, inward(x, y))); }
+for (const deg of [50, 66, 82, 98, 114, 130]) { const [x, y] = ring(-2.2, deg); props.push(P('barrier', x, y, 0.9, inward(x, y))); }
+// the foot of the tee stage: two LED walls either side of the line, facing the green
+for (const sx of [-1, 1]) props.push(P('led-board', sx * 21, 15.5, 3, L.facing(sx * 21, 15.5, sx * 21, 120)));
 // pitch side: neon boards at the four corners, flame jets beside the green
 for (const deg of [38, 142, 218, 322]) { const [x, y] = ring(-5, deg); props.push(P('neon-sign', x, y, 7, inward(x, y))); }
 for (const deg of [36, 74, 106, 144]) { const [x, y] = ring(-4.5, deg); props.push(P('torch', x, y, 5)); }
 props.push(
   // the tee stage: the tunnel mouth behind the players, trophies either side, fire at the corners
   P('gate', 0, -24, 13, L.facing(0, -24, 0, 0)),
+  P('tunnel', 0, -30, 7.4, L.facing(0, -30, 0, 0)),          // v3:stadium the players' tunnel behind the gate
+  P('podium', 0, -16.5, 10.8, L.facing(0, -16.5, 0, 0)),     // v3:stadium the truss arch over the walk-on, at the back of the stage
   P('statue', -15.5, -3, 9, L.facing(-15.5, -3, 0, 60)), P('statue', 15.5, -3, 9, L.facing(15.5, -3, 0, 60)),
   P('torch', -11, 8, 4), P('torch', 11, 8, 4), P('torch', -19, 2, 4), P('torch', 19, 2, 4),
   ...[-38, -52, -66].flatMap((y) => [P('flag-banner', -6.5, y, 7, 90), P('flag-banner', 6.5, y, 7, 270)]),
@@ -155,6 +180,13 @@ const trees = [
   ...L.clusterTrees(104, -42, { count: 4, radius: 9, seed: 222 }),
   ...L.clusterTrees(-106, 224, { count: 4, radius: 9, seed: 223 }),
   ...L.clusterTrees(106, 224, { count: 4, radius: 9, seed: 224 }),
+];
+
+// ---- gadgets (docs/gadgets.md): sudden death stays pure. Nothing here touches the ball:
+// only a coin trail along the flight that finishes by the flag (collect all 6 for the bonus).
+const flagFlight = L.flight(height, TEE, PIN, { speedMph: 99, vla: 23, spin: 8600 });
+const gadgets = [
+  flagFlight.coins('dome-coins', 20, Math.floor(flagFlight.carryM) - 8, 6, { reach: 4 }),
 ];
 
 module.exports = {
@@ -186,6 +218,7 @@ module.exports = {
   trees,
   woods: [],
   props,
+  gadgets,
   // out on the streets, well behind the grandstands: even a driver over the top stand is found
   obLine: L.ellipse(MID[0], MID[1], BOWL[0] + CONCOURSE_D + RIM_M + 32, BOWL[1] + CONCOURSE_D + RIM_M + 32, { n: 64 }),
   height,
@@ -208,5 +241,5 @@ module.exports = {
     { at: [0, 300], kind: 'ob', what: 'far over the north stand' },
   ],
   // for the tests and the look: how the stands are built
-  arena: { mid: MID, bowl: BOWL, wallM: WALL_M, tier: TIER, concourseD: CONCOURSE_D, rimM: RIM_M, stageH: STAGE_H, tierD, tierH, rimH: RIM_H },
+  arena: { mid: MID, bowl: BOWL, wallM: WALL_M, tier: TIER, concourseD: CONCOURSE_D, rimM: RIM_M, stageH: STAGE_H, tierD, tierH, rimH: RIM_H, sections: SECTIONS, gapX: GAP_X, baseZ: BASE_Z },
 };

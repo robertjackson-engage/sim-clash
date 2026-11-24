@@ -467,6 +467,17 @@ body.toast-live #hud:has(.mt-hdr:not(.hidden)) .mt-ticker { visibility: hidden; 
    chips: "SAM TEES OFF" and the third chip ran under it and were cut. Both stay on the slab. */
 .mt-s-stage .mt-stage-foot { max-width: 42%; flex-wrap: wrap; row-gap: calc(var(--u) * .6); }
 .mt-s-stage .mt-routes { width: 88%; }
+/* v3:gadgets the stage's gadgets, a row of small chips under the routes (match.js setStageGadgets) */
+.mt-gadgets { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u) * .4) calc(var(--u) * .55); width: 96%; margin-top: calc(var(--u) * .6); max-height: calc(var(--u) * 4.5); overflow: hidden; }   /* two rows at most: the series score stands under it */
+.mt-gadgets:empty { display: none; }
+.mt-gadgets-t { font-size: calc(var(--u) * 1.05); letter-spacing: .24em; color: rgba(255, 255, 255, .62); margin-right: calc(var(--u) * .3); }
+.mt-gadget {
+  --c: #ffd21f; display: inline-flex; align-items: center; gap: .5em; padding: calc(var(--u) * .28) calc(var(--u) * .9) calc(var(--u) * .2) calc(var(--u) * .7);
+  font-size: calc(var(--u) * 1.08); letter-spacing: .07em; color: #fff; background: rgba(8, 10, 8, .55); border: 1px solid color-mix(in srgb, var(--c) 70%, transparent);
+  border-radius: 99px; white-space: nowrap; animation: mt-gadget-in .3s var(--d, 1.3s) var(--mt-ease) both;
+}
+.mt-gadget i { width: .62em; height: .62em; border-radius: 50%; background: var(--c); box-shadow: 0 0 .6em var(--c); }
+@keyframes mt-gadget-in { from { opacity: 0; transform: translateY(40%); } to { opacity: 1; transform: none; } }
 
 /* ---------------------------------------------------------------- sudden death */
 .mt-sd-bg { background: #06070a; animation: mt-fade-in .18s both; }

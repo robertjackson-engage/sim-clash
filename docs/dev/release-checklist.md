@@ -114,10 +114,11 @@ before/after screenshots) is the part nothing depends on.
 
 - `LICENSE`: upstream's MIT text and copyright line unchanged, the fork's line beneath it.
 - `NOTICE.md`, `CREDITS.md`: both Open-Birdie authors by name with links; every bundled
-  library with its licence; sounds, voice, models, textures, fonts, and the three sky
-  photos that ship (Poly Haven, CC0: each file with its authors and source page; the two
-  installed beside the stages were checked against Poly Haven's own file list by size and
-  MD5, and are pinned by SHA-256 in `tools/arcade-holes/sky-files.mjs`).
+  library with its licence; sounds, voice, models, textures, fonts, the one sky photo that
+  ships (Poly Haven, CC0, inside the app) and the stages' own skies and ground textures
+  (`public/arcade/env`: generated for this project, each file with its model, job id and
+  prompt in the manifest). The two Poly Haven photos that used to be installed beside the
+  stages no longer ship; they stay pinned by SHA-256 in `tools/arcade-holes/sky-files.mjs`.
 - Every sound file has a row in `public/arcade/sfx/CREDITS.md` (a test checks this).
 - Nothing in the tree is taken from a commercial game. Sounds are CC0 (Kenney, freesound)
   or generated; the announcer is synthetic speech from a stock voice; models were scripted
@@ -193,8 +194,8 @@ before/after screenshots) is the part nothing depends on.
       (`docs/launch-monitors.md` does too) and `node site/dev/refresh.mjs --data build/arcade-data`
       reports `0 page(s) changed` (the site's stage cards, ball lists and launch-monitor
       tiers are current).
-- [ ] `node tools/arcade-holes/sky-bundle.mjs --check` (the sky photos the stages use are
-      bundled and match their pinned checksums).
+- [ ] `node tools/arcade-holes/sky-bundle.mjs --check` (the sky bundle is what the stages
+      need: today no photo at all, and no stray `.hdr` left in `build/arcade-data/sky`).
 - [ ] The silent install test in `docs/dev/packaging.md`.
 
 ### By hand

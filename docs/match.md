@@ -16,8 +16,17 @@ against is `docs/dev/arcade-v2-contract.md` section 4; this file is how the engi
 | `tools/arcade-dev/wind-e2e.mjs` | a real best of three on the built tour, checking every hole's wind (some 85 checks) |
 | `test/match-menu-server.test.mjs`, `test/match-menu-ui.test.mjs` | the match menu's routes on a real server over HTTP; the menu's items and the stake line |
 | `tools/arcade-dev/menu-e2e.mjs`, `stake-e2e.mjs` | real runs on the built tour: a stray ball taken back, restart hole / match (22 checks); putt in to tie / to win (11) |
+| `docs/modes.md` | **PARTY** (the same engine for two to four players: skins, a stroke race, elimination) and **handicaps** (HELP for one player, in a head-to-head too) |
+| `test/party.test.js`, `test/party-server.test.mjs`, `test/party-ui.test.mjs`, `tools/arcade-dev/party-e2e.mjs` | the party formats and the handicaps: the engine (30 tests), the routes over HTTP, the screens' helpers, four real games on the built tour |
 
 ## Rules
+
+This file is the head-to-head. The engine also plays a **party** of two to four (formats
+`skins`, `stroke`, `elim`: `docs/modes.md`), with the same stages, wind, loadouts, undo,
+restart, drop, stray-ball guard, rocket holes and driver; what follows about "both players"
+and "the opponent" is the two-player game, which runs the code it always ran. A player of
+either may have **help** (a handicap: more charges, a forward tee, a putting level of their
+own): `docs/modes.md` "Handicaps".
 
 - **Putting.** A match plays its own putting assist, `options.putting`: `'assist'` by
   default (a decent putt drops: start line within 2.5 degrees, pace from 85 % to 140 % of
@@ -295,8 +304,8 @@ const { createMatch, MatchError, MATCH_TIERS, MATCH_FORMATS, RANKS, TIMEOUTS,
         rankFor, normalizeProfile, rewardsFor, applyRewards, normalizeTour, powerupCatalogue } = require('./lib/match');
 
 const match = createMatch({
-  players: [{ id, name, initials?, handicap?, profile? }, { ... }],   // slot 1, slot 2
-  options: { format: 'quick' | 'bo3' | 'bo9', stage: '<id>' | 'random' | 'current', order: 'tour' | 'shuffle',
+  players: [{ id, name, initials?, handicap?, profile?, help? }, { ... }],   // slot 1, slot 2 (a party: up to four). help: a level 0 to 3 or { charges, tee, putting }
+  options: { format: 'quick' | 'bo3' | 'bo9' /* a party: 'skins' | 'stroke' | 'elim', with holes: 3 | 6 | 9 */, stage: '<id>' | 'random' | 'current', order: 'tour' | 'shuffle',
              tieRule: 'shootout' | 'halve', powerups: 'loadout' | 'unlimited' | 'off', stakes: null | tier,
              hazardLosesHole: false, holeIndex /* 'current': the hole to start on */, catalogue /* tests */ },
   tour,                 // the manifest, or null
@@ -314,14 +323,14 @@ Throws `MatchError` (`.status` 400 / 404 / 409).
 | `waiting` | what the driver has to do (above) |
 | `stageReady(game, token, { wind })` / `stageFailed(token, message)` | the driver's answer to `for: 'stage'`. `wind`: the wind the driver rolled for the hole (without one the stage carries the wind the game is playing in). A failed arena falls back to the same-hole shootout; a failed stage is replaced by another one; none left: the match is aborted (`aborted`, `error`). |
 | `ready(game)` / `continue()` | leave the intro / the result screen. `false` (and nothing happens) when that screen is not showing. |
-| `beforeShot(game)` | `null`: the swing does not count. Else the player who is up is loaded into the game: `{ playerId, armed, curses, free }` (`free`: `armed` is the stage's free ball, not the player's). |
+| `beforeShot(game)` | `null`: the swing does not count. Else the player who is up is loaded into the game: `{ playerId, armed, curses, free }` (`free`: `armed` is the stage's free ball, not the player's), plus `putting` when that player has a putting level of their own (help). |
 | `afterShot(game, result)` | spends the ball and the curse, records the shot (with `result.arcade` on it) for the stats, decides the hole / round / match, loads whoever is next. Returns the shot's event. |
-| `arm(playerId, id \| null)` | a ball for their next shot, `null` to put it back, or a trick cast on the opponent |
+| `arm(playerId, id \| null, targetId?)` | a ball for their next shot, `null` to put it back, or a trick cast on the opponent (a party: on `targetId`, else on whoever is doing best) |
 | `drop(game, playerId?)` | the rescue drop for the player who is up (`playerId`, when given, must be theirs: 409 "It is X's turn"). 409 outside `'play'` ("No drops in a sudden death") or with no drop to take. Returns `{ event: 'drop', playerId, drop: true, free, penalty, strokes, from, end, lie, nextPlayerId }`, or the hole's / match's closing event with `drop: true` on it when the stroke decided it |
 | `putting` (getter) | `'easy' \| 'assist' \| 'off'`: the putting assist of this match's swings |
 | `undoLastShot(game)` | take the last swing (or drop) back (above). `MatchError` 409 "There is no shot to take back". Returns `{ event: 'shot-undone', playerId, stray, from }` (`drop: true` when it was a drop) |
 | `restartHole(game)` | the hole (or the sudden-death round) again. 409 "No hole is being played". Returns `{ event: 'hole-restarted', holeNumber, tiebreak }` |
-| `concede(playerId)` | the other player wins |
+| `concede(playerId, game?)` | the other player wins (a party: that player leaves and the others play on) |
 | `abort(game?)`, `release(game)` | end it with no result; hand the bay back |
 | `config()` | `{ players, options }` a rematch starts from |
 | `state()` | the serializable state |
@@ -387,6 +396,8 @@ never reach the round's card.
   rewards: null | { winner: { trophies, coins, chest, streakBonus /* + */, pot /* + */ }, loser: { trophies /* a delta, <= 0 */ } },
   awards: null | [{ id, label, playerId, value }],
   // + on each player: shotFor: 'win' | 'tie' | 'lead' | null, shotKind: 'putt' | 'chip' | 'shot' | null (whoever is up on a hole)
+  // + on a player who has help: help: { level, label, charges, tee, putting, text }, teeYd (yards to the pin from their forward tee on this hole; null: the back tee)
+  // + on a party only: party, holes, teeOrder, carry, skinsAtStake, placings, and per player out / left / outOnHole / pickedUp / total / place (docs/modes.md)
   undoable: null | { playerId, stray, holeNumber, drop?: true },   // + the swing POST /api/match/undo would take back
   canRestartHole: true,                      // + a hole or a sudden-death round is being played
   events: [{ seq, type, t /* + */, ... }],   // the last 12
@@ -437,10 +448,11 @@ All POSTs answer `{ ok: true, match }` or `{ ok: false, error }` (400 / 404 / 40
 | Route | Body | |
 | --- | --- | --- |
 | `GET /api/match` | | `{ ok, match, tour: <manifest or null>, tiers, formats, profiles: { id: profile } }` (the tour lists only stages whose course file is there) |
-| `POST /api/match/start` | `{ playerIds: [a, b], format, stage?, order?, tieRule?, powerups?, stakes?, hazardLosesHole?, putting? }` | `playerIds[0]` is PLAYER ONE. Dismisses a finished match first. `putting`: `'easy' \| 'assist' \| 'off'` (default `'assist'`; in the state as `options.putting`) |
+| `POST /api/match/start` | `{ playerIds: [a, b], format, stage?, order?, tieRule?, powerups?, stakes?, hazardLosesHole?, putting?, help? }` (a party: two to four ids, `format: 'skins' \| 'stroke' \| 'elim'`, `holes?`; `help: { <playerId>: level \| levers }`) | `playerIds[0]` is PLAYER ONE. Dismisses a finished match first. `putting`: `'easy' \| 'assist' \| 'off'` (default `'assist'`; in the state as `options.putting`) |
 | `POST /api/match/ready` | `{}` | tee off. Not in an intro: nothing happens, still `ok`. |
 | `POST /api/match/continue` | `{}` | leave the result screen. Likewise. |
-| `POST /api/match/arm` | `{ playerId, id \| null }` | `playerId` defaults to whoever is up |
+| `POST /api/match/arm` | `{ playerId, id \| null, targetId? }` | `playerId` defaults to whoever is up; `targetId`: who a trick is cast on (a party) |
+| `POST /api/match/suggest` | `{ playerIds }` | `{ help: { id: level }, levels }`: a help level for each from their records. Shown by the lobbies, never applied; starts nothing |
 | `POST /api/match/concede` | `{ playerId }` | |
 | `POST /api/match/abort` | `{}` | also dismisses a finished match; answers `match: null` |
 | `POST /api/match/rematch` | `{}` | a finished match's players and options, a new match (409 while one is in play) |
@@ -546,3 +558,8 @@ server with sub-second timeouts) all three safety timeouts.
   `turnStartedAt` is in the state.
 - Online play: the same `beforeShot` / `afterShot` pair works with a remote opponent's
   launch data; what is missing is transport and identity, not rules.
+- The match UI of the page is `PartyUI` (`public/arcade/party.js`), a subclass of `MatchUI`
+  that hands every state without `party` straight to it. `match.js` exports its pieces of
+  markup as `kit` for that, keeps the menu's items / title / "where" line in methods, and
+  calls `onWinnerScreen(m, el)` when the winner screen is up (the SHOT OF THE MATCH replay
+  hangs there; every award row carries `data-award`).

@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { ASSETS } from './assets.js';
 import { RENDER_CONFIG } from './config.js';
 import { DIVOT_GLSL } from './divots.js';
+import { envTextures, turfEnvUniforms, cliffEnvUniforms, ENV_TEX_GLSL } from './env-materials.js';   // v3:environment the arcade stages' ground materials
 
 const loader = new THREE.TextureLoader();
 
@@ -41,6 +42,32 @@ function turfNoiseTexture() {
   noiseTex.needsUpdate = true;
   return noiseTex;
 }
+// v3:env-polish One layout of a cliff's rock (TURF_ENV with TURF_CLIFF): the rock set at a place in
+// metres, drawn from two places in the set at once (off.xy, off.zw: this patch of wall's
+// and the next's) with the higher of the two winning as f runs 0 to 1, and the look's
+// second rock through it where m2 says. rgb: colour detail (x1 = the look's rock as it is);
+// a: height. dx, dy: uv's screen gradients (it is read inside a branch).
+const ROCK_GLSL = /* glsl */`
+        uniform vec3 uArcCliffC; uniform vec4 uArcCliffD, uArcCliffE;
+        vec4 rockAt(vec2 uv, vec2 dx, vec2 dy, vec4 off, float f, float m2, float far) {
+          // the wall's build: the set three times its size, so a face a hundred metres off
+          // is great blocks and ledges, not a grid of small ones
+          float ib = 1.0 / (uEnvC.x * 3.1);
+          vec4 a = envCG(3.0, uv * ib + off.xy, dx * ib, dy * ib), b = envCG(3.0, uv * ib + off.zw, dx * ib, dy * ib);
+          vec4 r = mix(a, b, smoothstep(0.3, 0.7, f + 3.2 * (b.a - a.a) * f * (1.0 - f)));
+          // the stone's own grain at its true size, close to
+          if (far < 0.98) {
+            float it = 1.0 / uEnvC.x, kN = 1.0 - far;
+            vec4 n = envCG(3.0, uv * it + 0.37, dx * it, dy * it);
+            r = vec4(r.rgb * mix(vec3(1.0), n.rgb, kN), clamp(r.a + (n.a - 0.5) * 0.7 * kN, 0.0, 1.0));
+          }
+          if (m2 > 0.01) {
+            float i2 = 1.0 / uArcCliffD.y;
+            vec4 c = envCG(uArcCliffD.x, uv.yx * i2 + off.wz * 1.7, dx.yx * i2, dy.yx * i2);   // on its side: upright joints
+            r = mix(r, c, smoothstep(0.3, 0.7, m2 + 2.4 * (c.a - r.a) * m2 * (1.0 - m2)));
+          }
+          return r;
+        }`;
 function tiled(url, srgb, repX, repY, aniso) {
   const t = loader.load(url);
   t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
@@ -57,7 +84,8 @@ function tiled(url, srgb, repX, repY, aniso) {
 // aux (optional): the soft AUX surface mask (B = bunker, ~1.8 m blur) — darkens the
 // steep sand face just inside the edge so bunkers read as dished hazards with a
 // grass lip, not flat decals.
-export function makeSandMaterial(bounds, aniso, aux = null, sunDir = null, courseDry = 1) {
+// env (optional, v3:environment; arcade-look.js turf.env): the sand darkens where it runs into water.
+export function makeSandMaterial(bounds, aniso, aux = null, sunDir = null, courseDry = 1, env = null) {
   const extX = bounds.maxX - bounds.minX, extY = bounds.maxY - bounds.minY;
   const tileM = 2.0, repX = extX / tileM, repY = extY / tileM;
   const map = tiled(ASSETS.turf.sand, true, repX, repY, aniso);
@@ -127,9 +155,10 @@ export function makeSandMaterial(bounds, aniso, aux = null, sunDir = null, cours
             float bowl = clamp(dot(vec2(wgx, wgy), toCamH) * 2.5, -1.0, 1.0);   // + far side, - near side
             diffuseColor.rgb *= (1.0 - 0.32 * hidden * graze) * (1.0 + 0.14 * rises * graze) * (1.0 - 0.3 * overhang * graze);
             diffuseColor.rgb *= 1.0 + (0.12 * max(bowl, 0.0) - 0.04 * max(-bowl, 0.0)) * graze;
+            ${env ? '// wet sand: darker and cooler within a couple of metres of water\n            diffuseColor.rgb *= mix(vec3(1.0), vec3(0.6, 0.6, 0.62), smoothstep(0.06, 0.45, texture2D(uAux, vCourseUv).g));' : ''}
           }`);
     };
-    mat.customProgramCacheKey = () => 'sand-lip-v4';
+    mat.customProgramCacheKey = () => `sand-lip-v4${env ? '-wet' : ''}`;
   }
   return mat;
 }
@@ -186,11 +215,17 @@ export function makeTurfMaterial({ baseMap, mownMask, bunkerMask, bounds, anisot
       const sandCol = new THREE.Color(arcade.sand ?? '#ffffff');
       shader.uniforms.uArcSand = { value: new THREE.Vector4(sandCol.r, sandCol.g, sandCol.b, arcade.sandMix ?? 0) };
     }
+    const env = arcade?.env || null;   // v3:environment the ground's own materials (TURF_ENV), or nothing
+    if (env) {
+      shader.uniforms.uEnvTex = { value: envTextures().array };
+      for (const [k, v] of Object.entries(turfEnvUniforms(env))) shader.uniforms[k] = { value: v };
+    }
     if (cliff) {
       // steep ground is rock (arcade-look.js turf.cliff): where the slope turns to rock, its strata's spacing, its two colours
       shader.uniforms.uArcCliff = { value: new THREE.Vector3(cliff.from ?? 0.6, cliff.to ?? 0.8, (2 * Math.PI) / Math.max(0.5, cliff.strataM ?? 3)) };
       shader.uniforms.uArcCliffA = { value: new THREE.Color(cliff.a ?? '#8f7f6a') };
       shader.uniforms.uArcCliffB = { value: new THREE.Color(cliff.b ?? '#6f6254') };
+      if (arcade?.env) for (const [k, v] of Object.entries(cliffEnvUniforms(cliff))) shader.uniforms[k] = { value: v };   // v3:env-polish
     }
     if (glow) {
       // an arcade theme's night golf (arcade-look.js turf.glow): self-lit mown ground, glowing edges
@@ -343,6 +378,8 @@ export function makeTurfMaterial({ baseMap, mownMask, bunkerMask, bounds, anisot
         ${glow ? '#define TURF_GLOW\nuniform vec2 uArcLift; uniform vec4 uArcEdge; uniform vec4 uArcGreenEdge;' : ''}
         ${cliff ? '#define TURF_CLIFF\nuniform vec3 uArcCliff; uniform vec3 uArcCliffA; uniform vec3 uArcCliffB;' : ''}
         ${shore ? '#define TURF_SHORE\nuniform sampler2D uShore; uniform vec4 uShoreRect; varying float vShoreH;' : ''}
+        ${arcade?.env ? `#define TURF_ENV\nuniform vec4 uEnvA, uEnvB, uEnvC;\n${ENV_TEX_GLSL}` : ''}
+        ${arcade?.env && cliff ? ROCK_GLSL : ''}
         uniform sampler2D uDetail; uniform vec2 uDetailRepeat;
         uniform sampler2D uMask; uniform sampler2D uBunker; uniform sampler2D uSand;
         uniform sampler2D uMaskRaw; uniform vec3 uPalGreenA; uniform vec3 uSunDir3;
@@ -703,6 +740,9 @@ export function makeTurfMaterial({ baseMap, mownMask, bunkerMask, bounds, anisot
               vec3 beach = texture2D(uSand, vMapUv * uDetailRepeat * 0.5).rgb * 0.62;
               beach = mix(beach, vec3(0.34, 0.30, 0.235), 0.5) * (0.92 + 0.16 * tNoise(vec2(wx, wy) * 1.3));
               beach *= mix(vec3(1.0), vec3(0.55, 0.56, 0.6), sh.b);
+              #ifdef TURF_ENV
+              { vec4 bd = envC(2.0, vec2(wx, wy) / uEnvC.y); beach = mix(beach, uArcSand.rgb * mix(1.0, 0.6, sh.b), 0.7) * bd.rgb * (0.8 + 0.4 * bd.a); }
+              #endif
               // grey-brown stone in beds along the face, blocky, cracked close up, darker
               // and wet low down
               float beds = tNoise(vec2(vShoreH * 1.3 + 4.0 * tNoise(vec2(wx, wy) * 0.15), 7.7));
@@ -741,6 +781,35 @@ export function makeTurfMaterial({ baseMap, mownMask, bunkerMask, bounds, anisot
           #endif
           // Soft highlight rolloff: light mown/aerial areas + mow-stripe peaks were
           // washing out to pale rectangles. Compress grass values above ~0.66.
+          #ifdef TURF_ENV
+          float envSpark = 0.0;
+          {
+            // THE GROUND'S OWN MATERIALS (env-materials.js). The mown cut takes the grass set's
+            // fine nap (tighter still on a green); everything unmown takes the theme's set
+            // (rough grass, snow, basalt, earth, sand). Each is read at two scales, the close
+            // one giving way to a broad, turned copy with distance, so there is grain at the
+            // ball and structure from the tee, and no visible repeat in between.
+            vec2 ewp = vec2(wx, wy);
+            float evd = length(vViewPosition);
+            float eRough = clamp(1.0 - max(max(mCrisp, cls.r), gCrisp) - bCrisp, 0.0, 1.0);
+            float eFar = smoothstep(14.0, 80.0, evd);
+            vec2 farUv = (mat2(0.8, -0.6, 0.6, 0.8) * ewp) / uEnvC.w;
+            vec3 dMown = mix(envC(0.0, ewp / mix(uEnvA.y, uEnvA.z, gCrisp)).rgb, envC(0.0, farUv / uEnvA.y).rgb, eFar);
+            vec4 r0 = envC(uEnvA.x, ewp / uEnvA.w), r1 = envC(uEnvA.x, farUv / uEnvA.w);
+            vec4 dRough = mix(r0, r1, eFar);
+            grass *= mix(vec3(1.0), mix(dMown, dRough.rgb, eRough), mix(uEnvB.x, uEnvB.y, eRough));
+            grass *= 1.0 + 0.5 * eRough * uEnvB.y * (dRough.a - 0.5);   // its hollows darker, its tops lighter
+            if (uEnvB.w > 0.0) {
+              // snow: single crystals catching the sun, different ones as the camera moves
+              vec3 svd = normalize(vViewPosition);
+              float sh1 = tNoise(floor(ewp * 11.0) * 0.731 + floor(svd.xy * 14.0) * 3.1);
+              // (v3:env-polish a round glint in the middle of its cell, not the whole cell: close to the
+              // camera the cells were white squares a centimetre across the screen)
+              vec2 sc = fract(ewp * 11.0) - 0.5;
+              envSpark = step(0.993, fract(sh1 * 61.7)) * eRough * uEnvB.w * (1.0 - smoothstep(6.0, 28.0, evd)) * smoothstep(1.2, 3.5, evd) * step(0.45, r0.a) * (1.0 - smoothstep(0.08, 0.3, length(sc)));
+            }
+          }
+          #endif
           #ifdef TURF_ARCADE
           // arcade look: candy grass (x = saturation, y = gain)
           grass = max(vec3(0.0), mix(vec3(dot(grass, vec3(0.2126, 0.7152, 0.0722))), grass, uArcTone.x)) * uArcTone.y;
@@ -753,6 +822,9 @@ export function makeTurfMaterial({ baseMap, mownMask, bunkerMask, bounds, anisot
           sand = mix(sand, vec3(0.72, 0.68, 0.58), 0.18) * 1.04;
           #ifdef TURF_ARCADE
           sand = mix(sand, uArcSand.rgb, uArcSand.a);   // arcade look: bright white sand
+          #endif
+          #ifdef TURF_ENV
+          { vec4 sd = envC(2.0, vec2(wx, wy) / uEnvC.y); sand *= sd.rgb * (0.82 + 0.36 * sd.a); }   // wind ripples, rake lines
           #endif
           // Union NDVI-detected sand (cls.b) into the OSM bunker mask, but only OUTSIDE
           // mown ground — m is post-union here, so "no sand where OSM- or NDVI-mown".
@@ -772,12 +844,91 @@ export function makeTurfMaterial({ baseMap, mownMask, bunkerMask, bounds, anisot
             float upN = normalize((vec4(normalize(vNormal), 0.0) * viewMatrix).xyz).y;
             arcRock = (1.0 - smoothstep(uArcCliff.x, uArcCliff.y, upN)) * (1.0 - gCrisp);
             float wH = cameraPosition.y - (vec4(vViewPosition, 0.0) * viewMatrix).y;
+            #ifdef TURF_ENV
+            // v3:environment REAL ROCK, v3:env-polish and a wall that is not a tiled floor stood on end.
+            // Nothing below is read where the ground is not a cliff: every read sits in the
+            // branch, with the screen gradients taken out here where they are defined.
+            vec3 rP = vec3(wx, wy, wH), rPx = vec3(wdx, dFdx(wH)), rPy = vec3(wdy, dFdy(wH));
+            vec3 rock = uArcCliffA;
+            if (arcRock > 0.002) {
+              // WHICH WAY THE FACE LOOKS. A sheer face is laid out by its height and by the
+              // ground along it, taken along whichever of FOUR bearings (north, north-east,
+              // east, south-east) lies nearest its own: a wall across the map's diagonal is
+              // then drawn once, at its true size, where two axes left it a half-and-half
+              // ghost of two stretched copies. Ledges and the brow of a cliff are laid out
+              // from above. The weights are steep: one layout owns nearly every pixel, and
+              // two share one only over a few degrees of turn.
+              vec3 nW = normalize((vec4(normalize(vNormal), 0.0) * viewMatrix).xyz);
+              vec2 nh = vec2(nW.x, -nW.z);
+              float nhl = max(length(nh), 1e-4); nh /= nhl;
+              vec4 wS = pow(vec4(abs(nh.y), abs(nh.x - nh.y) * 0.70710678, abs(nh.x), abs(nh.x + nh.y) * 0.70710678), vec4(16.0));
+              // (from above or from the side goes by the ground's TRUE slope, the triangle's own:
+              // at the brow of a cliff the smoothed normal already leans while the ground is
+              // still level, and a level face laid out by its height is one long smear)
+              vec3 gN = cross(rPx, rPy);
+              float gUp = abs(gN.z) / max(length(gN), 1e-12);
+              float sideK = pow(sqrt(max(1.0 - gUp * gUp, 0.0)), 8.0), topK = pow(min(gUp * 1.15, 1.0), 8.0);
+              wS *= sideK / ((wS.x + wS.y + wS.z + wS.w) * (sideK + topK));
+              float wT = topK / (sideK + topK);
+              // NO TWO STRETCHES ALIKE: the wall is cut into patches some tens of metres
+              // across, and each draws the set from its own place in it; where two patches
+              // meet, the higher rock of the two wins (no cross-fade to blur them)
+              float pl = tNoise(vec2(wx + wH * 0.83, wy - wH * 0.61) * 0.023 + 3.0) * 7.0, pi = floor(pl), pf = pl - pi;
+              vec4 off = vec4(fract(sin(vec2(3.1, 7.3) * pi) * 43.7), fract(sin(vec2(3.1, 7.3) * (pi + 1.0)) * 43.7));
+              // THE BEDS: level, bent a little by the wall's own bulges, at three sizes. The
+              // fine ones are the look's strata; broad ones of uneven thickness run through
+              // them; and great pale bands, a dozen beds apart, cross the whole face.
+              float sM = 6.2831853 / uArcCliff.z;
+              float bend = (tNoise(vec2(wx, wy) * 0.017 + 1.7) - 0.5) * 1.5 + (tNoise(vec2(wx, wy) * 0.09) - 0.5) * 0.35;
+              float hS = wH / sM + bend;
+              float s1 = smoothstep(0.25, 0.75, tNoise(vec2(hS * 1.3, 0.0)));   // (uneven: a sine here drew scan lines)
+              float s2 = tNoise(vec2(hS / 3.7, 0.0)), s3 = tNoise(vec2(hS / 11.0 + 5.3, 0.0));
+              // the second rock (uArcCliffD: its set, tile, share): in beds of its own and in patches
+              float m2t = 0.5 + (0.5 - uArcCliffD.z) * 0.55;
+              float m2 = smoothstep(m2t - 0.06, m2t + 0.06, 0.6 * tNoise(vec2(wx - wH * 0.4, wy + wH * 0.7) * 0.031 + 11.0) + 0.4 * tNoise(vec2(hS / 5.3 + 2.2, 0.0)));
+              vec4 rk = vec4(0.0);
+              float rFar = smoothstep(22.0, 90.0, length(vViewPosition));
+              if (wS.x > 0.02) rk += wS.x * rockAt(rP.xz, rPx.xz, rPy.xz, off, pf, m2, rFar);
+              if (wS.y > 0.02) rk += wS.y * rockAt(vec2((rP.x + rP.y) * 0.70710678, rP.z), vec2((rPx.x + rPx.y) * 0.70710678, rPx.z), vec2((rPy.x + rPy.y) * 0.70710678, rPy.z), off, pf, m2, rFar);
+              if (wS.z > 0.02) rk += wS.z * rockAt(rP.yz, rPx.yz, rPy.yz, off, pf, m2, rFar);
+              if (wS.w > 0.02) rk += wS.w * rockAt(vec2((rP.y - rP.x) * 0.70710678, rP.z), vec2((rPx.y - rPx.x) * 0.70710678, rPx.z), vec2((rPy.y - rPy.x) * 0.70710678, rPy.z), off, pf, m2, rFar);
+              if (wT > 0.02) rk += wT * rockAt(rP.xy, rPx.xy, rPy.xy, off, pf, m2, rFar);
+              rk /= max(step(0.02, wS.x) * wS.x + step(0.02, wS.y) * wS.y + step(0.02, wS.z) * wS.z + step(0.02, wS.w) * wS.w + step(0.02, wT) * wT, 1e-3);
+              // where rock gives way to ground the rock's own relief breaks the line
+              arcRock = clamp(arcRock + (rk.a - 0.45) * 1.6 * arcRock * (1.0 - arcRock), 0.0, 1.0);
+              rock = mix(uArcCliffA, uArcCliffB, smoothstep(0.3, 0.7, 0.25 * s1 + 0.75 * s2) * 0.85);
+              rock = mix(rock, uArcCliffC, smoothstep(0.52, 0.66, s3) * (0.6 + 0.3 * s1));
+              rock = mix(rock, mix(uArcCliffA, uArcCliffC, 0.45), m2 * 0.5);
+              // THE WALL AS A WHOLE: lighter and darker over fifty metres, warmer and cooler
+              // over a hundred and fifty, weathered grey in places, stained down its runnels
+              float m1 = tFbm2(vec2(wx + wH * 0.6, wy - wH * 0.45) * 0.019 + 7.0) / 0.75;
+              float hue = (tNoise(vec2(wx - wH * 0.35, wy + wH * 0.5) * 0.0063 + 2.0) - 0.5) * 2.0 * uArcCliffD.w;
+              rock *= (0.72 + 0.56 * m1) * vec3(1.0 + 0.17 * hue, 1.0 + 0.03 * hue, 1.0 - 0.2 * hue);
+              rock = mix(rock, vec3(dot(rock, vec3(0.2126, 0.7152, 0.0722))), 0.3 * smoothstep(0.5, 0.8, m1) * uArcCliffD.w);
+              rock *= 0.9 + 0.2 * tNoise(vec2((wx + wy) * 0.29, wH * 0.035)) * sideK / (sideK + topK);
+              // the stone itself; its recesses darker and cooler (they see the sky, not the sun)
+              rock *= mix(vec3(1.0), rk.rgb, uEnvC.z) * (0.6 + 0.8 * rk.a);
+              rock *= mix(vec3(1.0), vec3(0.5, 0.55, 0.66), (1.0 - smoothstep(0.1, 0.42, rk.a)) * 0.85);
+              // what lies on it (uArcCliffE: snow, moss): where the face leans back, and along
+              // the tops of its beds on a sheer one, never in its recesses
+              if (uArcCliffE.a > 0.0) {
+                float cn = tNoise(vec2(wx + wH * 0.5, wy - wH * 0.3) * 0.21);
+                float lean = smoothstep(0.34, 0.6, upN + (cn - 0.5) * 0.3 + (rk.a - 0.5) * 0.25);
+                float ledge = smoothstep(0.6, 0.82, tNoise(vec2(wx - wH * 0.7, wy + wH * 0.6) * 0.045 + 5.0)) * smoothstep(0.52, 0.72, rk.a + (cn - 0.5) * 0.3) * 0.55;
+                rock = mix(rock, uArcCliffE.rgb * (0.82 + 0.3 * rk.a), clamp(max(lean, ledge) * uArcCliffE.a, 0.0, 1.0));
+              }
+            }
+            #else
             float lump = tNoise(vec2(wx, wy) * 0.11);
             float strata = 0.5 + 0.5 * sin(wH * uArcCliff.z + lump * 9.0 + tNoise(vec2(wy, wx) * 0.031) * 7.0);
             float chips = tNoise(vec2(wx + wH * 0.7, wy - wH * 0.4) * 0.6);
             vec3 rock = mix(uArcCliffA, uArcCliffB, smoothstep(0.2, 0.8, strata) * 0.8) * (0.78 + 0.44 * chips);
+            #endif
             diffuseColor.rgb = mix(diffuseColor.rgb, rock, arcRock);
           }
+          #endif
+          #ifdef TURF_ENV
+          totalEmissiveRadiance += vec3(2.2, 2.3, 2.6) * envSpark;
           #endif
           #ifdef TURF_GLOW
           {
@@ -845,9 +996,23 @@ export function makeTurfMaterial({ baseMap, mownMask, bunkerMask, bounds, anisot
             vec3 mTilt = (viewMatrix * vec4(-(mhx - mh0) / me, 0.0, -(mhy - mh0) / me, 0.0)).xyz;
             normal = normalize(normal + mTilt * (0.18 * mFade));
           }
+          #ifdef TURF_ENV
+          {
+            // v3:environment the ground sets' own relief, near the camera: the nap of the cut, the tufts
+            // of the rough, drifts, cracks. World x east and sim y north (three -z).
+            float nFade = 1.0 - smoothstep(28.0, 95.0, length(vViewPosition));
+            if (nFade > 0.0) {
+              vec4 nmk = texture2D(uMaskRaw, vMapUv);
+              float nRough = clamp(1.0 - max(nmk.r, nmk.g) - nmk.b, 0.0, 1.0);
+              vec2 nwp = vec2(snwx, snwy);
+              vec2 nxy = mix(envN(0.0, nwp / mix(uEnvA.y, uEnvA.z, step(0.5, nmk.g))).xy * 0.55, envN(uEnvA.x, nwp / uEnvA.w).xy, nRough) * (uEnvB.z * nFade);
+              normal = normalize(normal + (viewMatrix * vec4(nxy.x, 0.0, -nxy.y, 0.0)).xyz);
+            }
+          }
+          #endif
         }`);
   };
-  mat.customProgramCacheKey = () => `turf-grain-v46${macro ? '-macro' : ''}${hq ? '' : '-lq'}${shore ? '-shore' : ''}${arcade ? '-arcade' : ''}${glow ? '-glow' : ''}${cliff ? '-cliff' : ''}`; // v46: a low sun lights the blades' sides; v45: the sun's mirror reflection off turf cut to a sheen; v44: clean fairways/greens, stripes down the hole (v43: Low's lighter grain; v42: divots, crisp tee box, rough sheen; v41: distance/surface-gated taps; v40: texture value noise)
+  mat.customProgramCacheKey = () => `turf-grain-v46${macro ? '-macro' : ''}${hq ? '' : '-lq'}${shore ? '-shore' : ''}${arcade ? '-arcade' : ''}${glow ? '-glow' : ''}${cliff ? '-cliff' : ''}${arcade?.env ? '-env3' : ''}`; // v46: a low sun lights the blades' sides; v45: the sun's mirror reflection off turf cut to a sheen; v44: clean fairways/greens, stripes down the hole (v43: Low's lighter grain; v42: divots, crisp tee box, rough sheen; v41: distance/surface-gated taps; v40: texture value noise)
   // textures injected via onBeforeCompile (+ the canvas masks) aren't reachable from
   // the standard material slots, so register them for disposal on course reload.
   mat.userData.disposeTextures = [detail, sand, maskTex, bunkerMaskTex, ...(surfaceMaskRaw ? [maskRawTex] : []), ...(shore ? [shore.tex] : [])];

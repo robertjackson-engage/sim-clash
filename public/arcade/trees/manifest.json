@@ -1,0 +1,1776 @@
+{
+ "version": 2,
+ "generator": "tools/arcade-art/trees/build.mjs",
+ "lodKeep": [
+  1,
+  0.42,
+  0.15
+ ],
+ "leafTiles": [
+  "broadA",
+  "broadB",
+  "bigleaf",
+  "spray",
+  "frond",
+  "fan",
+  "banana",
+  "fern",
+  "bough",
+  "pineTuft",
+  "blossom",
+  "maple",
+  "bushFlower",
+  "grass",
+  "vine",
+  "twig",
+  "juniper",
+  "gorse",
+  "dryScrub",
+  "boughSnow"
+ ],
+ "leafGrid": [
+  4,
+  5
+ ],
+ "barkColumns": [
+  "ridged",
+  "plated",
+  "smooth",
+  "ringed",
+  "banded",
+  "fibrous",
+  "dead",
+  "mossy"
+ ],
+ "detailMid": 0.4,
+ "textures": {
+  "leaves": {
+   "file": "leaves.webp",
+   "grid": [
+    4,
+    5
+   ],
+   "tile": 512,
+   "bytes": 1163378,
+   "width": 2048,
+   "height": 2560
+  },
+  "leavesAux": {
+   "file": "leaves-aux.png",
+   "grid": [
+    4,
+    5
+   ],
+   "tile": 512,
+   "bytes": 1288469,
+   "width": 2048,
+   "height": 2560
+  },
+  "bark": {
+   "file": "bark.webp",
+   "columns": 8,
+   "column": [
+    256,
+    1024
+   ],
+   "bytes": 705688,
+   "width": 2048,
+   "height": 1024
+  },
+  "barkNormal": {
+   "file": "bark-n.webp",
+   "columns": 8,
+   "column": [
+    256,
+    1024
+   ],
+   "bytes": 822870,
+   "width": 2048,
+   "height": 1024
+  }
+ },
+ "art": {
+  "made": "painted for Sim Clash with an image model (original; no photograph, no third-party texture)",
+  "prompts": "tools/arcade-art/trees/prompts.mjs",
+  "model": "nano_banana_2_1",
+  "jobs": {
+   "broadA": "7ab7439a-3b69-484a-950a-ce779648d353",
+   "broadB": "1413c04a-f29f-485b-a4f2-fdbe2576a8e9",
+   "bigleaf": "992e2acd-0d3c-475e-bdd2-7a682b0ca369",
+   "spray": "fcd63f11-9a3d-4b73-9efe-c119081a7b61",
+   "frond": "295996cc-a0bc-4a84-bd0c-1233d1f9cd06",
+   "fan": "2d63e505-d679-405b-b8a9-7679dee16fea",
+   "banana": "b3639a88-f560-4712-ba5c-7bd17d6b7a44",
+   "fern": "86747546-7666-43d0-90a1-d97abafa06d7",
+   "bough": "4efd3ba4-7cf2-45b2-9a2b-b68542b7255a",
+   "pineTuft": "f7bc39d5-755f-4d08-bbdc-a397a2b828d9",
+   "blossom": "88f99f06-8c8b-45b1-8937-9d9e4913be8c",
+   "maple": "75cabb8d-7933-4a69-8e4f-e4a535b7982d",
+   "bushFlower": "34697092-4c22-48bf-87d9-61845efcdeaa",
+   "grass": "2f3036dc-07cf-4b16-92de-a6b24e881fa1",
+   "vine": "d3121b9c-d4fa-44d2-ab14-9ff3afd017bd",
+   "twig": "85a42e7c-4896-4919-8ea2-899bce5561d4",
+   "juniper": "f68c1111-c7b8-4bee-90ba-f5dc0c60a563",
+   "gorse": "0cc81bd0-ccb2-4d02-9956-4ea0a5bf0f06",
+   "dryScrub": "a28fb008-bff4-4cae-b911-6b380eeec7d7",
+   "boughSnow": "7dfa7124-7fba-4c3e-9416-c489457a31ca",
+   "ridged": "b3d51ceb-f960-4a92-8da8-2ec5e69efcbb",
+   "plated": "5e48efe8-8d4a-4c1e-b3bb-99251a191195",
+   "smooth": "342e67f1-cc6a-4b00-82e4-519dabbd51e6",
+   "ringed": "8351ba16-84bc-4e39-a69b-3b60935027aa",
+   "banded": "f0ddd990-db38-4c59-a77c-f5792355756f",
+   "fibrous": "c444ed82-077b-4ccb-89d5-a4ec74e7719e",
+   "dead": "26744db7-e563-4a70-8958-c12f01bd4cc5",
+   "mossy": "22037ec9-9749-4327-ba5d-e850294cada8"
+  }
+ },
+ "species": {
+  "kapok": {
+   "file": "kapok.glb",
+   "kind": "lobed",
+   "H": 18,
+   "align": false,
+   "bytes": 632032,
+   "variants": [
+    {
+     "top": 19.926,
+     "crownBase": 13.305,
+     "crownTop": 19.054,
+     "crownR": 7.891,
+     "trunkR": 0.522,
+     "trunkTop": 12.541,
+     "leanAtCrown": 0.13,
+     "leanMid": 0.125,
+     "cards": 341,
+     "verts": 2563,
+     "tris": [
+      2134,
+      1290,
+      340
+     ]
+    },
+    {
+     "top": 20.082,
+     "crownBase": 13.707,
+     "crownTop": 19.437,
+     "crownR": 7.038,
+     "trunkR": 0.524,
+     "trunkTop": 14.377,
+     "leanAtCrown": 0.175,
+     "leanMid": 0.16,
+     "cards": 302,
+     "verts": 2312,
+     "tris": [
+      1946,
+      1188,
+      306
+     ]
+    }
+   ],
+   "hero": {
+    "top": 19.973,
+    "crownBase": 13.225,
+    "crownTop": 19.078,
+    "crownR": 7.975,
+    "trunkR": 0.522,
+    "trunkTop": 12.541,
+    "leanAtCrown": 0.13,
+    "leanMid": 0.125,
+    "cards": 417,
+    "verts": 4568,
+    "tris": [
+     4878,
+     3444,
+     452
+    ]
+   }
+  },
+  "fig": {
+   "file": "fig.glb",
+   "kind": "lobed",
+   "H": 15,
+   "align": false,
+   "bytes": 722416,
+   "variants": [
+    {
+     "top": 16.967,
+     "crownBase": 7.03,
+     "crownTop": 16.029,
+     "crownR": 8.398,
+     "trunkR": 0.59,
+     "trunkTop": 7.962,
+     "leanAtCrown": 0.046,
+     "leanMid": 0.067,
+     "cards": 359,
+     "verts": 3059,
+     "tris": [
+      2718,
+      1806,
+      356
+     ]
+    },
+    {
+     "top": 16.306,
+     "crownBase": 7.983,
+     "crownTop": 15.564,
+     "crownR": 6.789,
+     "trunkR": 0.593,
+     "trunkTop": 8.623,
+     "leanAtCrown": 0.166,
+     "leanMid": 0.17,
+     "cards": 308,
+     "verts": 2681,
+     "tris": [
+      2402,
+      1590,
+      320
+     ]
+    }
+   ],
+   "hero": {
+    "top": 16.435,
+    "crownBase": 7.372,
+    "crownTop": 15.578,
+    "crownR": 8.396,
+    "trunkR": 0.59,
+    "trunkTop": 7.962,
+    "leanAtCrown": 0.049,
+    "leanMid": 0.067,
+    "cards": 393,
+    "verts": 4978,
+    "tris": [
+     5480,
+     4030,
+     448
+    ]
+   }
+  },
+  "junglebroad": {
+   "file": "junglebroad.glb",
+   "kind": "lobed",
+   "H": 14,
+   "align": false,
+   "bytes": 706720,
+   "variants": [
+    {
+     "top": 15.143,
+     "crownBase": 7.171,
+     "crownTop": 14.607,
+     "crownR": 5.739,
+     "trunkR": 0.428,
+     "trunkTop": 9.077,
+     "leanAtCrown": 0.304,
+     "leanMid": 0.316,
+     "cards": 282,
+     "verts": 2082,
+     "tris": [
+      1820,
+      1104,
+      200
+     ]
+    },
+    {
+     "top": 15.393,
+     "crownBase": 8.681,
+     "crownTop": 14.864,
+     "crownR": 5.483,
+     "trunkR": 0.43,
+     "trunkTop": 9.86,
+     "leanAtCrown": 0.136,
+     "leanMid": 0.173,
+     "cards": 279,
+     "verts": 2003,
+     "tris": [
+      1736,
+      1060,
+      208
+     ]
+    },
+    {
+     "top": 15.608,
+     "crownBase": 7.277,
+     "crownTop": 14.891,
+     "crownR": 6.005,
+     "trunkR": 0.427,
+     "trunkTop": 8.922,
+     "leanAtCrown": 0.285,
+     "leanMid": 0.285,
+     "cards": 330,
+     "verts": 2364,
+     "tris": [
+      2040,
+      1198,
+      224
+     ]
+    }
+   ],
+   "hero": {
+    "top": 15.812,
+    "crownBase": 7.176,
+    "crownTop": 14.925,
+    "crownR": 5.674,
+    "trunkR": 0.428,
+    "trunkTop": 9.077,
+    "leanAtCrown": 0.305,
+    "leanMid": 0.324,
+    "cards": 399,
+    "verts": 4119,
+    "tris": [
+     4462,
+     3120,
+     332
+    ]
+   }
+  },
+  "coconut": {
+   "file": "coconut.glb",
+   "kind": "rosette",
+   "H": 13,
+   "align": false,
+   "bytes": 272480,
+   "variants": [
+    {
+     "top": 13.013,
+     "crownBase": 6.725,
+     "crownTop": 12.765,
+     "crownR": 5.051,
+     "trunkR": 0.31,
+     "trunkTop": 10.505,
+     "leanAtCrown": 0.615,
+     "leanMid": 0.551,
+     "cards": 22,
+     "verts": 718,
+     "tris": [
+      852,
+      516,
+      168
+     ]
+    },
+    {
+     "top": 13.422,
+     "crownBase": 7.023,
+     "crownTop": 13.241,
+     "crownR": 4.226,
+     "trunkR": 0.316,
+     "trunkTop": 11.029,
+     "leanAtCrown": 0.188,
+     "leanMid": 0.152,
+     "cards": 22,
+     "verts": 718,
+     "tris": [
+      852,
+      516,
+      168
+     ]
+    },
+    {
+     "top": 12.258,
+     "crownBase": 6.451,
+     "crownTop": 11.952,
+     "crownR": 4.831,
+     "trunkR": 0.304,
+     "trunkTop": 9.973,
+     "leanAtCrown": 0.496,
+     "leanMid": 0.454,
+     "cards": 22,
+     "verts": 718,
+     "tris": [
+      852,
+      516,
+      168
+     ]
+    }
+   ],
+   "hero": {
+    "top": 12.968,
+    "crownBase": 6.423,
+    "crownTop": 12.84,
+    "crownR": 4.856,
+    "trunkR": 0.31,
+    "trunkTop": 10.505,
+    "leanAtCrown": 0.524,
+    "leanMid": 0.543,
+    "cards": 29,
+    "verts": 1627,
+    "tris": [
+     2128,
+     1488,
+     280
+    ]
+   }
+  },
+  "fanpalm": {
+   "file": "fanpalm.glb",
+   "kind": "rosette",
+   "H": 10,
+   "align": false,
+   "bytes": 166304,
+   "variants": [
+    {
+     "top": 10.263,
+     "crownBase": 6.776,
+     "crownTop": 10.263,
+     "crownR": 2.688,
+     "trunkR": 0.298,
+     "trunkTop": 7.664,
+     "leanAtCrown": 0.348,
+     "leanMid": 0.164,
+     "cards": 26,
+     "verts": 602,
+     "tris": [
+      560,
+      292,
+      88
+     ]
+    },
+    {
+     "top": 9.417,
+     "crownBase": 6.143,
+     "crownTop": 9.417,
+     "crownR": 2.875,
+     "trunkR": 0.295,
+     "trunkTop": 6.909,
+     "leanAtCrown": 0.625,
+     "leanMid": 0.397,
+     "cards": 26,
+     "verts": 602,
+     "tris": [
+      560,
+      292,
+      88
+     ]
+    }
+   ],
+   "hero": {
+    "top": 9.99,
+    "crownBase": 6.823,
+    "crownTop": 9.954,
+    "crownR": 2.568,
+    "trunkR": 0.297,
+    "trunkTop": 7.664,
+    "leanAtCrown": 0.353,
+    "leanMid": 0.15,
+    "cards": 32,
+    "verts": 1166,
+    "tris": [
+     1352,
+     1024,
+     120
+    ]
+   }
+  },
+  "seaalmond": {
+   "file": "seaalmond.glb",
+   "kind": "lobed",
+   "H": 12,
+   "align": false,
+   "bytes": 543944,
+   "variants": [
+    {
+     "top": 12.955,
+     "crownBase": 5.743,
+     "crownTop": 12.622,
+     "crownR": 6.926,
+     "trunkR": 0.364,
+     "trunkTop": 8.162,
+     "leanAtCrown": 0.143,
+     "leanMid": 0.191,
+     "cards": 270,
+     "verts": 2095,
+     "tris": [
+      1754,
+      1108,
+      308
+     ]
+    },
+    {
+     "top": 13.173,
+     "crownBase": 5.935,
+     "crownTop": 12.513,
+     "crownR": 6.664,
+     "trunkR": 0.365,
+     "trunkTop": 8.496,
+     "leanAtCrown": 0.29,
+     "leanMid": 0.3,
+     "cards": 256,
+     "verts": 1966,
+     "tris": [
+      1648,
+      1056,
+      282
+     ]
+    }
+   ],
+   "hero": {
+    "top": 13.711,
+    "crownBase": 5.618,
+    "crownTop": 13.055,
+    "crownR": 6.703,
+    "trunkR": 0.364,
+    "trunkTop": 8.162,
+    "leanAtCrown": 0.134,
+    "leanMid": 0.214,
+    "cards": 340,
+    "verts": 4009,
+    "tris": [
+     4360,
+     3184,
+     400
+    ]
+   }
+  },
+  "juniper": {
+   "file": "juniper.glb",
+   "kind": "lobed",
+   "H": 8,
+   "align": false,
+   "bytes": 425996,
+   "variants": [
+    {
+     "top": 8.369,
+     "crownBase": 3.288,
+     "crownTop": 8.131,
+     "crownR": 4.005,
+     "trunkR": 0.362,
+     "trunkTop": 5.133,
+     "leanAtCrown": 0.236,
+     "leanMid": 0.21,
+     "cards": 214,
+     "verts": 1645,
+     "tris": [
+      1394,
+      888,
+      230
+     ]
+    },
+    {
+     "top": 9.391,
+     "crownBase": 3.794,
+     "crownTop": 8.922,
+     "crownR": 4.259,
+     "trunkR": 0.367,
+     "trunkTop": 5.671,
+     "leanAtCrown": 0.375,
+     "leanMid": 0.698,
+     "cards": 198,
+     "verts": 1507,
+     "tris": [
+      1282,
+      850,
+      212
+     ]
+    }
+   ],
+   "hero": {
+    "top": 8.963,
+    "crownBase": 3.715,
+    "crownTop": 8.418,
+    "crownR": 4.077,
+    "trunkR": 0.36,
+    "trunkTop": 5.133,
+    "leanAtCrown": 0.268,
+    "leanMid": 0.181,
+    "cards": 272,
+    "verts": 3129,
+    "tris": [
+     3428,
+     2544,
+     320
+    ]
+   }
+  },
+  "acacia": {
+   "file": "acacia.glb",
+   "kind": "lobed",
+   "H": 9,
+   "align": false,
+   "bytes": 553352,
+   "variants": [
+    {
+     "top": 10.569,
+     "crownBase": 6.584,
+     "crownTop": 10.376,
+     "crownR": 6.63,
+     "trunkR": 0.271,
+     "trunkTop": 5.47,
+     "leanAtCrown": 0.391,
+     "leanMid": 0.364,
+     "cards": 278,
+     "verts": 2209,
+     "tris": [
+      1846,
+      1068,
+      302
+     ]
+    },
+    {
+     "top": 10.686,
+     "crownBase": 6.734,
+     "crownTop": 10.56,
+     "crownR": 6.214,
+     "trunkR": 0.273,
+     "trunkTop": 6.015,
+     "leanAtCrown": 0.35,
+     "leanMid": 0.25,
+     "cards": 244,
+     "verts": 1978,
+     "tris": [
+      1668,
+      972,
+      278
+     ]
+    }
+   ],
+   "hero": {
+    "top": 10.56,
+    "crownBase": 6.501,
+    "crownTop": 10.317,
+    "crownR": 6.65,
+    "trunkR": 0.271,
+    "trunkTop": 5.47,
+    "leanAtCrown": 0.391,
+    "leanMid": 0.365,
+    "cards": 340,
+    "verts": 4061,
+    "tris": [
+     4384,
+     3100,
+     400
+    ]
+   }
+  },
+  "datepalm": {
+   "file": "datepalm.glb",
+   "kind": "rosette",
+   "H": 12,
+   "align": false,
+   "bytes": 254124,
+   "variants": [
+    {
+     "top": 10.738,
+     "crownBase": 5.81,
+     "crownTop": 10.597,
+     "crownR": 3.277,
+     "trunkR": 0.353,
+     "trunkTop": 8.824,
+     "leanAtCrown": 0.162,
+     "leanMid": 0.149,
+     "cards": 31,
+     "verts": 865,
+     "tris": [
+      1012,
+      604,
+      176
+     ]
+    },
+    {
+     "top": 10.173,
+     "crownBase": 5.157,
+     "crownTop": 9.932,
+     "crownR": 3.839,
+     "trunkR": 0.351,
+     "trunkTop": 8.258,
+     "leanAtCrown": 0.359,
+     "leanMid": 0.349,
+     "cards": 31,
+     "verts": 865,
+     "tris": [
+      1012,
+      604,
+      176
+     ]
+    }
+   ],
+   "hero": {
+    "top": 11.074,
+    "crownBase": 5.881,
+    "crownTop": 10.713,
+    "crownR": 3.285,
+    "trunkR": 0.352,
+    "trunkTop": 8.824,
+    "leanAtCrown": 0.164,
+    "leanMid": 0.152,
+    "cards": 38,
+    "verts": 1834,
+    "tris": [
+     2368,
+     1612,
+     296
+    ]
+   }
+  },
+  "snag": {
+   "file": "snag.glb",
+   "kind": "snag",
+   "H": 10,
+   "align": false,
+   "bytes": 191720,
+   "variants": [
+    {
+     "top": 10.459,
+     "crownBase": 4.768,
+     "crownTop": 10.459,
+     "crownR": 5.515,
+     "trunkR": 0.375,
+     "trunkTop": 8.2,
+     "leanAtCrown": 0.061,
+     "leanMid": 0.152,
+     "cards": 8,
+     "verts": 493,
+     "tris": [
+      522,
+      514,
+      112
+     ]
+    },
+    {
+     "top": 10.825,
+     "crownBase": 4.832,
+     "crownTop": 10.825,
+     "crownR": 5.785,
+     "trunkR": 0.362,
+     "trunkTop": 7,
+     "leanAtCrown": 0.459,
+     "leanMid": 0.46,
+     "cards": 10,
+     "verts": 527,
+     "tris": [
+      546,
+      536,
+      120
+     ]
+    },
+    {
+     "top": 11.831,
+     "crownBase": 5.412,
+     "crownTop": 11.831,
+     "crownR": 6.53,
+     "trunkR": 0.382,
+     "trunkTop": 9,
+     "leanAtCrown": 0.047,
+     "leanMid": 0.047,
+     "cards": 6,
+     "verts": 459,
+     "tris": [
+      498,
+      492,
+      106
+     ]
+    }
+   ],
+   "hero": {
+    "top": 10.977,
+    "crownBase": 4.315,
+    "crownTop": 10.977,
+    "crownR": 5.191,
+    "trunkR": 0.372,
+    "trunkTop": 8.2,
+    "leanAtCrown": 0.096,
+    "leanMid": 0.206,
+    "cards": 14,
+    "verts": 1090,
+    "tris": [
+     1396,
+     1380,
+     156
+    ]
+   }
+  },
+  "windpine": {
+   "file": "windpine.glb",
+   "kind": "lobed",
+   "H": 11,
+   "align": true,
+   "bytes": 597060,
+   "variants": [
+    {
+     "top": 12.498,
+     "crownBase": 7.959,
+     "crownTop": 11.911,
+     "crownR": 7.215,
+     "trunkR": 0.344,
+     "trunkTop": 8.391,
+     "leanAtCrown": 0.559,
+     "leanMid": 0.477,
+     "cards": 230,
+     "verts": 1753,
+     "tris": [
+      1466,
+      922,
+      252
+     ]
+    },
+    {
+     "top": 12.94,
+     "crownBase": 8.215,
+     "crownTop": 12.343,
+     "crownR": 6.451,
+     "trunkR": 0.345,
+     "trunkTop": 8.747,
+     "leanAtCrown": 0.45,
+     "leanMid": 0.439,
+     "cards": 232,
+     "verts": 1696,
+     "tris": [
+      1408,
+      888,
+      248
+     ]
+    },
+    {
+     "top": 12.293,
+     "crownBase": 7.94,
+     "crownTop": 11.93,
+     "crownR": 8.472,
+     "trunkR": 0.343,
+     "trunkTop": 7.918,
+     "leanAtCrown": 0.707,
+     "leanMid": 0.295,
+     "cards": 286,
+     "verts": 2071,
+     "tris": [
+      1698,
+      1022,
+      288
+     ]
+    }
+   ],
+   "hero": {
+    "top": 12.746,
+    "crownBase": 7.851,
+    "crownTop": 12.203,
+    "crownR": 7.173,
+    "trunkR": 0.344,
+    "trunkTop": 8.391,
+    "leanAtCrown": 0.553,
+    "leanMid": 0.487,
+    "cards": 296,
+    "verts": 3373,
+    "tris": [
+     3660,
+     2676,
+     348
+    ]
+   }
+  },
+  "spruce": {
+   "file": "spruce.glb",
+   "kind": "conifer",
+   "H": 16,
+   "align": false,
+   "bytes": 634012,
+   "variants": [
+    {
+     "top": 16.648,
+     "crownBase": 0.739,
+     "crownTop": 16.002,
+     "crownR": 3.456,
+     "trunkR": 0.353,
+     "trunkTop": 15.76,
+     "leanAtCrown": 0.008,
+     "leanMid": 0.03,
+     "cards": 113,
+     "verts": 1524,
+     "tris": [
+      1558,
+      818,
+      304
+     ]
+    },
+    {
+     "top": 16.648,
+     "crownBase": 1.057,
+     "crownTop": 16.002,
+     "crownR": 3.012,
+     "trunkR": 0.353,
+     "trunkTop": 15.76,
+     "leanAtCrown": 0.009,
+     "leanMid": 0.036,
+     "cards": 115,
+     "verts": 1548,
+     "tris": [
+      1582,
+      830,
+      316
+     ]
+    },
+    {
+     "top": 16.648,
+     "crownBase": 0.683,
+     "crownTop": 16.599,
+     "crownR": 3.915,
+     "trunkR": 0.353,
+     "trunkTop": 15.76,
+     "leanAtCrown": 0.005,
+     "leanMid": 0.066,
+     "cards": 92,
+     "verts": 1272,
+     "tris": [
+      1306,
+      714,
+      268
+     ]
+    }
+   ],
+   "hero": {
+    "top": 16.648,
+    "crownBase": 0.862,
+    "crownTop": 15.356,
+    "crownR": 3.365,
+    "trunkR": 0.353,
+    "trunkTop": 15.76,
+    "leanAtCrown": 0.009,
+    "leanMid": 0.031,
+    "cards": 148,
+    "verts": 4923,
+    "tris": [
+     5456,
+     3836,
+     564
+    ]
+   }
+  },
+  "fir": {
+   "file": "fir.glb",
+   "kind": "conifer",
+   "H": 15,
+   "align": false,
+   "bytes": 835532,
+   "variants": [
+    {
+     "top": 15.608,
+     "crownBase": 1.001,
+     "crownTop": 14.955,
+     "crownR": 2.664,
+     "trunkR": 0.327,
+     "trunkTop": 14.775,
+     "leanAtCrown": 0.013,
+     "leanMid": 0.059,
+     "cards": 187,
+     "verts": 2412,
+     "tris": [
+      2446,
+      1226,
+      448
+     ]
+    },
+    {
+     "top": 15.608,
+     "crownBase": 1.029,
+     "crownTop": 14.955,
+     "crownR": 2.488,
+     "trunkR": 0.327,
+     "trunkTop": 14.775,
+     "leanAtCrown": 0.011,
+     "leanMid": 0.07,
+     "cards": 177,
+     "verts": 2292,
+     "tris": [
+      2326,
+      1166,
+      436
+     ]
+    }
+   ],
+   "hero": {
+    "top": 15.608,
+    "crownBase": 0.998,
+    "crownTop": 14.154,
+    "crownR": 2.448,
+    "trunkR": 0.327,
+    "trunkTop": 14.775,
+    "leanAtCrown": 0.013,
+    "leanMid": 0.06,
+    "cards": 238,
+    "verts": 7623,
+    "tris": [
+     8336,
+     5736,
+     864
+    ]
+   }
+  },
+  "larch": {
+   "file": "larch.glb",
+   "kind": "conifer",
+   "H": 15,
+   "align": false,
+   "bytes": 614748,
+   "variants": [
+    {
+     "top": 15.608,
+     "crownBase": 3.118,
+     "crownTop": 15.561,
+     "crownR": 3.229,
+     "trunkR": 0.327,
+     "trunkTop": 14.775,
+     "leanAtCrown": 0.033,
+     "leanMid": 0.006,
+     "cards": 89,
+     "verts": 2228,
+     "tris": [
+      2254,
+      1674,
+      220
+     ]
+    },
+    {
+     "top": 15.608,
+     "crownBase": 3.879,
+     "crownTop": 15.561,
+     "crownR": 2.752,
+     "trunkR": 0.327,
+     "trunkTop": 14.775,
+     "leanAtCrown": 0.023,
+     "leanMid": 0.043,
+     "cards": 95,
+     "verts": 2372,
+     "tris": [
+      2398,
+      1786,
+      236
+     ]
+    }
+   ],
+   "hero": {
+    "top": 15.608,
+    "crownBase": 3.305,
+    "crownTop": 14.955,
+    "crownR": 2.862,
+    "trunkR": 0.327,
+    "trunkTop": 14.775,
+    "leanAtCrown": 0.035,
+    "leanMid": 0.006,
+    "cards": 131,
+    "verts": 4385,
+    "tris": [
+     4876,
+     3448,
+     480
+    ]
+   }
+  },
+  "cherry": {
+   "file": "cherry.glb",
+   "kind": "lobed",
+   "H": 9,
+   "align": false,
+   "bytes": 824904,
+   "variants": [
+    {
+     "top": 9.826,
+     "crownBase": 3.838,
+     "crownTop": 9.445,
+     "crownR": 5.994,
+     "trunkR": 0.339,
+     "trunkTop": 3.276,
+     "leanAtCrown": 0.203,
+     "leanMid": 0.203,
+     "cards": 336,
+     "verts": 2578,
+     "tris": [
+      2136,
+      1236,
+      352
+     ]
+    },
+    {
+     "top": 10.129,
+     "crownBase": 3.81,
+     "crownTop": 9.628,
+     "crownR": 5.324,
+     "trunkR": 0.343,
+     "trunkTop": 3.57,
+     "leanAtCrown": 0.302,
+     "leanMid": 0.302,
+     "cards": 328,
+     "verts": 2464,
+     "tris": [
+      2036,
+      1194,
+      324
+     ]
+    },
+    {
+     "top": 9.989,
+     "crownBase": 3.689,
+     "crownTop": 9.688,
+     "crownR": 5.927,
+     "trunkR": 0.339,
+     "trunkTop": 3.238,
+     "leanAtCrown": 0.254,
+     "leanMid": 0.254,
+     "cards": 348,
+     "verts": 2710,
+     "tris": [
+      2248,
+      1316,
+      368
+     ]
+    }
+   ],
+   "hero": {
+    "top": 10.376,
+    "crownBase": 3.617,
+    "crownTop": 9.687,
+    "crownR": 5.921,
+    "trunkR": 0.338,
+    "trunkTop": 3.276,
+    "leanAtCrown": 0.203,
+    "leanMid": 0.203,
+    "cards": 408,
+    "verts": 4649,
+    "tris": [
+     4972,
+     3480,
+     456
+    ]
+   }
+  },
+  "maple": {
+   "file": "maple.glb",
+   "kind": "lobed",
+   "H": 8,
+   "align": false,
+   "bytes": 569080,
+   "variants": [
+    {
+     "top": 8.967,
+     "crownBase": 3.781,
+     "crownTop": 8.613,
+     "crownR": 5.158,
+     "trunkR": 0.224,
+     "trunkTop": 3.53,
+     "leanAtCrown": 0.341,
+     "leanMid": 0.341,
+     "cards": 278,
+     "verts": 2131,
+     "tris": [
+      1770,
+      1032,
+      278
+     ]
+    },
+    {
+     "top": 9.244,
+     "crownBase": 3.701,
+     "crownTop": 8.629,
+     "crownR": 5.296,
+     "trunkR": 0.224,
+     "trunkTop": 3.593,
+     "leanAtCrown": 0.3,
+     "leanMid": 0.3,
+     "cards": 306,
+     "verts": 2335,
+     "tris": [
+      1930,
+      1112,
+      326
+     ]
+    }
+   ],
+   "hero": {
+    "top": 9.253,
+    "crownBase": 3.785,
+    "crownTop": 8.814,
+    "crownR": 5.291,
+    "trunkR": 0.223,
+    "trunkTop": 3.53,
+    "leanAtCrown": 0.341,
+    "leanMid": 0.341,
+    "cards": 376,
+    "verts": 4049,
+    "tris": [
+     4296,
+     2996,
+     412
+    ]
+   }
+  },
+  "cloudpine": {
+   "file": "cloudpine.glb",
+   "kind": "lobed",
+   "H": 10,
+   "align": false,
+   "bytes": 471464,
+   "variants": [
+    {
+     "top": 10.845,
+     "crownBase": 4.771,
+     "crownTop": 10.411,
+     "crownR": 6.295,
+     "trunkR": 0.328,
+     "trunkTop": 8.235,
+     "leanAtCrown": 0.322,
+     "leanMid": 0.321,
+     "cards": 236,
+     "verts": 1810,
+     "tris": [
+      1524,
+      964,
+      256
+     ]
+    },
+    {
+     "top": 10.647,
+     "crownBase": 5.199,
+     "crownTop": 10.363,
+     "crownR": 5.586,
+     "trunkR": 0.329,
+     "trunkTop": 8.368,
+     "leanAtCrown": 0.54,
+     "leanMid": 0.516,
+     "cards": 228,
+     "verts": 1708,
+     "tris": [
+      1436,
+      908,
+      240
+     ]
+    }
+   ],
+   "hero": {
+    "top": 10.809,
+    "crownBase": 4.853,
+    "crownTop": 10.485,
+    "crownR": 6.373,
+    "trunkR": 0.328,
+    "trunkTop": 8.235,
+    "leanAtCrown": 0.348,
+    "leanMid": 0.346,
+    "cards": 302,
+    "verts": 3459,
+    "tris": [
+     3768,
+     2772,
+     352
+    ]
+   }
+  },
+  "street": {
+   "file": "street.glb",
+   "kind": "lobed",
+   "H": 10,
+   "align": false,
+   "bytes": 713676,
+   "variants": [
+    {
+     "top": 10.98,
+     "crownBase": 4.76,
+     "crownTop": 10.316,
+     "crownR": 3.005,
+     "trunkR": 0.242,
+     "trunkTop": 7.07,
+     "leanAtCrown": 0.02,
+     "leanMid": 0.014,
+     "cards": 302,
+     "verts": 1945,
+     "tris": [
+      1634,
+      1028,
+      208
+     ]
+    },
+    {
+     "top": 10.791,
+     "crownBase": 4.444,
+     "crownTop": 10.266,
+     "crownR": 2.628,
+     "trunkR": 0.242,
+     "trunkTop": 6.848,
+     "leanAtCrown": 0.02,
+     "leanMid": 0.018,
+     "cards": 380,
+     "verts": 2380,
+     "tris": [
+      1972,
+      1196,
+      254
+     ]
+    },
+    {
+     "top": 11.293,
+     "crownBase": 6.136,
+     "crownTop": 10.598,
+     "crownR": 3.523,
+     "trunkR": 0.243,
+     "trunkTop": 7.558,
+     "leanAtCrown": 0.018,
+     "leanMid": 0.02,
+     "cards": 354,
+     "verts": 2179,
+     "tris": [
+      1790,
+      1102,
+      238
+     ]
+    }
+   ],
+   "hero": {
+    "top": 10.757,
+    "crownBase": 4.783,
+    "crownTop": 10.229,
+    "crownR": 2.949,
+    "trunkR": 0.242,
+    "trunkTop": 7.07,
+    "leanAtCrown": 0.02,
+    "leanMid": 0.015,
+    "cards": 408,
+    "verts": 4177,
+    "tris": [
+     4564,
+     3312,
+     336
+    ]
+   }
+  },
+  "banana": {
+   "file": "banana.glb",
+   "kind": "rosette",
+   "H": 4.5,
+   "align": false,
+   "bytes": 44972,
+   "variants": [
+    {
+     "top": 3.622,
+     "crownBase": 1.464,
+     "crownTop": 3.565,
+     "crownR": 2.229,
+     "trunkR": 0.133,
+     "trunkTop": 1.948,
+     "leanAtCrown": 0.125,
+     "leanMid": 0.168,
+     "cards": 9,
+     "verts": 307,
+     "tris": [
+      348,
+      248,
+      76
+     ]
+    },
+    {
+     "top": 3.273,
+     "crownBase": 1.303,
+     "crownTop": 3.267,
+     "crownR": 2.245,
+     "trunkR": 0.129,
+     "trunkTop": 1.728,
+     "leanAtCrown": 0.116,
+     "leanMid": 0.146,
+     "cards": 7,
+     "verts": 271,
+     "tris": [
+      308,
+      228,
+      76
+     ]
+    }
+   ]
+  },
+  "treefern": {
+   "file": "treefern.glb",
+   "kind": "rosette",
+   "H": 4.5,
+   "align": false,
+   "bytes": 61872,
+   "variants": [
+    {
+     "top": 3.95,
+     "crownBase": 1.68,
+     "crownTop": 3.899,
+     "crownR": 2.07,
+     "trunkR": 0.13,
+     "trunkTop": 2.77,
+     "leanAtCrown": 0.179,
+     "leanMid": 0.203,
+     "cards": 15,
+     "verts": 415,
+     "tris": [
+      468,
+      308,
+      96
+     ]
+    },
+    {
+     "top": 3.411,
+     "crownBase": 1.056,
+     "crownTop": 3.352,
+     "crownR": 2.107,
+     "trunkR": 0.129,
+     "trunkTop": 2.169,
+     "leanAtCrown": 0.026,
+     "leanMid": 0.27,
+     "cards": 15,
+     "verts": 415,
+     "tris": [
+      468,
+      308,
+      96
+     ]
+    }
+   ]
+  },
+  "under-fern": {
+   "file": "under-fern.glb",
+   "kind": "under",
+   "H": 1,
+   "align": false,
+   "bytes": 21780,
+   "variants": [
+    {
+     "top": 0.532,
+     "crownBase": 0.004,
+     "crownTop": 0.51,
+     "crownR": 0.835,
+     "trunkR": 0.02,
+     "trunkTop": 1,
+     "leanAtCrown": 0,
+     "leanMid": 0,
+     "cards": 8,
+     "verts": 120,
+     "tris": [
+      128,
+      64,
+      16
+     ]
+    },
+    {
+     "top": 0.568,
+     "crownBase": -0.001,
+     "crownTop": 0.535,
+     "crownR": 0.789,
+     "trunkR": 0.02,
+     "trunkTop": 1,
+     "leanAtCrown": 0,
+     "leanMid": 0,
+     "cards": 9,
+     "verts": 135,
+     "tris": [
+      144,
+      64,
+      16
+     ]
+    }
+   ]
+  },
+  "under-bigleaf": {
+   "file": "under-bigleaf.glb",
+   "kind": "under",
+   "H": 1,
+   "align": false,
+   "bytes": 17880,
+   "variants": [
+    {
+     "top": 0.746,
+     "crownBase": -0.013,
+     "crownTop": 0.708,
+     "crownR": 0.74,
+     "trunkR": 0.02,
+     "trunkTop": 1,
+     "leanAtCrown": 0,
+     "leanMid": 0,
+     "cards": 7,
+     "verts": 105,
+     "tris": [
+      112,
+      48,
+      16
+     ]
+    },
+    {
+     "top": 0.729,
+     "crownBase": -0.014,
+     "crownTop": 0.729,
+     "crownR": 0.895,
+     "trunkR": 0.02,
+     "trunkTop": 1,
+     "leanAtCrown": 0,
+     "leanMid": 0,
+     "cards": 6,
+     "verts": 90,
+     "tris": [
+      96,
+      48,
+      16
+     ]
+    }
+   ]
+  },
+  "under-flower": {
+   "file": "under-flower.glb",
+   "kind": "under",
+   "H": 1,
+   "align": false,
+   "bytes": 9032,
+   "variants": [
+    {
+     "top": 0.795,
+     "crownBase": -0.371,
+     "crownTop": 0.795,
+     "crownR": 0.866,
+     "trunkR": 0.02,
+     "trunkTop": 1,
+     "leanAtCrown": 0,
+     "leanMid": 0,
+     "cards": 6,
+     "verts": 30,
+     "tris": [
+      24,
+      12,
+      4
+     ]
+    },
+    {
+     "top": 0.878,
+     "crownBase": -0.347,
+     "crownTop": 0.878,
+     "crownR": 0.878,
+     "trunkR": 0.02,
+     "trunkTop": 1,
+     "leanAtCrown": 0,
+     "leanMid": 0,
+     "cards": 7,
+     "verts": 35,
+     "tris": [
+      28,
+      12,
+      4
+     ]
+    }
+   ]
+  },
+  "under-scrub": {
+   "file": "under-scrub.glb",
+   "kind": "under",
+   "H": 1,
+   "align": false,
+   "bytes": 11884,
+   "variants": [
+    {
+     "top": 0.867,
+     "crownBase": -0.256,
+     "crownTop": 0.867,
+     "crownR": 0.877,
+     "trunkR": 0.02,
+     "trunkTop": 1,
+     "leanAtCrown": 0,
+     "leanMid": 0,
+     "cards": 7,
+     "verts": 51,
+     "tris": [
+      40,
+      24,
+      16
+     ]
+    },
+    {
+     "top": 0.929,
+     "crownBase": -0.326,
+     "crownTop": 0.929,
+     "crownR": 0.899,
+     "trunkR": 0.02,
+     "trunkTop": 1,
+     "leanAtCrown": 0,
+     "leanMid": 0,
+     "cards": 8,
+     "verts": 56,
+     "tris": [
+      44,
+      28,
+      16
+     ]
+    }
+   ]
+  },
+  "under-gorse": {
+   "file": "under-gorse.glb",
+   "kind": "under",
+   "H": 1,
+   "align": false,
+   "bytes": 11400,
+   "variants": [
+    {
+     "top": 0.934,
+     "crownBase": -0.43,
+     "crownTop": 0.934,
+     "crownR": 0.905,
+     "trunkR": 0.02,
+     "trunkTop": 1,
+     "leanAtCrown": 0,
+     "leanMid": 0,
+     "cards": 8,
+     "verts": 48,
+     "tris": [
+      38,
+      22,
+      10
+     ]
+    },
+    {
+     "top": 0.947,
+     "crownBase": -0.348,
+     "crownTop": 0.947,
+     "crownR": 0.941,
+     "trunkR": 0.02,
+     "trunkTop": 1,
+     "leanAtCrown": 0,
+     "leanMid": 0,
+     "cards": 9,
+     "verts": 53,
+     "tris": [
+      42,
+      22,
+      10
+     ]
+    }
+   ]
+  },
+  "under-bush": {
+   "file": "under-bush.glb",
+   "kind": "under",
+   "H": 1,
+   "align": false,
+   "bytes": 12044,
+   "variants": [
+    {
+     "top": 0.909,
+     "crownBase": -0.206,
+     "crownTop": 0.909,
+     "crownR": 0.763,
+     "trunkR": 0.02,
+     "trunkTop": 1,
+     "leanAtCrown": 0,
+     "leanMid": 0,
+     "cards": 9,
+     "verts": 53,
+     "tris": [
+      42,
+      22,
+      10
+     ]
+    },
+    {
+     "top": 0.992,
+     "crownBase": -0.327,
+     "crownTop": 0.992,
+     "crownR": 0.81,
+     "trunkR": 0.02,
+     "trunkTop": 1,
+     "leanAtCrown": 0,
+     "leanMid": 0,
+     "cards": 10,
+     "verts": 58,
+     "tris": [
+      46,
+      26,
+      14
+     ]
+    }
+   ]
+  },
+  "under-grass": {
+   "file": "under-grass.glb",
+   "kind": "under",
+   "H": 1,
+   "align": false,
+   "bytes": 6044,
+   "variants": [
+    {
+     "top": 0.98,
+     "crownBase": -0.02,
+     "crownTop": 0.98,
+     "crownR": 0.518,
+     "trunkR": 0.02,
+     "trunkTop": 1,
+     "leanAtCrown": 0,
+     "leanMid": 0,
+     "cards": 3,
+     "verts": 12,
+     "tris": [
+      6,
+      2,
+      0
+     ]
+    },
+    {
+     "top": 0.98,
+     "crownBase": -0.02,
+     "crownTop": 0.98,
+     "crownR": 0.513,
+     "trunkR": 0.02,
+     "trunkTop": 1,
+     "leanAtCrown": 0,
+     "leanMid": 0,
+     "cards": 2,
+     "verts": 8,
+     "tris": [
+      4,
+      2,
+      0
+     ]
+    }
+   ]
+  },
+  "under-rock": {
+   "file": "under-rock.glb",
+   "kind": "under",
+   "H": 1,
+   "align": false,
+   "bytes": 20608,
+   "variants": [
+    {
+     "top": 0.397,
+     "crownBase": -0.037,
+     "crownTop": 0.397,
+     "crownR": 0.708,
+     "trunkR": 0.02,
+     "trunkTop": 1,
+     "leanAtCrown": 0,
+     "leanMid": 0,
+     "cards": 0,
+     "verts": 72,
+     "tris": [
+      24,
+      24,
+      24
+     ]
+    },
+    {
+     "top": 0.645,
+     "crownBase": -0.03,
+     "crownTop": 0.645,
+     "crownR": 0.572,
+     "trunkR": 0.02,
+     "trunkTop": 1,
+     "leanAtCrown": 0,
+     "leanMid": 0,
+     "cards": 0,
+     "verts": 72,
+     "tris": [
+      24,
+      24,
+      24
+     ]
+    },
+    {
+     "top": 0.332,
+     "crownBase": -0.068,
+     "crownTop": 0.332,
+     "crownR": 0.828,
+     "trunkR": 0.02,
+     "trunkTop": 1,
+     "leanAtCrown": 0,
+     "leanMid": 0,
+     "cards": 0,
+     "verts": 72,
+     "tris": [
+      24,
+      24,
+      24
+     ]
+    }
+   ]
+  }
+ },
+ "bytes": 13927485
+}

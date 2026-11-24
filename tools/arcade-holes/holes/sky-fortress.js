@@ -239,6 +239,25 @@ for (const [x, y, hM, rot] of [[-420, 300, 110, 20], [-520, 640, 150, 80], [-180
 for (const [x, y, hM] of [[-360, 480, 60], [-340, 90, 54], [380, 380, 64], [360, 40, 50], [-90, 720, 70], [140, 740, 76], [330, 660, 58], [-300, 720, 66]]) P('rock-spire', x, y, hM, (x + y) % 360);
 P('rock-arch', -380, 600, 44, 60); P('rock-arch', 400, 760, 50, 300);
 
+// ---- gadgets (docs/gadgets.md): what a swing can hit
+//   ROCKET  coins up the full Rocket's flight; the courtyard is a x3 landing. Nothing hangs
+//           in the Rocket's way: the hero carry is the hole.
+//   SAFE    two ways up for a ball that comes up short. The Great Bombard, a cannon on the
+//           Rampart ledge: a ball that comes down on it (a plain drive of about 140 mph, a
+//           Rocket struck at 80, a pitch from the lower ramp) is fired up into the courtyard.
+//           The Siege Ladder, a pad on the upper ramp: a Rocket that lands on it (struck at
+//           about 100 mph) is thrown up over the lip. And the Powder Trail, a speed strip on
+//           the floor fairway, runs a topped ball on to the foot of the ramp.
+const keepRocket = L.flight(height, TEE, PIN, { speedMph: 125, vla: 13, spin: 2600, ball: 'rocket' });
+const gadgets = [
+  L.gadget('zone', 'courtyard-x3', 0, 336, { radius: 12, mult: 3 }),
+  L.gadget('warp', 'great-bombard', 0, 184, { radius: 8, pair: 'bombard-muzzle', style: 'cannon', delay: 0.9 }),
+  L.gadget('warp-exit', 'bombard-muzzle', 0, 186, { alt: 3, heading: 0, angle: 48, speedMph: 125, style: 'cannon' }),
+  L.gadget('pad', 'siege-ladder', 0, 258, { radius: 8, heading: 0, angle: 58, minMps: 27, maxMps: 27 }),
+  L.gadget('strip', 'powder-trail', 0, 56, { size: [30, 34], heading: 0, strength: 8, maxMps: 18 }),
+  keepRocket.coins('keep-coins', 80, 320, 7),
+];
+
 module.exports = {
   id: 'sky-fortress',
   stage: {
@@ -276,6 +295,7 @@ module.exports = {
   trees,
   woods,
   props,
+  gadgets,
   // the canyon's rim: nothing a Rocket can do reaches it
   obLine: L.rect(-282, -100, 284, 610),
   height,

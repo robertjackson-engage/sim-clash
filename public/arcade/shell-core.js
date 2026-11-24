@@ -27,12 +27,26 @@ export function pageProduct({ query = null, product = null } = {}) {
  */
 export function startScreen(query = null) {
   const q = (k) => (query && typeof query.get === 'function' ? query.get(k) : null);
-  if (q('match') === '1') return 'versus';
+  if (q('match') === '1' || q('party') === '1') return 'versus';   // v3:modes ?party=1: the party lobby (it is the match UI's too)
   if (q('menu') === '0') return 'game';
   if (q('menu') === 'main') return 'main';
   if (q('connect') === '1') return 'connect';
   return 'title';
 }
+
+// ---------------------------------------------------------------- v3:modes the four player colours
+// Slots 1 and 2 are the two the game has always had; 3 and 4 were picked to stay apart from them, from
+// each other and from the gold of a win under the three common kinds of colour blindness (the smallest
+// CIELAB distance between any two of the four, simulated protan / deutan / tritan: 18.8) and on a washed-out
+// projector. Colour is never the only cue: a slot also has its number and its own mark, shown wherever the
+// colour is (a header chip, a dart on the Bullseye board, a row of a results table).
+export const PLAYER_COLORS = Object.freeze(['#ff5a36', '#2e9bff', '#2fe6a8', '#f277d0']);
+export const PLAYER_MARKS = Object.freeze(['●', '◆', '▲', '■']);
+export const PLAYER_COLOR_NAMES = Object.freeze(['RED', 'BLUE', 'MINT', 'PINK']);
+/** The colour of a slot (1 to 4; anything else: slot 1). */
+export const slotColor = (slot) => PLAYER_COLORS[(slot >= 1 && slot <= 4 ? slot : 1) - 1];
+/** The mark of a slot (1 to 4). */
+export const slotMark = (slot) => PLAYER_MARKS[(slot >= 1 && slot <= 4 ? slot : 1) - 1];
 
 // ---------------------------------------------------------------- the menu map
 // Every screen of the front end. `parent`: where ESC goes. A screen with `list` has a
@@ -53,24 +67,38 @@ export const SCREENS = Object.freeze({
   monitor: { parent: 'settings' },
   credits: { parent: 'settings' },
   howto: { parent: 'main' },
+  // v3:modes screens a mode's own module draws (public/arcade/<id>.js), with its own keys, as
+  // 'versus' is the match UI's: the lobby of BULLSEYE and of the TRICK SHOT DUEL, the HIGHLIGHTS reel
+  bullseye: { parent: 'main', module: true },
+  duel: { parent: 'main', module: true },
+  highlights: { parent: 'main', module: true },
   game: { parent: null },
   pause: { parent: 'game', list: true },
   result: { parent: null, list: true },
 });
 
+// v3:modes `mode`: the item is offered only when that mode is in the build (mainItems({ modes })).
+// `game: true`: a way of playing (a big tile); the rest are the small print.
 export const MAIN_ITEMS = Object.freeze([
-  { id: 'versus', label: 'VERSUS', sub: 'TWO PLAYERS · HEAD TO HEAD', to: 'versus', tone: 'duel' },
-  { id: 'solo', label: 'SOLO', sub: 'ONE PLAYER · THE TOUR FOR A SCORE', to: 'solo', tone: 'p1' },
-  { id: 'practice', label: 'PRACTICE', sub: 'FREE HITTING AND MINI GAMES', to: 'practice', tone: 'p2' },
+  { id: 'versus', label: 'VERSUS', sub: 'TWO PLAYERS · HEAD TO HEAD', to: 'versus', tone: 'duel', game: true },
+  { id: 'party', label: 'PARTY', sub: '2 TO 4 PLAYERS · SKINS · RACE · KNOCKOUT', to: 'versus', tone: 'party', game: true, mode: 'party' },
+  { id: 'bullseye', label: 'BULLSEYE', sub: '1 TO 4 PLAYERS · DARTS WITH A GOLF BALL', to: 'bullseye', tone: 'gold', game: true, mode: 'bullseye' },
+  { id: 'duel', label: 'TRICK SHOT DUEL', sub: 'TWO PLAYERS · CALL IT · MATCH IT', to: 'duel', tone: 'duel', game: true, mode: 'duel' },
+  { id: 'solo', label: 'SOLO', sub: 'ONE PLAYER · THE TOUR FOR A SCORE', to: 'solo', tone: 'p1', game: true },
+  { id: 'practice', label: 'PRACTICE', sub: 'FREE HITTING AND MINI GAMES', to: 'practice', tone: 'p2', game: true },
+  { id: 'highlights', label: 'HIGHLIGHTS', sub: 'REPLAY THE BEST SHOTS OF THE NIGHT', to: 'highlights', tone: 'plain', mode: 'highlights' },
   { id: 'players', label: 'PLAYERS', sub: 'ROSTER · RANKS · TROPHIES', to: 'players', tone: 'plain' },
   { id: 'settings', label: 'SETTINGS', sub: 'SOUND · CAMERA · ASSISTS · MONITOR', to: 'settings', tone: 'plain' },
   { id: 'howto', label: 'HOW TO PLAY', sub: 'THE RULES · THE BALLS · THE KEYS', to: 'howto', tone: 'plain' },
   { id: 'quit', label: 'QUIT', sub: 'CLOSE THE GAME', to: null, tone: 'plain', desktopOnly: true },
 ]);
 
-/** The main menu for this window: QUIT only where there is a window to close. */
-export function mainItems({ canQuit = false } = {}) {
-  return MAIN_ITEMS.filter((x) => !x.desktopOnly || canQuit);
+/**
+ * The main menu for this window: QUIT only where there is a window to close, and (v3:modes)
+ * the newer modes only when they are in the build (`modes`: the ids that are).
+ */
+export function mainItems({ canQuit = false, modes = [] } = {}) {
+  return MAIN_ITEMS.filter((x) => (!x.desktopOnly || canQuit) && (!x.mode || modes.includes(x.mode)));
 }
 
 /** The solo menu: the tour at three lengths (as many as the stages built allow), and a single stage. */
@@ -209,7 +237,7 @@ export function createShellMachine({ start = 'title', count = () => 0, columns =
     key(key, { repeat = false } = {}) {
       const s = top();
       const k = String(key || '');
-      if (s === 'game' || s === 'versus' || s === 'connect') return none;
+      if (s === 'game' || s === 'versus' || s === 'connect' || SCREENS[s].module) return none;   // v3:modes a mode's own screen has its own keys
       if (/^F\d+$/.test(k) || k === 'Tab' || k === 'Shift' || k === 'Control' || k === 'Alt' || k === 'Meta' || k === 'CapsLock') return none;
       if (s === 'title') return repeat ? none : { type: 'leave-title' };
       if (k === 'Escape' || k === 'Backspace') return repeat ? none : api.back();
@@ -248,7 +276,7 @@ export function cueFor(effect) {
   if (effect.type === 'move' || effect.type === 'adjust') return 'ui-tick';
   if (effect.type === 'select') return 'ui-confirm';
   if (effect.type === 'back') return 'ui-back';
-  if (effect.type === 'open') return effect.from === 'title' ? 'whoosh' : effect.screen === 'versus' ? null /* the lobby brings its own */ : 'ui-confirm';
+  if (effect.type === 'open') return effect.from === 'title' ? 'whoosh' : effect.screen === 'versus' || (SCREENS[effect.screen] && SCREENS[effect.screen].module) ? null /* the lobby brings its own */ : 'ui-confirm';
   return null;
 }
 

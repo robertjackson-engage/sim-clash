@@ -17,6 +17,10 @@ def S(x,y=None,z=None):
 def fbm(p, sc=1.0, oct=3, seed=0.0):
     return noise.fractal(Vector(p)*sc + Vector((seed,seed*1.7,seed*0.3)), 1.0, 2.0, oct)
 
+# material slots beyond base (0) and glow (1), carried in the second colour UV's v (bake.mjs):
+# screen / led / ad faces are TEXTURED: their first UV set is a real UV (Kit.uvquad); glass keeps its colour
+SLOT = {'screen':0.2,'led':0.4,'ad':0.6,'glass':0.8}
+
 class Kit:
     def __init__(s, name, seed=7):
         s.name = name; s.bm = bmesh.new(); s.rnd = random.Random(seed)
@@ -24,14 +28,14 @@ class Kit:
         s.xf = [Matrix.Identity(4)]
     def push(s, m): s.xf.append(s.xf[-1] @ m)
     def pop(s): s.xf.pop()
-    def paint(s, faces, col, glow=0, jit=0, fj=0, smooth=False):
+    def paint(s, faces, col, glow=0, jit=0, fj=0, smooth=False, slot=None):
         u0 = s.bm.loops.layers.uv['c0']; u1 = s.bm.loops.layers.uv['c1']; c = hexc(col)
         k0 = 1 + s.rnd.choice((-1,-.5,0,.5,1))*jit if jit else 1
         for f in faces:
             k = k0*(1 + s.rnd.choice((-1,-.5,0,.5,1))*fj) if fj else k0
             r = min(1,max(0,c[0]*k)); g = min(1,max(0,c[1]*k)); b = min(1,max(0,c[2]*k))
             for l in f.loops:
-                l[u0].uv = (r,g); l[u1].uv = (b, 1.0 if glow else 0.0)
+                l[u0].uv = (r,g); l[u1].uv = (b, SLOT[slot] if slot else (1.0 if glow else 0.0))
             f.smooth = smooth
         return faces
     def tint(s, faces, fn):

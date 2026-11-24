@@ -101,6 +101,7 @@ test('the swing gate: every screen but play itself is "in the menus"', () => {
   assert.deepEqual(gate, {
     title: true, main: true, versus: true, connect: true, solo: true, 'solo-stage': true, practice: true, 'practice-stage': true,
     players: true, settings: true, monitor: true, credits: true, howto: true,
+    bullseye: true, duel: true, highlights: true,   // v3:modes a mode's lobby is a menu: its swings are held
     game: false, pause: false, result: false,
   });
 });
@@ -150,6 +151,9 @@ test('one sound per action', () => {
 test('the menus: QUIT only in a window, the tour at the lengths the stages allow, the practice games that fit a stage', () => {
   assert.deepEqual(mainItems().map((x) => x.id), ['versus', 'solo', 'practice', 'players', 'settings', 'howto']);
   assert.equal(mainItems({ canQuit: true }).at(-1).id, 'quit');
+  // v3:modes the newer modes are offered only when they are in the build
+  assert.deepEqual(mainItems({ modes: ['party', 'bullseye', 'duel', 'highlights'] }).map((x) => x.id), ['versus', 'party', 'bullseye', 'duel', 'solo', 'practice', 'highlights', 'players', 'settings', 'howto']);
+  assert.deepEqual(mainItems({ modes: ['bullseye'] }).map((x) => x.id), ['versus', 'bullseye', 'solo', 'practice', 'players', 'settings', 'howto']);
 
   assert.deepEqual(soloItems({ stages: 12 }).map((x) => x.id), ['tour-3', 'tour-6', 'tour-12', 'single']);
   assert.deepEqual(soloItems({ stages: 5 }).map((x) => x.id), ['tour-3', 'tour-5', 'single']);

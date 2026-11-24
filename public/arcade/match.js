@@ -182,9 +182,10 @@ export function shotNeed(m, p) {
   if (!p.strokes) {
     const st = m.stage || {};
     // a rocket hole: everybody's tee shot is a free ball, already loaded
-    const len = fog ? '???' : st.lengthYd ? `${Math.round(st.lengthYd)} YD` : '';
+    const yd = p.teeYd || st.lengthYd;   // v3:modes a forward tee (a handicap) has its own yardage
+    const len = fog ? '???' : yd ? `${Math.round(yd)} YD` : '';
     if (st.freeBall && m.phase === 'play') return { text: `${ballWord(st.freeBall)} LOADED${len ? ` · ${len}` : ''}`, tone: 'rocket' };
-    return { text: ['TEE SHOT', len, par ? `PAR ${par}` : ''].filter(Boolean).join(' · '), tone: 'info' };
+    return { text: [p.teeYd ? 'FORWARD TEE' : 'TEE SHOT', len, par ? `PAR ${par}` : ''].filter(Boolean).join(' · '), tone: 'info' };
   }
   return { text: `SHOT ${next}${fog ? ' · ??? TO THE PIN' : p.distToPinYd != null ? ` · ${toGoText(p.distToPinYd)} TO THE PIN` : ''}`, tone: 'info' };
 }
@@ -498,7 +499,7 @@ export class MatchUI {
     this.tour = null;         // the tour manifest
     this.tiers = TIER_FALLBACK;
     this.match = null;        // the last match state from the server (null: none)
-    this.pick = { a: null, b: null, format: 'quick', stage: 'random', tieRule: 'shootout', powerups: 'loadout', order: 'tour', hazardLosesHole: false, stakes: null, putting: 'assist' };
+    this.pick = { a: null, b: null, format: 'quick', stage: 'random', tieRule: 'shootout', powerups: 'loadout', order: 'tour', hazardLosesHole: false, stakes: null, putting: 'assist', help: {} /* v3:modes { playerId: 1 | 2 | 3 }: a handicap */ };
     try { Object.assign(this.pick, JSON.parse(localStorage.getItem(PICK_KEY) || '{}')); } catch (_) { /* first time, or private mode */ }
     this.lobbyUi = { open: false, picker: null, drawer: false, busy: false, fresh: false, error: '' };
     this.reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -592,6 +593,20 @@ export class MatchUI {
   _clearSet(set) { for (const h of set) clearTimeout(h); set.clear(); }
 
   // ---------- data in ----------
+  // v3:gadgets The gadgets of the stage whose course is in the bay (app.js, when its geometry is in:
+  // geo.arcade.id and render/gadget-core.js gadgetSummary(geo.gadgets): [{ kind, label, color,
+  // count, note }]). The stage intro lists them under the routes; the course usually arrives
+  // while the intro is up, so the row is filled in where it stands.
+  setStageGadgets(id, rows) {
+    this._stageGadgets = id && Array.isArray(rows) && rows.length ? { id: String(id), rows } : null;
+    const el = this.screen && this._screenKind === 'stage' ? this.screen.querySelector('.mt-gadgets') : null;
+    if (el && this._stageGadgets && el.getAttribute('data-stage') === this._stageGadgets.id && !el.firstChild) el.innerHTML = this._gadgetChips(this._stageGadgets.id);
+  }
+  _gadgetChips(id) {
+    const g = this._stageGadgets;
+    if (!g || !id || g.id !== String(id)) return '';
+    return `<b class="mt-gadgets-t">GADGETS</b>${g.rows.slice(0, 8).map((r, i) => `<span class="mt-gadget" style="--c:${esc(r.color)};--d:${(1.35 + i * 0.07).toFixed(2)}s"><i></i>${esc(String(r.count > 1 ? `${r.count} ` : '') + String(r.label).toUpperCase() + (r.count > 1 && !/S$/i.test(r.label) ? 'S' : '') + (r.note ? ` ${String(r.note).toUpperCase()}` : ''))}</span>`).join('')}`;
+  }
   // the roster (GET /api/leagues -> players), for the lobby
   setPlayers(list) {
     this.players = Array.isArray(list) ? list.map((p) => ({ ...p, initials: p.initials || initialsOf(p.name) })) : [];
@@ -916,6 +931,7 @@ export class MatchUI {
         <div class="mt-stage-facts">${st.par ? `<b>PAR ${esc(st.par)}</b>` : ''}${st.lengthYd ? `<b>${Math.round(st.lengthYd)} YD</b>` : ''}${diff}</div>
         ${st.blurb ? `<p class="mt-stage-blurb">${esc(st.blurb)}</p>` : ''}
         ${routes.length ? `<div class="mt-routes">${routes.map((r, i) => `<span class="mt-route mt-route-${r.id}" style="--d:${(0.95 + i * 0.13).toFixed(2)}s"><b>${r.label}</b><em>${esc(r.name)}</em></span>`).join('')}</div>` : ''}
+        <div class="mt-gadgets" data-stage="${esc(st.id || '')}">${this._gadgetChips(st.id) /* v3:gadgets */}</div>
       </div>
       ${free ? `<div class="mt-rocket" style="--c:${esc(free.color)}"><i aria-hidden="true">${esc(free.emoji || '🚀')}</i>${big(`${ballWord(free.id)} HOLE`, 'mt-rocket-t')}<span>FREE ${esc(ballWord(free.id))} BALL ON THE TEE</span></div>` : ''}
       ${windChip(st.wind || tourEntry.wind) /* v2:wind */}
@@ -1059,7 +1075,7 @@ export class MatchUI {
         <i class="mt-side-bg"></i>
         <span class="mt-badge">${up ? clock : ''}<b>P${slot}</b>${up && this.shotClock > 0 ? '<i class="mt-clock-s"></i>' : ''}</span>
         <div class="mt-side-body">
-          <div class="mt-side-id"><span class="mt-side-name">${esc(shout(p.name))}</span>${armed}${cursed}${pips(p.holesWon || 0, target)}</div>
+          <div class="mt-side-id"><span class="mt-side-name">${esc(shout(p.name))}</span>${armed}${cursed}${p.help && p.help.level ? `<i class="mt-hcp" title="${esc(p.help.text || 'Help')}">H${p.help.level}</i>` : '' /* v3:modes */}${pips(p.holesWon || 0, target)}</div>
           <div class="mt-nums">${nums}</div>
         </div>
         ${tag}
@@ -1374,10 +1390,10 @@ export class MatchUI {
         : lastR.reason === 'tiebreak' ? `WON IN SUDDEN DEATH · ${lw.big}${ll && !ll.out ? ` TO ${ll.big}` : ''}`
           : lv.kind === 'knockout' ? (series ? `WON BY KNOCKOUT ON HOLE ${lastR.holeNumber}` : `WON BY KNOCKOUT${lw.label ? ` · IN FOR ${lw.label}` : ''}`)
             : lv.how ? (series ? `HOLE ${lastR.holeNumber}: ${lv.how}` : lv.how) : '';
-    const awards = (m.awards || []).slice(0, 5).map((x, i) => {
+    const awards = (m.awards || []).slice(0, 5).map((x, i) => {   // v3:modes each row carries data-award (its id): the SHOT OF THE MATCH replay finds its own
       const p = playerOf(m, x.playerId);
       const [val, ...more] = String(x.value ?? '').split(' · ');
-      return `<div class="mt-award ${p ? `mt-p${slotOf(m, p.id)}` : ''}" style="--d:${(1.5 + i * 0.22).toFixed(2)}s">
+      return `<div class="mt-award ${p ? `mt-p${slotOf(m, p.id)}` : ''}" data-award="${esc(x.id || '')}" style="--d:${(1.5 + i * 0.22).toFixed(2)}s">
         <span class="mt-award-l">${esc([String(x.label || x.id || ''), ...more].join(' · ').toUpperCase())}</span>
         <b class="mt-award-p">${p ? esc(shout(p.name)) : ''}</b>
         <span class="mt-award-v${val.length > 7 ? ' mt-long' : ''}${val.length > 14 ? ' mt-xlong' : ''}">${esc(val.toUpperCase())}</span></div>`;
@@ -1426,6 +1442,8 @@ export class MatchUI {
     this._after(2000, () => this._burst(ws, 0.8));
     if (chest.length) this._after(3650, () => this._cue('chest-open'));
     this._after(this.reduced ? 0 : 900, () => this.screen.querySelector('[data-mt="rematch"]')?.focus({ preventScroll: true }));
+    // v3:modes the winner screen is up: whoever listens may add to it (arcade/replay.js: the SHOT OF THE MATCH replay)
+    try { if (typeof this.onWinnerScreen === 'function') this.onWinnerScreen(m, this.screen); } catch (_) { /* the screen stands without it */ }
   }
 
   // ---------- the lobby ----------
@@ -1541,9 +1559,18 @@ export class MatchUI {
         <div class="mt-scards">
         ${shown.map((s, i) => scard(s, { ro: true, n: i + 1 })).join('')}</div></div>`;
     }
+    // v3:modes HELP (a handicap) for each of the two players: OFF, or level 1 to 3 (lib/match.js HELP_LEVELS); kept by player, not by slot
+    if (!pk.help || typeof pk.help !== 'object') pk.help = {};
+    const helpOf = (p) => (p ? Math.max(0, Math.min(3, +pk.help[p.id] || 0)) : 0);
+    const helpRow = (p) => {
+      if (!p) return '';
+      const lv = helpOf(p), sug = this.suggested ? +this.suggested[p.id] || 0 : 0;
+      return `<div class="mt-opt mt-opt-help" title="HELP 1: EASY PUTTING AND ONE MORE POWER-UP. HELP 2: ALSO A FORWARD TEE, 20% CLOSER. HELP 3: TWO MORE POWER-UPS AND A TEE 35% CLOSER."><span>HELP FOR ${esc(shout(p.name))}${sug && sug !== lv ? `<em class="mt-help-sug">SUGGESTED: ${sug}</em>` : ''}</span><div class="mt-seg">${[0, 1, 2, 3].map((v) => `<button type="button" class="${v === lv ? 'on' : ''}" data-opt="help:${esc(p.id)}" data-val="${v}">${v ? v : 'OFF'}</button>`).join('')}</div></div>`;
+    };
     const tier = this.tiers.find((t) => t.id === pk.stakes) || null;
     const seg = (key, opts) => `<div class="mt-seg">${opts.map(([val, label]) => `<button type="button" class="${String(pk[key] ?? '') === String(val) ? `on ${arr === `opt-${key}` ? 'mt-arrive' : ''}` : ''}" data-opt="${key}" data-val="${esc(val)}">${esc(label)}</button>`).join('')}</div>`;
-    const summary = [pk.tieRule === 'halve' ? 'TIES HALVED' : 'TIES: SUDDEN DEATH', pk.powerups === 'off' ? 'NO POWER-UPS' : pk.powerups === 'unlimited' ? 'UNLIMITED POWER-UPS' : 'POWER-UP LOADOUT', pk.hazardLosesHole ? 'HAZARD LOSES HOLE' : '', pk.putting === 'easy' ? 'EASY PUTTING' : pk.putting === 'off' ? 'REAL PUTTING' : '', tier ? `STAKES ${fmt(tier.entryFee)}` : 'FRIENDLY'].filter(Boolean).join(' · ');
+    const summary = [pk.tieRule === 'halve' ? 'TIES HALVED' : 'TIES: SUDDEN DEATH', pk.powerups === 'off' ? 'NO POWER-UPS' : pk.powerups === 'unlimited' ? 'UNLIMITED POWER-UPS' : 'POWER-UP LOADOUT', pk.hazardLosesHole ? 'HAZARD LOSES HOLE' : '', pk.putting === 'easy' ? 'EASY PUTTING' : pk.putting === 'off' ? 'REAL PUTTING' : '', tier ? `STAKES ${fmt(tier.entryFee)}` : 'FRIENDLY',
+      ...[P(pk.a), P(pk.b)].filter((p) => helpOf(p)).map((p) => `HELP ${helpOf(p)}: ${shout(p.name)}`) /* v3:modes */].filter(Boolean).join(' · ');
     const a = P(pk.a), b = P(pk.b);
     const can = a && b && a.id !== b.id && !this.active && !ui.busy;
     const html = `
@@ -1574,6 +1601,8 @@ export class MatchUI {
         <div class="mt-opt"><span>HAZARD LOSES THE HOLE</span>${seg('hazardLosesHole', [['false', 'OFF'], ['true', 'ON']])}</div>
         <div class="mt-opt" title="How much the game helps a putt. ASSISTED: a decent putt drops, a poor one is a miss. EASY: more of them drop. REAL: your own stroke at the real cup."><span>PUTTING</span>${seg('putting', [['easy', 'EASY'], ['assist', 'ASSISTED'], ['off', 'REAL']])}</div>
         <div class="mt-opt"><span>STAKES</span>${seg('stakes', [['', 'FRIENDLY'], ...this.tiers.map((t) => [t.id, `${String(t.label || t.id).toUpperCase()} ${fmt(t.entryFee)}`])])}</div>
+        <div class="mt-opt-pair">${helpRow(a)}${helpRow(b) /* v3:modes HELP for each of the two players, side by side */}</div>
+        <p class="mt-help-note">HELP IS A HANDICAP FOR ONE PLAYER. 1: EASY PUTTING AND ONE MORE POWER-UP. 2: ALSO A FORWARD TEE, 20% CLOSER. 3: TWO MORE POWER-UPS AND A TEE 35% CLOSER.</p>
       </aside>`;
     const keepScroll = this.screen.querySelector('.mt-scards')?.scrollLeft || 0;
     this._show('lobby', html);
@@ -1658,6 +1687,7 @@ export class MatchUI {
       stage: pk.format === 'quick' ? pk.stage : (this._stages().length ? undefined : 'current'),
       order: pk.order, tieRule: pk.tieRule, powerups: pk.powerups, stakes: pk.stakes || null, hazardLosesHole: !!pk.hazardLosesHole,
       putting: ['easy', 'assist', 'off'].includes(pk.putting) ? pk.putting : 'assist',
+      help: Object.fromEntries([a, b].map((p) => [p.id, Math.max(0, Math.min(3, +(pk.help || {})[p.id] || 0))]).filter(([, v]) => v)),   // v3:modes
     });
     ui.busy = false;
     if (out && out.match && (!this.match || this.match.id !== out.match.id)) this.onMatch(out.match);
@@ -1698,11 +1728,10 @@ export class MatchUI {
   _renderMenu() {
     const m = this.match, ui = this.menuUi;
     if (!m || !ui.open) return;
-    const items = menuItems(m, this.game, { shell: this.shell });   // v2:playability with the rescue drop when there is one
+    const items = this._menuItems(m);   // v2:playability with the rescue drop when there is one (v3:modes through a method: a party has its own words)
     const asking = items.find((x) => x.id === ui.ask && x.ask && x.on) || null;
     if (!asking) ui.ask = null;
-    const [a, b] = bySlot(m);
-    const where = m.phase === 'done' ? 'MATCH OVER' : `${m.phase === 'tiebreak' ? 'SUDDEN DEATH' : `HOLE ${m.holeNumber || 1}`} · ${esc(shout(a.name))} ${a.holesWon || 0}–${b.holesWon || 0} ${esc(shout(b.name))}`;
+    const where = this._menuWhere(m);
     const body = asking
       ? `<span class="mt-x mt-menu-t mt-menu-q" style="--n:${asking.ask.title.length}">${esc(asking.ask.title)}</span>
          <span class="mt-menu-sub">${esc(asking.ask.sub)}</span>
@@ -1710,7 +1739,7 @@ export class MatchUI {
            <button type="button" class="mt-menu-b mt-menu-yes" data-mt="menu-yes" ${ui.busy ? 'disabled' : ''}><i>Y</i><b>YES</b></button>
            <button type="button" class="mt-menu-b mt-menu-no" data-mt="menu-no" ${ui.busy ? 'disabled' : ''}><i>N</i><b>NO</b></button>
          </div>`
-      : `<span class="mt-x mt-menu-t">MATCH MENU</span>
+      : `<span class="mt-x mt-menu-t">${esc(this._menuTitle(m))}</span>
          <span class="mt-menu-sub">${where}</span>
          <div class="mt-menu-list">${items.map((x, i) => `<button type="button" class="mt-menu-b mt-menu-${x.id}" data-mt="menu-do" data-do="${x.id}" ${x.on && !ui.busy ? '' : 'disabled'}><i>${i + 1}</i><b>${esc(x.label)}</b><span>${esc(x.sub)}</span></button>`).join('')}</div>
          <span class="mt-menu-note">SWINGS STILL COUNT WHILE THIS IS OPEN · ESC TO RESUME</span>`;
@@ -1718,6 +1747,13 @@ export class MatchUI {
     this.menuEl.innerHTML = `<div class="mt-menu-back" data-mt="${asking ? 'menu-no' : 'menu-resume'}"></div><div class="mt-menu-panel" role="dialog" aria-modal="true" aria-label="Match menu">${body}</div>`;
     ui.key = this._menuStateKey(m);
     this.menuEl.querySelector(asking ? '.mt-menu-no' : '.mt-menu-b:not([disabled])')?.focus({ preventScroll: true });
+  }
+  // v3:modes what the menu offers, what it is called and where the match stands: methods, so the party UI can say it its own way
+  _menuItems(m) { return menuItems(m, this.game, { shell: this.shell }); }
+  _menuTitle() { return 'MATCH MENU'; }
+  _menuWhere(m) {
+    const [a, b] = bySlot(m);
+    return m.phase === 'done' ? 'MATCH OVER' : `${m.phase === 'tiebreak' ? 'SUDDEN DEATH' : `HOLE ${m.holeNumber || 1}`} · ${esc(shout(a.name))} ${a.holesWon || 0}–${b.holesWon || 0} ${esc(shout(b.name))}`;
   }
   _menuStateKey(m) { const g = this.game; return m ? `${m.id}|${m.phase}|${m.undoable ? `${m.undoable.playerId}${m.undoable.stray ? 's' : ''}${m.undoable.drop ? 'd' : ''}` : ''}|${m.canRestartHole ? 1 : 0}|${m.holeNumber}|${m.players.map((p) => p.holesWon).join('-')}|${g && g.canDrop && g.drop ? `${m.currentPlayerId}${g.drop.free ? 'f' : 'p'}` : ''}` : ''; }
   // v2:playability the game state (app.js, on every 'state'): the menu's DROP ON THE LINE
@@ -1739,7 +1775,7 @@ export class MatchUI {
   }
   async _menuDo(id) {
     const m = this.match, ui = this.menuUi;
-    const item = menuItems(m, this.game, { shell: this.shell }).find((x) => x.id === id);
+    const item = this._menuItems(m).find((x) => x.id === id);   // v3:modes (through the method)
     if (!item || !item.on || ui.busy) return;
     if (id === 'resume') { this.closeMenu(); return; }
     if (item.ask) { ui.ask = id; this._cue('ui-confirm'); this._renderMenu(); return; }   // asks once: YES / NO
@@ -1780,7 +1816,7 @@ export class MatchUI {
       ? (e.drop   // v2:playability a rescue drop taken back: the ball is where it lay
         ? { kicker: p ? shout(p.name) : 'THE DROP', text: 'DROP TAKEN BACK', sub: 'THE BALL IS BACK WHERE IT LAY', tone: 'gold', ms: 1700 }
         : { kicker: p ? shout(p.name) : 'LAST SHOT', text: 'SHOT TAKEN BACK', sub: e.stray ? 'A STRAY BALL: IT NEVER HAPPENED' : 'HIT IT AGAIN', tone: 'gold', ms: 1700 })
-      : { kicker: e.tiebreak ? 'SUDDEN DEATH' : `HOLE ${e.holeNumber || m.holeNumber || ''}`, text: e.tiebreak ? 'ROUND RESTARTED' : 'HOLE RESTARTED', sub: 'BOTH PLAYERS BACK ON THE TEE', tone: 'gold', ms: 1700 });
+      : { kicker: e.tiebreak ? 'SUDDEN DEATH' : `HOLE ${e.holeNumber || m.holeNumber || ''}`, text: e.tiebreak ? 'ROUND RESTARTED' : 'HOLE RESTARTED', sub: m.party ? 'EVERYBODY BACK ON THE TEE' /* v3:modes */ : 'BOTH PLAYERS BACK ON THE TEE', tone: 'gold', ms: 1700 });
   }
   // A stray ball (the server marks a swing under 40 mph from a full-shot lie): it counted,
   // and for eight seconds, or until the next swing, a big prompt offers to take it back.
@@ -1841,7 +1877,7 @@ export class MatchUI {
         if (k === 'y') this._menuRun(ui.ask);
         else if (k === 'n' || k === 'escape' || k === 'backspace') { this._cue('ui-back'); ui.ask = null; this._renderMenu(); }
       } else if (k === 'escape' || k === 'm') this.closeMenu();
-      else if (/^[1-6]$/.test(k)) { const it = menuItems(this.match, this.game, { shell: this.shell })[+k - 1]; if (it) this._menuDo(it.id); }   // v2:playability six with the drop
+      else if (/^[1-7]$/.test(k)) { const it = this._menuItems(this.match)[+k - 1]; if (it) this._menuDo(it.id); }   // v2:playability six with the drop (v3:modes seven in a party: LEAVE THE GAME)
       return true;
     }
     if (this._stray && (k === 'u' || k === 'c')) {
@@ -1894,7 +1930,8 @@ export class MatchUI {
         const k = ob.dataset.opt, v = ob.dataset.val;
         this._cue((v === 'false' || v === 'off' || v === '' || v == null) && k !== 'putting' ? 'toggle-off' : 'toggle-on');   // v2:voice
         this.lobbyUi.arrive = `opt-${k}`;
-        this.pick[k] = k === 'hazardLosesHole' ? v === 'true' : k === 'stakes' ? (v || null) : v;
+        if (k.startsWith('help:')) { this.pick.help = { ...(this.pick.help || {}) }; if (+v) this.pick.help[k.slice(5)] = +v; else delete this.pick.help[k.slice(5)]; }   // v3:modes
+        else this.pick[k] = k === 'hazardLosesHole' ? v === 'true' : k === 'stakes' ? (v || null) : v;
         this._savePick(); this._renderLobby(); return;
       }
     }
@@ -1982,5 +2019,8 @@ export class MatchUI {
     }
   }
 }
+
+// v3:modes the little pieces of markup above, for the party UI (arcade/party.js: PartyUI extends MatchUI)
+export const kit = Object.freeze({ esc, fmt, big, bgHalves, profileChip, pips, stageFacts, themeStyle, windChip, windBadge, trophySvg, voiceName });
 
 export default MatchUI;

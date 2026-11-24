@@ -1,0 +1,734 @@
+{
+  "format": 1,
+  "skies": {
+    "alpine-day": {
+      "file": "sky/alpine-day.webp",
+      "bytes": 524062,
+      "sha256": "5b805ad362dc48d12502c18ced2a5997e40b6d05e93021526ad0c0f3b75bd3c3",
+      "width": 8192,
+      "height": 2048,
+      "band": [
+        -15,
+        75
+      ],
+      "sun": {
+        "azDeg": 244.6,
+        "altDeg": 22.7,
+        "color": "#ccd6e4"
+      },
+      "haze": [
+        "#6d84a8",
+        "#637698",
+        "#5e7ba8",
+        "#a2b7d9",
+        "#798baa",
+        "#485f85",
+        "#3d557c",
+        "#41587d",
+        "#5e708e",
+        "#6c82a6",
+        "#a4b5d1",
+        "#a8bcdb",
+        "#a4b5d2",
+        "#7c8faf",
+        "#5d7296",
+        "#4c6894"
+      ],
+      "horizon": "#768aab",
+      "zenith": "#0f388f",
+      "ground": "#5f78ab",
+      "luma": 0.1917,
+      "source": {
+        "made": "generated for Sim Clash (original; no third-party image)",
+        "model": "nano_banana_2_1",
+        "job": "56a31472-5084-45e7-ac2f-6369d8af4a82",
+        "front": 0.62,
+        "horizonRow": 0.7227,
+        "strip": [
+          8256,
+          2048
+        ],
+        "prompt": "Seamless 360 degree cylindrical panorama strip, a skybox backdrop for a stylised video game with the stylised realism of a modern Nintendo golf game: believable light and atmosphere, bold saturated colour, slightly painterly. A perfectly straight level horizon line runs across the whole image at one fifth of the height from the bottom edge. Below the horizon only a snowfield and frozen valley in blue shadow. Above it a crisp cold alpine day: deep cobalt sky, a few thin cirrus streaks, a small brilliant sun in the left third about one third of the way up the sky. All the way round the horizon stands an unbroken wall of enormous jagged snow-covered peaks and glaciers, sunlit on one side with blue shadows on the other, reaching up to a quarter of the image height, with lower dark pine-forested ridges in pale haze at their feet. No foreground objects, no people, no animals, no text, no logos, no real landmarks, no lens flare streaks, no vignette, no frame. The left edge and the right edge match exactly so the strip wraps around seamlessly."
+      }
+    },
+    "alpine-golden": {
+      "file": "sky/alpine-golden.webp",
+      "bytes": 406664,
+      "sha256": "62c586bf7dc14797101e6c481b71feda37dd807788f9cce2b3cc21d9a5ed2f6a",
+      "width": 8192,
+      "height": 2048,
+      "band": [
+        -15,
+        75
+      ],
+      "sun": {
+        "azDeg": 296.1,
+        "altDeg": 12.2,
+        "color": "#fae7b3"
+      },
+      "haze": [
+        "#4775b4",
+        "#3e6cab",
+        "#396bae",
+        "#3d6dae",
+        "#3666a7",
+        "#3769ab",
+        "#3c6bad",
+        "#3969aa",
+        "#3767a8",
+        "#3b6bac",
+        "#3a6bab",
+        "#3969aa",
+        "#4873b0",
+        "#938fb0",
+        "#6179ad",
+        "#4775b3"
+      ],
+      "horizon": "#4970ad",
+      "zenith": "#06225b",
+      "ground": "#305ea5",
+      "luma": 0.1253,
+      "source": {
+        "made": "generated for Sim Clash (original; no third-party image)",
+        "model": "nano_banana_2_1",
+        "job": "04d30cad-3770-4aba-add5-b26434673f89",
+        "front": 0.42,
+        "horizonRow": 0.605,
+        "strip": [
+          8256,
+          2048
+        ],
+        "prompt": "Seamless 360 degree cylindrical panorama strip, a skybox backdrop for a stylised video game with the stylised realism of a modern Nintendo golf game: believable light and atmosphere, bold saturated colour, slightly painterly. A perfectly straight level horizon line runs across the whole image at one fifth of the height from the bottom edge. Below the horizon only a snowfield in deep blue twilight shadow. Above it the blue hour in the high mountains: the sky runs from warm peach at the horizon through teal to deep indigo above, the first stars are out, and bright curtains of green and violet aurora borealis hang across the upper sky all the way round. A low golden sun sits just above the peaks in the left third. All the way round the horizon stands a wall of enormous jagged snow peaks, their tops glowing pink with alpenglow, their feet in blue haze, reaching up to a quarter of the image height. No foreground objects, no people, no animals, no text, no logos, no real landmarks, no lens flare streaks, no vignette, no frame. The left edge and the right edge match exactly so the strip wraps around seamlessly."
+      }
+    },
+    "canyon-golden": {
+      "file": "sky/canyon-golden.webp",
+      "bytes": 387192,
+      "sha256": "423d4f80ba15b6b6668b5ac4aaa7df0e842c78247f86a30205a02dca2a218656",
+      "width": 8192,
+      "height": 2048,
+      "band": [
+        -15,
+        75
+      ],
+      "sun": {
+        "azDeg": 300.4,
+        "altDeg": 10.7,
+        "color": "#fdfdd0"
+      },
+      "haze": [
+        "#e39862",
+        "#f9bd78",
+        "#f5b071",
+        "#e29866",
+        "#c07357",
+        "#bb6b56",
+        "#b16c5a",
+        "#cb7159",
+        "#c15c4c",
+        "#9e5249",
+        "#b86950",
+        "#d68458",
+        "#e9a065",
+        "#fbc578",
+        "#fbc277",
+        "#e79c64"
+      ],
+      "horizon": "#d89162",
+      "zenith": "#4188a3",
+      "ground": "#ca5c43",
+      "luma": 0.3965,
+      "source": {
+        "made": "generated for Sim Clash (original; no third-party image)",
+        "model": "nano_banana_2_1",
+        "job": "2a4e2b56-ba6e-4845-b648-c9e22e94e5d1",
+        "front": 0.437,
+        "horizonRow": 0.709,
+        "strip": [
+          8256,
+          2048
+        ],
+        "prompt": "Seamless 360 degree cylindrical panorama strip, a skybox backdrop for a stylised video game with the stylised realism of a modern Nintendo golf game: believable light and atmosphere, bold saturated colour, slightly painterly. A perfectly straight level horizon line runs across the whole image at one fifth of the height from the bottom edge. Below the horizon only a hazy red desert plain. Above it golden hour over canyon country: a sky running from warm apricot at the horizon to clear turquoise above, long streaks of salmon and gold cloud, the low sun in the left third a little above the horizon, glowing. All the way round the horizon stand layered red sandstone mesas, buttes and canyon rims fading into warm haze, far and small, none taller than one eighth of the image height. No foreground objects, no people, no animals, no text, no logos, no real landmarks, no lens flare streaks, no vignette, no frame. The left edge and the right edge match exactly so the strip wraps around seamlessly."
+      }
+    },
+    "desert-golden": {
+      "file": "sky/desert-golden.webp",
+      "bytes": 340878,
+      "sha256": "227e39ac4b235befe780f9f84eb66672d31040846f602d5817c3d0bfc764a0fa",
+      "width": 8192,
+      "height": 2048,
+      "band": [
+        -15,
+        75
+      ],
+      "sun": {
+        "azDeg": 271.4,
+        "altDeg": 14.3,
+        "color": "#fce691"
+      },
+      "haze": [
+        "#d28954",
+        "#c67d4a",
+        "#ca8253",
+        "#dc905b",
+        "#cf8355",
+        "#c67b55",
+        "#c37a50",
+        "#c57b50",
+        "#c17654",
+        "#c67a55",
+        "#ba7251",
+        "#d58b55",
+        "#da8f5c",
+        "#cd8256",
+        "#ca8056",
+        "#bd7852"
+      ],
+      "horizon": "#ca8054",
+      "zenith": "#435597",
+      "ground": "#e6a257",
+      "luma": 0.1764,
+      "source": {
+        "made": "generated for Sim Clash (original; no third-party image)",
+        "model": "nano_banana_2_1",
+        "job": "f4af22cf-7b16-4723-89c2-636159ceb36c",
+        "front": 0.44,
+        "horizonRow": 0.5967,
+        "strip": [
+          8256,
+          2048
+        ],
+        "prompt": "Seamless 360 degree cylindrical panorama strip, a skybox backdrop for a stylised video game with the stylised realism of a modern Nintendo golf game: believable light and atmosphere, bold saturated colour, slightly painterly. A perfectly straight level horizon line runs across the whole image at one fifth of the height from the bottom edge. Below the horizon only rolling golden sand dunes. Above it a desert sunset: the sky runs from blazing orange at the horizon through magenta to deep blue above, a few thin gilded clouds, a large low sun in the left third sinking into the haze just above the dunes. All the way round the horizon lie endless dunes in soft layers. In the centre of the image, far off and tiny in the haze, stands an invented ancient desert city of flat-roofed mud-brick towers, domes and obelisks, no taller than one tenth of the image height. No foreground objects, no people, no animals, no text, no logos, no real landmarks, no lens flare streaks, no vignette, no frame. The left edge and the right edge match exactly so the strip wraps around seamlessly."
+      }
+    },
+    "jungle-golden": {
+      "file": "sky/jungle-golden.webp",
+      "bytes": 436636,
+      "sha256": "d60f5e4a8bc75488c734ea54ebe27b5d651b3ad42640c2e0921ea2ea4ea385b0",
+      "width": 8192,
+      "height": 2048,
+      "band": [
+        -15,
+        75
+      ],
+      "sun": {
+        "azDeg": 269.8,
+        "altDeg": 14.4,
+        "color": "#fef6cf"
+      },
+      "haze": [
+        "#968e75",
+        "#8c8473",
+        "#a99c88",
+        "#8a8371",
+        "#706d5d",
+        "#65645d",
+        "#6d6a5d",
+        "#494b41",
+        "#515047",
+        "#6e695c",
+        "#bcad97",
+        "#e0cfb1",
+        "#f0dec2",
+        "#e5d2b3",
+        "#d2c3a7",
+        "#bbae93"
+      ],
+      "horizon": "#a59a85",
+      "zenith": "#796d54",
+      "ground": "#786e54",
+      "luma": 0.2573,
+      "source": {
+        "made": "generated for Sim Clash (original; no third-party image)",
+        "model": "nano_banana_2_1",
+        "job": "8eaff3f8-b359-4aaa-8340-8c3e19055b58",
+        "front": 0.46,
+        "horizonRow": 0.6592,
+        "strip": [
+          8256,
+          2048
+        ],
+        "prompt": "Seamless 360 degree cylindrical panorama strip, a skybox backdrop for a stylised video game with the stylised realism of a modern Nintendo golf game: believable light and atmosphere, bold saturated colour, slightly painterly. A perfectly straight level horizon line runs across the whole image at one fifth of the height from the bottom edge. Below the horizon only a sea of jungle canopy under mist. Above it golden hour in the tropics: a humid amber and green-gold sky, towering thunderheads lit orange and rose, the sun low in the left third behind bright mist. All the way round the horizon stand steep jungle-covered limestone karst mountains and ridges in layers, each layer paler in the mist, with bands of low cloud lying between them, reaching up to one fifth of the image height. No buildings. No foreground objects, no people, no animals, no text, no logos, no real landmarks, no lens flare streaks, no vignette, no frame. The left edge and the right edge match exactly so the strip wraps around seamlessly."
+      }
+    },
+    "links-day": {
+      "file": "sky/links-day.webp",
+      "bytes": 489076,
+      "sha256": "ba103c3fa3d41317f3693aa2f4cb0f75159a66a1f4a11302d02c7a9a28eb829e",
+      "width": 8192,
+      "height": 2048,
+      "band": [
+        -15,
+        75
+      ],
+      "sun": {
+        "azDeg": 228.6,
+        "altDeg": 24.5,
+        "color": "#f4f8f8"
+      },
+      "haze": [
+        "#8fa6b4",
+        "#5c7895",
+        "#5d7a98",
+        "#7da8c5",
+        "#83b9dc",
+        "#94c9e8",
+        "#97b7be",
+        "#99d2ea",
+        "#b3e7fc",
+        "#c2ebfb",
+        "#c1eefd",
+        "#c5ebfa",
+        "#a8ddef",
+        "#96dffc",
+        "#9ce3fb",
+        "#9bc3d3"
+      ],
+      "horizon": "#9ccadf",
+      "zenith": "#426186",
+      "ground": "#256c8e",
+      "luma": 0.3853,
+      "source": {
+        "made": "generated for Sim Clash (original; no third-party image)",
+        "model": "nano_banana_2_1",
+        "job": "8b63bc92-5305-4b73-98d8-323fde758605",
+        "front": 0.62,
+        "horizonRow": 0.6943,
+        "strip": [
+          8256,
+          2048
+        ],
+        "prompt": "Seamless 360 degree cylindrical panorama strip, a skybox backdrop for a stylised video game with the stylised realism of a modern Nintendo golf game: believable light and atmosphere, bold saturated colour, slightly painterly. A perfectly straight level horizon line runs across the whole image at one fifth of the height from the bottom edge. Below the horizon only a cold deep blue-green sea with small whitecaps. Above it a dramatic maritime sky: bright clear blue with brilliant white sunlit clouds over most of the panorama, but along one third of the horizon a dark slate storm front with grey rain curtains and shafts of sunlight breaking through its edge. The sun sits in the left third, half way up the sky, a small bright disc behind a wisp of thin cloud. A few far low headlands and pale cliffs sit tiny on the horizon. No foreground objects, no people, no animals, no text, no logos, no real landmarks, no lens flare streaks, no vignette, no frame. The left edge and the right edge match exactly so the strip wraps around seamlessly."
+      }
+    },
+    "neon-night": {
+      "file": "sky/neon-night.webp",
+      "bytes": 217262,
+      "sha256": "0255bd93bac8200178b74540ab2b1014110b6fc6498040698784beb332efe8be",
+      "width": 8192,
+      "height": 2048,
+      "band": [
+        -15,
+        75
+      ],
+      "sun": {
+        "azDeg": 258.6,
+        "altDeg": 38.9,
+        "color": "#c1cde8"
+      },
+      "haze": [
+        "#7378ae",
+        "#745d9c",
+        "#555d94",
+        "#5f81ba",
+        "#5b72a6",
+        "#4d75a0",
+        "#5d5a92",
+        "#6072a6",
+        "#5c7dad",
+        "#63659c",
+        "#546199",
+        "#6971bc",
+        "#6571ae",
+        "#5079a3",
+        "#615e98",
+        "#5e73a4"
+      ],
+      "horizon": "#606ea5",
+      "zenith": "#0a0936",
+      "ground": "#1c1c43",
+      "luma": 0.0552,
+      "source": {
+        "made": "generated for Sim Clash (original; no third-party image)",
+        "model": "nano_banana_2_1",
+        "job": "642688f7-6dd3-48db-a4c5-d47ce7f64ead",
+        "front": 0.55,
+        "horizonRow": 0.7129,
+        "strip": [
+          8256,
+          2048
+        ],
+        "note": "third take: the second still had stepped, spired towers in its haze that could be read as real ones. This one is flat-roofed boxes and cylinders only. The model drew two moons; the left one was taken out here (a harmonic fill and the sky's own grain), nothing else was retouched.",
+        "prompt": "Seamless 360 degree cylindrical panorama strip, a skybox backdrop for a stylised video game with the stylised realism of a modern arcade golf game: believable light and atmosphere, bold saturated colour, slightly painterly. A perfectly straight level horizon line runs across the whole image at one fifth of the height from the bottom edge. Below the horizon only black water mirroring city lights. Above it a night sky of deep indigo and violet with a few stars and thin clouds lit magenta from below, and a bright full moon in the left third two thirds of the way up the sky. All the way round the horizon stands an imaginary science-fiction city skyline in haze: hundreds of plain invented towers, every one a simple box, slab or cylinder with a perfectly flat level roof, of many heights and widths, with thousands of small lit windows, neon magenta and cyan edge lights, a few searchlight beams, the tallest towers reaching one third of the image height. Every roof is flat: no spires, no antennas, no masts, no needles, no pointed tops, no pyramid tops, no stepped or tiered crowns, no setbacks, no art deco towers, no domes, no arches, no clock towers, no pagodas, no twisted towers, no observation decks, no bridges, no wheels. Every building is a made-up generic shape: none may resemble any real-world building, tower or landmark, and the skyline must not resemble any real city. No signs, no lettering, no symbols, no hearts, no logos. No foreground objects, no people, no animals, no text, no lens flare streaks, no vignette, no frame. The left edge and the right edge match exactly so the strip wraps around seamlessly."
+      }
+    },
+    "sakura-day": {
+      "file": "sky/sakura-day.webp",
+      "bytes": 376190,
+      "sha256": "f43ecc3e0d7d5ae5e1043b099b3714e3f52364c1828469f023d3e2baa6f0d49f",
+      "width": 8192,
+      "height": 2048,
+      "band": [
+        -15,
+        75
+      ],
+      "sun": {
+        "azDeg": 262.7,
+        "altDeg": 22.1,
+        "color": "#fdf9ec"
+      },
+      "haze": [
+        "#b2c3c9",
+        "#b9c2ce",
+        "#abbec6",
+        "#aac1cc",
+        "#b4c9d3",
+        "#aab6c2",
+        "#96a6b8",
+        "#dbbfcf",
+        "#c2c1cd",
+        "#b4c4cb",
+        "#bac6ce",
+        "#c3d0d4",
+        "#d8dfe3",
+        "#d5dde2",
+        "#c7d6dc",
+        "#bfd0d6"
+      ],
+      "horizon": "#bcc7d0",
+      "zenith": "#a5caee",
+      "ground": "#b2c8b4",
+      "luma": 0.6211,
+      "source": {
+        "made": "generated for Sim Clash (original; no third-party image)",
+        "model": "nano_banana_2_1",
+        "job": "99ae1426-a46c-4fc5-acc3-da0c695835b6",
+        "front": 0.55,
+        "horizonRow": 0.6836,
+        "strip": [
+          8256,
+          2048
+        ],
+        "prompt": "Seamless 360 degree cylindrical panorama strip, a skybox backdrop for a stylised video game with the stylised realism of a modern Nintendo golf game: believable light and atmosphere, bold saturated colour, slightly painterly. A perfectly straight level horizon line runs across the whole image at one fifth of the height from the bottom edge. Below the horizon only a misty pale green valley floor. Above it a soft spring morning: pale blue sky warming to pink-peach near the horizon, a gentle sun in the left third about one third of the way up, a few soft white clouds. All the way round the horizon run misty layered blue-green mountains, ridge behind ridge fading into pale haze like an ink landscape painting, the nearest slopes dusted pink with cherry blossom, none taller than one fifth of the image height. No single conical mountain. No foreground objects, no people, no animals, no text, no logos, no real landmarks, no lens flare streaks, no vignette, no frame. The left edge and the right edge match exactly so the strip wraps around seamlessly."
+      }
+    },
+    "stadium-night": {
+      "file": "sky/stadium-night.webp",
+      "bytes": 342766,
+      "sha256": "85538d6467b3bb9f68a168998f3655a4616e7e248467e2356cfed309a786d46c",
+      "width": 8192,
+      "height": 2048,
+      "band": [
+        -15,
+        75
+      ],
+      "sun": {
+        "azDeg": 271.5,
+        "altDeg": 36,
+        "color": "#bfa789"
+      },
+      "haze": [
+        "#8f9fb2",
+        "#91a3b3",
+        "#8b9cac",
+        "#8fa2b4",
+        "#627285",
+        "#5e6473",
+        "#3f4654",
+        "#222530",
+        "#151924",
+        "#1e2633",
+        "#3e4c5d",
+        "#5e6b7f",
+        "#899eaf",
+        "#92a5b2",
+        "#94a5b4",
+        "#98aab9"
+      ],
+      "horizon": "#738190",
+      "zenith": "#020202",
+      "ground": "#0f0f14",
+      "luma": 0.0344,
+      "source": {
+        "made": "generated for Sim Clash (original; no third-party image)",
+        "model": "nano_banana_2_1",
+        "job": "31920826-0d99-4866-a250-d12ba8391491",
+        "front": 0.5,
+        "horizonRow": 0.7471,
+        "strip": [
+          8256,
+          2048
+        ],
+        "prompt": "Seamless 360 degree cylindrical panorama strip, a skybox backdrop for a stylised video game with the stylised realism of a modern Nintendo golf game: believable light and atmosphere, bold saturated colour, slightly painterly. A perfectly straight level horizon line runs across the whole image at one fifth of the height from the bottom edge. Below the horizon only dark ground. Above it a clear night sky full of stars, deep navy shading to black, a faint milky way, and a bright moon in the left third two thirds of the way up the sky. A low glow of cool white floodlight haze lies along the whole horizon, with soft shafts of floodlight rising from it at intervals, and a dark line of trees and scattered far city lights on the horizon itself. No stadium, no buildings in front. No foreground objects, no people, no animals, no text, no logos, no real landmarks, no lens flare streaks, no vignette, no frame. The left edge and the right edge match exactly so the strip wraps around seamlessly."
+      }
+    },
+    "tropical-day": {
+      "file": "sky/tropical-day.webp",
+      "bytes": 439256,
+      "sha256": "a5684a1c97c88eb9a75969c61ebd1f5ddd14bdeb0ed3911d8d804b435a096480",
+      "width": 8192,
+      "height": 2048,
+      "band": [
+        -15,
+        75
+      ],
+      "sun": {
+        "azDeg": 238.9,
+        "altDeg": 22,
+        "color": "#fae8c9"
+      },
+      "haze": [
+        "#7bbed6",
+        "#7ac1db",
+        "#7cc1d8",
+        "#7bbad2",
+        "#85c8d9",
+        "#88bece",
+        "#8fc0cc",
+        "#a5bdba",
+        "#bcc2af",
+        "#c6c6ac",
+        "#d0caad",
+        "#d4ccae",
+        "#bec2b1",
+        "#b8c3b3",
+        "#adc4bb",
+        "#a1c3c1"
+      ],
+      "horizon": "#a5c3c3",
+      "zenith": "#1250a0",
+      "ground": "#13c3d8",
+      "luma": 0.2755,
+      "source": {
+        "made": "generated for Sim Clash (original; no third-party image)",
+        "model": "nano_banana_2_1",
+        "job": "c31161e3-85a2-4190-a1ae-f56142662608",
+        "front": 0.585,
+        "horizonRow": 0.7485,
+        "strip": [
+          8256,
+          2048
+        ],
+        "prompt": "Seamless 360 degree cylindrical panorama strip of sky and open ocean, a skybox backdrop for a stylised video game with the stylised realism of a modern Nintendo golf game: believable light and atmosphere, bold saturated colour, slightly painterly. A perfectly straight level horizon line runs across the whole image at one fifth of the height from the bottom edge. Below the horizon only calm turquoise tropical sea fading to deep blue. Above it a perfect tropical afternoon: rich saturated blue sky deepening toward the top, towering sunlit cumulus cloud banks piled along the horizon all the way round, a few small fair-weather puffs higher up, clean open blue at the very top of the image. The sun sits in the left third, about one third of the way up the sky, a small bright disc with a soft warm glow, lighting the cloud edges gold. Three or four tiny hazy blue silhouettes of far-off jungle islands with small peaks sit on the horizon, spaced around the panorama. No foreground, no beach, no boats, no birds, no people, no text, no lens flare streaks, no vignette. The left edge and the right edge match exactly so the strip wraps around seamlessly."
+      }
+    },
+    "volcano-dusk": {
+      "file": "sky/volcano-dusk.webp",
+      "bytes": 381790,
+      "sha256": "e90cc1ce73a0cab36fe324c0cd1fb943cdf555d7044e3e35d284e3abfca8ce30",
+      "width": 8192,
+      "height": 2048,
+      "band": [
+        -15,
+        75
+      ],
+      "sun": {
+        "azDeg": 262.8,
+        "altDeg": 17.6,
+        "color": "#ec6a3c"
+      },
+      "haze": [
+        "#f26228",
+        "#c24227",
+        "#e74d26",
+        "#f55d28",
+        "#d55b30",
+        "#b3422f",
+        "#cb4c2e",
+        "#dd5128",
+        "#f77029",
+        "#e25b29",
+        "#c1442e",
+        "#ba4434",
+        "#a83f34",
+        "#b3412f",
+        "#e6542a",
+        "#ee5426"
+      ],
+      "horizon": "#d6512c",
+      "zenith": "#32141c",
+      "ground": "#502527",
+      "luma": 0.0578,
+      "source": {
+        "made": "generated for Sim Clash (original; no third-party image)",
+        "model": "nano_banana_2_1",
+        "job": "552cdfb1-07fd-44e8-a954-e9aff30a6581",
+        "front": 0.52,
+        "horizonRow": 0.6436,
+        "strip": [
+          8256,
+          2048
+        ],
+        "prompt": "Seamless 360 degree cylindrical panorama strip, a skybox backdrop for a stylised video game with the stylised realism of a modern Nintendo golf game: believable light and atmosphere, bold saturated colour, slightly painterly. A perfectly straight level horizon line runs across the whole image at one fifth of the height from the bottom edge. Below the horizon only a dark basalt plain veined with thin glowing lava rivers. Above it an ember-lit caldera sky at dusk: deep maroon and charcoal ash clouds lit from underneath in orange and red, a band of fiery orange along the whole horizon, drifting sparks. Three distant volcano cones stand around the horizon, each erupting with a lava fountain and a tall ash plume, none taller than one fifth of the image height. A dim blood-orange sun hangs low in the left third, veiled by smoke. No foreground objects, no people, no animals, no text, no logos, no real landmarks, no lens flare streaks, no vignette, no frame. The left edge and the right edge match exactly so the strip wraps around seamlessly."
+      }
+    }
+  },
+  "textures": {
+    "basalt": {
+      "color": {
+        "file": "tex/basalt_c.webp",
+        "bytes": 635076,
+        "sha256": "cff90c8d96c617a9c6cba0893753e0fb0275640214cf2ed159f63667c2ac804c"
+      },
+      "normal": {
+        "file": "tex/basalt_n.webp",
+        "bytes": 388392,
+        "sha256": "f6e6223f75020957ef88346576e8e0f19e318245daa4b089659ab166ac66224b"
+      },
+      "size": 1024,
+      "tileM": 5,
+      "mean": "#2b2b2b",
+      "tileError": 0.0012,
+      "source": {
+        "made": "generated for Sim Clash (original; no third-party image)",
+        "model": "nano_banana_2_1",
+        "job": "ec62b92d-4b46-49c3-a5ba-d87adb8dd097",
+        "prompt": "Seamless tileable game texture, perfectly top-down orthographic view of cooled volcanic basalt lava crust filling the whole frame edge to edge: matte charcoal-black rock broken into irregular plates by a network of deep cracks, fine ropey pahoehoe wrinkles and small gas bubbles, no glowing lava, flat even diffuse light, no shadows, no objects, no vignette, no border, no text. Stylised realism for a modern video game, crisp detail."
+      }
+    },
+    "earth": {
+      "color": {
+        "file": "tex/earth_c.webp",
+        "bytes": 553208,
+        "sha256": "6cdf1fc6447487c9947ffe5e5f0ce1ebd953c6d8f2f68651102b4f45d92e062c"
+      },
+      "normal": {
+        "file": "tex/earth_n.webp",
+        "bytes": 396620,
+        "sha256": "a458415b439fee9c99865fab7f59a21cb8da215c3541c31f98cc2a766011bc87"
+      },
+      "size": 1024,
+      "tileM": 3,
+      "mean": "#b79b7f",
+      "tileError": 0.0121,
+      "source": {
+        "made": "generated for Sim Clash (original; no third-party image)",
+        "model": "nano_banana_2_1",
+        "job": "560ce146-4dbe-410a-b181-7d7a3f2ce720",
+        "prompt": "Seamless tileable game texture, perfectly top-down orthographic view of dry desert hardpan earth filling the whole frame edge to edge: fine compacted dusty soil with small scattered pebbles and grit, a faint network of shallow dry cracks, neutral warm tan colour, flat even diffuse light, no shadows, no objects, no vignette, no border, no text. Stylised realism for a modern video game, crisp detail."
+      }
+    },
+    "grass": {
+      "color": {
+        "file": "tex/grass_c.webp",
+        "bytes": 903080,
+        "sha256": "d5439618e84b02c66e10697339ec50b9f47950954384a1099a0dbfda4fae6314"
+      },
+      "normal": {
+        "file": "tex/grass_n.webp",
+        "bytes": 501476,
+        "sha256": "461a41f55f1f53c22038f405fde41f485f6ccd959ec0377c5f23a6104be794e0"
+      },
+      "size": 1024,
+      "tileM": 1.6,
+      "mean": "#3b6a25",
+      "tileError": 0.013,
+      "source": {
+        "made": "generated for Sim Clash (original; no third-party image)",
+        "model": "nano_banana_2_1",
+        "job": "1e2da29c-7f45-4d82-b420-fa19327aabea",
+        "prompt": "Seamless tileable game texture, perfectly top-down orthographic view of short mown golf fairway grass filling the whole frame edge to edge: dense fine blades, uniform even coverage, rich saturated green with subtle lighter and darker blades, flat even diffuse light, no shadows, no objects, no vignette, no border, no text. Stylised realism for a modern video game, crisp detail."
+      }
+    },
+    "ice": {
+      "color": {
+        "file": "tex/ice_c.webp",
+        "bytes": 407084,
+        "sha256": "6aa92f9182efb420f08f8f334f109a396d22f0ba6e894d80a0db4ccc254d2267"
+      },
+      "normal": {
+        "file": "tex/ice_n.webp",
+        "bytes": 211902,
+        "sha256": "f07cde1a5425bdc6ffaf10229d9a7f03a07ec366d65764443d29d9b3b6cc37e9"
+      },
+      "size": 1024,
+      "tileM": 7,
+      "mean": "#93aabe",
+      "tileError": 0.0055,
+      "source": {
+        "made": "generated for Sim Clash (original; no third-party image)",
+        "model": "nano_banana_2_1",
+        "job": "ec243d91-b00f-46f5-9583-631d9fe9f7c5",
+        "prompt": "Seamless tileable game texture, perfectly top-down orthographic view of a frozen lake ice surface filling the whole frame edge to edge: frosted pale blue ice with long thin white scratches, a few branching white cracks running deep into the ice, clusters of tiny trapped air bubbles, a light dusting of frost, flat even diffuse light, no shadows, no objects, no vignette, no border, no text. Stylised realism for a modern video game, crisp detail."
+      }
+    },
+    "rock": {
+      "color": {
+        "file": "tex/rock_c.webp",
+        "bytes": 485834,
+        "sha256": "a7b83ec2b4a128929e1091a6f9c304cff7edb476f1e6bb35eacf2f5bd91a2bab"
+      },
+      "normal": {
+        "file": "tex/rock_n.webp",
+        "bytes": 310414,
+        "sha256": "7372545008e5f094b34e10a36b02fdc44fc2381676bfa70522662f06574074fa"
+      },
+      "size": 1024,
+      "tileM": 9,
+      "mean": "#88796b",
+      "tileError": 0.0041,
+      "source": {
+        "made": "generated for Sim Clash (original; no third-party image)",
+        "model": "nano_banana_2_1",
+        "job": "77bff6c1-0c49-4eca-874c-ffa7e294658c",
+        "prompt": "Seamless tileable game texture, perfectly top-down orthographic view of (face-on, not top-down) a weathered layered sandstone cliff face filling the whole frame edge to edge: clear horizontal strata running straight across the whole image, vertical cracks and fractured blocks, small ledges and chips, neutral warm grey-tan stone, flat even diffuse light, no shadows, no objects, no vignette, no border, no text. Stylised realism for a modern video game, crisp detail."
+      }
+    },
+    "rough": {
+      "color": {
+        "file": "tex/rough_c.webp",
+        "bytes": 531116,
+        "sha256": "21c4e43a9346722bbcf77c5da79162ef61a17dc61a86c315896a53eef7ac718c"
+      },
+      "normal": {
+        "file": "tex/rough_n.webp",
+        "bytes": 242244,
+        "sha256": "8572ee2cff8d680b3bc297ec702a012535ed0f77ef581c801d635dcfcd660434"
+      },
+      "size": 1024,
+      "tileM": 2.6,
+      "mean": "#30511f",
+      "tileError": 0.0001,
+      "source": {
+        "made": "generated for Sim Clash (original; no third-party image)",
+        "model": "nano_banana_2_1",
+        "job": "e4acd7dc-fc22-4c55-941f-b9228728a81e",
+        "prompt": "Seamless tileable game texture, perfectly top-down orthographic view of longer lush rough grass filling the whole frame edge to edge: thicker coarser blades lying in small swirling tufts and clumps, a few tiny clover leaves, uniform even coverage, deep saturated green with some yellow-green blades, flat even diffuse light, no shadows, no objects, no vignette, no border, no text. Stylised realism for a modern video game, crisp detail."
+      }
+    },
+    "sand": {
+      "color": {
+        "file": "tex/sand_c.webp",
+        "bytes": 148082,
+        "sha256": "9bdb04c285e5c804205dbed25c7b502963dc6779d704d1262a694ee3432593dc"
+      },
+      "normal": {
+        "file": "tex/sand_n.webp",
+        "bytes": 123984,
+        "sha256": "31e3a320488facc9173383e49e7e74abc2493a6d6ee1f4bfe8e291a0b03e51b3"
+      },
+      "size": 1024,
+      "tileM": 3.2,
+      "mean": "#eeddc6",
+      "tileError": 0.0038,
+      "source": {
+        "made": "generated for Sim Clash (original; no third-party image)",
+        "model": "nano_banana_2_1",
+        "job": "dd03f722-2fbb-4237-9202-3228fb12e16f",
+        "prompt": "Seamless tileable game texture, perfectly top-down orthographic view of fine pale cream bunker sand filling the whole frame edge to edge: gentle parallel wind ripples running left to right across the whole image, with a few faint straight rake lines, tiny grains and a few specks, soft even light from above, flat even diffuse light, no shadows, no objects, no vignette, no border, no text. Stylised realism for a modern video game, crisp detail."
+      }
+    },
+    "snow": {
+      "color": {
+        "file": "tex/snow_c.webp",
+        "bytes": 265094,
+        "sha256": "5bebd4a072754df52e151000b8faabf86d39c26bae41a25a8c5aa73ec3df15ed"
+      },
+      "normal": {
+        "file": "tex/snow_n.webp",
+        "bytes": 333344,
+        "sha256": "cfc4c59be9911572846419c01856d439f82b72afd9da8536732924bdfe367630"
+      },
+      "size": 1024,
+      "tileM": 6,
+      "mean": "#e0e6ed",
+      "tileError": 0.0042,
+      "source": {
+        "made": "generated for Sim Clash (original; no third-party image)",
+        "model": "nano_banana_2_1",
+        "job": "abfbe583-e853-4ea2-8075-9302ab191693",
+        "prompt": "Seamless tileable game texture, perfectly top-down orthographic view of fresh powder snow filling the whole frame edge to edge: soft rounded wind-drift shapes and gentle sastrugi ridges, fine crystalline grain with tiny sparkling ice crystals, white with very pale blue in the hollows, flat even diffuse light, no shadows, no objects, no vignette, no border, no text. Stylised realism for a modern video game, crisp detail."
+      }
+    }
+  }
+}

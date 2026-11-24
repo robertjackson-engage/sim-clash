@@ -218,6 +218,25 @@ const props = [
   ...palms,
 ].filter((p) => L.FLOATING_PROP_KINDS.includes(p.kind) || p.kind === 'bridge' || (!onPlay(p.x, p.y, 3) && offLine(p.x, p.y, L.SLIM_PROP_KINDS.includes(p.kind) ? 6 : 9)));
 
+// ---- gadgets (docs/gadgets.md): what a swing can hit
+//   SAFE    the drive's landing is a x2 ring, and the Mud Bank across the end of the fairway
+//           stops a ball that is running for the first river (stuck, but dry).
+//   RISKY   the Stone Drum, a pad on the island's far bank (beyond where a lay-up stops),
+//           throws a ball that reaches it over the second river onto the forecourt instead
+//           of letting it run into the water; and at the foot of the
+//           temple stairs is the Serpent's Mouth, a pipe that takes a ball rolling into it
+//           and fires it from the top of the stairs onto the green.
+//   ROCKET  coins all the way to the temple, along the Rocket drive's flight.
+const templeRocket = L.flight(height, TEE, PIN, { speedMph: 142, vla: 12, spin: 2600, ball: 'rocket' });
+const gadgets = [
+  L.gadget('zone', 'drive-x2', 2, 262, { radius: 13, mult: 2 }),
+  L.gadget('mud', 'mud-bank', 0, 299, { size: [54, 8], heading: 0 }),
+  L.gadget('pad', 'stone-drum', 12, 386, { radius: 5, heading: L.bearing([12, 386], [12, 432]), angle: 50, minMps: 24, maxMps: 24 }),
+  L.gadget('warp', 'serpents-mouth', 12, 443, { radius: 3, pair: 'serpents-tail', style: 'pipe' }),
+  L.gadget('warp-exit', 'serpents-tail', 12, 461, { heading: 352, angle: 45, speedMph: 21, style: 'pipe' }),   // onto the front of the green: a putt, not a tap-in
+  templeRocket.coins('temple-coins', 90, 450, 8),
+];
+
 module.exports = {
   id: 'temple-run',
   extent: { minX: -270, minY: -130, maxX: 270, maxY: 660 },
@@ -254,6 +273,7 @@ module.exports = {
     L.capsule([[-56, 561.5], [12, 562], [80, 561.5]], 9),
   ],
   props,
+  gadgets,
   // up the gorge walls either side, behind the tee's ledge and above the temple
   obLine: L.rect(-232, -104, 244, 622),
   height,

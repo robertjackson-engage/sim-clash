@@ -215,6 +215,28 @@ const props = [
   P('bird-flock', -40, 80, 8), P('bird-flock', 60, 150, 8), P('cloud', -120, 250, 24), P('cloud', 130, 260, 24), P('balloon', -110, 150, 20), P('balloon', 130, 60, 20),
 ].filter((p) => L.FLOATING_PROP_KINDS.includes(p.kind) || p.kind === 'bridge' || (!onPlay(p.x, p.y) && offLine(p.x, p.y, L.SLIM_PROP_KINDS.includes(p.kind) ? 6 : 9)));
 
+// ---- gadgets (docs/gadgets.md): what a swing can hit
+//   RISKY   the Festival Lantern hangs over the koi pond on the line at the flag: a wedge
+//           that goes through it bursts it for coins and flies on untouched. Round the flag
+//           the green is a Tea Bowl, a funnel that draws a ball that lands near it in to
+//           tap-in range; the Koi Rail on the pond's bank kicks back a ball that is running
+//           off the green's right side.
+//   SAFE    the Moss Runner, a slow speed strip at the end of the Moss Path, walks a ball
+//           that was laid up there on to the front left of the green.
+//   ROCKET  coins up to the Great Falls, along the Rocket wedge's flight.
+const flagWedge = L.flight(height, TEE, PIN, { speedMph: 91, vla: 25.5, spin: 9300 });
+const fallsRocket = L.flight(height, TEE, [-1, 150], { speedMph: 91, vla: 25.5, spin: 9300, ball: 'rocket' });
+const lanternAt = flagWedge.at(60);
+const koiRail = [];
+for (let a = -42; a <= 28; a += 10) koiRail.push(at(a, greenR(a * RAD) + 2.6).map(L.round2));
+const gadgets = [
+  L.gadget('breakable', 'festival-lantern', lanternAt.x, lanternAt.y, { z: L.round2(lanternAt.z - 3), radius: 3, height: 6, breakMph: 50, keep: 1, style: 'pinata' }),
+  L.gadget('funnel', 'tea-bowl', -2.5, 122, { radius: 7, strength: 1 }),
+  { id: 'koi-rail', kind: 'rail', points: koiRail, strength: 4 },
+  L.gadget('strip', 'moss-runner', -18, 93, { size: [12, 18], heading: L.bearing([-19, 92], [-9, 114]), strength: 4, maxMps: 4 }),
+  fallsRocket.coins('falls-coins', 30, 130, 6),
+];
+
 module.exports = {
   id: 'sakura-garden',
   extent: { minX: -200, minY: -110, maxX: 200, maxY: 300 },
@@ -246,6 +268,7 @@ module.exports = {
     L.capsule([[-56, 139.5], [0, 140], [56, 139.5]], 6),
   ],
   props,
+  gadgets,
   obLine: L.rect(-176, -90, 176, 276),
   height,
   sea: false,

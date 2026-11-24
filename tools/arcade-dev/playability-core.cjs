@@ -34,7 +34,7 @@ function stageGame(id, assist = null) {
 
 const ctxOf = (g) => {
   const h = g.hole;
-  return { surfaceAt: g.surfaceAt, terrain: g.terrain, trees: g.treeObstacles, pin: { x: h.pin[0], y: h.pin[1] } };
+  return { surfaceAt: g.surfaceAt, terrain: g.terrain, trees: g.treeObstacles, gadgets: g.gadgets || null /* v3:gadgets */, pin: { x: h.pin[0], y: h.pin[1] } };
 };
 
 // The spots: a `step` grid over everything in bounds that is not water or the green, a

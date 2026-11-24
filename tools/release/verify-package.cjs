@@ -98,7 +98,11 @@ else {
   try { tour = JSON.parse(fs.readFileSync(path.join(bundleDir, TOUR_FILE), 'utf8')); } catch (_) { bad('bundled arcade-tour.json missing or unreadable'); }
   if (tour) for (const s of [...tour.stages, ...tour.tiebreaks]) if (!bundle.courses.some((c) => c.file === s.file)) bad(`the tour lists ${s.id} but its course is not bundled`);
 }
-// ---- 3b. the sky photos those stages are lit by (lib/sky-bundle.js; the game never downloads one)
+// ---- 3b. the sky photos those stages are lit by (lib/sky-bundle.js; the game never downloads one).
+// v3:env-polish Every stage has its own panorama inside the archive (3c), so the bundle is
+// expected to list NO photo (tools/arcade-holes/sky-files.mjs decides, test/sky-bundle.test.mjs
+// pins it): one that is listed must say which stage needs it, and the two 16 MB Poly Haven
+// files must not ride along unlisted.
 const { readSkyBundle, SKY_DIR } = require(path.join(repo, 'lib', 'sky-bundle.js'));
 const skies = readSkyBundle(bundleDir);
 let skyBytes = 0;
@@ -110,11 +114,68 @@ else {
     try { buf = fs.readFileSync(path.join(bundleDir, SKY_DIR, f.file)); } catch (_) { bad(`bundled sky missing: ${f.file}`); }
     if (buf && (buf.length !== f.bytes || sha(buf) !== f.sha256)) bad(`bundled sky does not match its checksum: ${f.file}`);
     if (buf) skyBytes += buf.length;
+    if (!Array.isArray(f.stages) || !f.stages.length) bad(`a bundled sky photo names no stage that needs it: ${f.file}`);
   }
   let extra = [];
   try { extra = fs.readdirSync(path.join(bundleDir, SKY_DIR)).filter((n) => !skies.files.some((f) => f.file === n)); } catch (_) { /* reported above */ }
   for (const n of extra) bad(`a sky file that no stage uses is in the package: ${n}`);
 }
+// ---- 3c. the arcade stages' own skies and ground materials (v3:environment; public/arcade/env/manifest.json).
+// They are generated art that lives in the repo, so they ship inside the archive like the
+// midday sky does (nothing to install on first boot); every file the manifest names must
+// be there with the manifest's size and checksum, and nothing the manifest does not name.
+let envNote = null;
+try {
+  const envManifest = JSON.parse(fs.readFileSync(path.join(repo, 'public', 'arcade', 'env', 'manifest.json'), 'utf8'));
+  const named = [...Object.values(envManifest.skies || {}), ...Object.values(envManifest.textures || {}).flatMap((t) => [t.color, t.normal])];
+  if (!has.has('public/arcade/env/manifest.json')) bad('missing from the archive: public/arcade/env/manifest.json');
+  let envBytes = 0, skyOnly = 0;
+  for (const f of named) {
+    const rel = `public/arcade/env/${f.file}`;
+    if (!has.has(rel)) { bad(`missing from the archive: ${rel}`); continue; }
+    let buf = null;
+    try { buf = asar.extractFile(asarFile, rel.split('/').join(path.sep)); } catch (_) { bad(`cannot read from the archive: ${rel}`); }
+    if (buf && (buf.length !== f.bytes || sha(buf) !== f.sha256)) bad(`does not match its checksum in the env manifest: ${rel}`);
+    if (buf) { envBytes += buf.length; if (f.file.startsWith('sky/')) skyOnly += buf.length; }
+  }
+  for (const f of under('public/arcade/env')) {
+    const rel = f.path.slice('public/arcade/env/'.length);
+    if (rel !== 'manifest.json' && !named.some((n) => n.file === rel)) bad(`in the archive but not in the env manifest: ${f.path}`);
+  }
+  if (!Object.keys(envManifest.skies || {}).length) bad('the env manifest names no skies');
+  if (skyOnly > 40 * 1048576) bad(`the stage skies weigh ${(skyOnly / 1048576).toFixed(1)} MB (the budget is 40)`);
+  envNote = `${Object.keys(envManifest.skies || {}).length} stage skies (${(skyOnly / 1048576).toFixed(1)} MB), ${Object.keys(envManifest.textures || {}).length} ground sets, ${(envBytes / 1048576).toFixed(1)} MB in all`;
+} catch (error) { bad(`public/arcade/env/manifest.json is missing or unreadable: ${error.message}`); }
+// ---- 3d. the arcade worlds' trees (v3:tree-realism; public/arcade/trees/manifest.json): the species'
+// models and the four painted textures ship inside the archive; every file the manifest names
+// must be there at the manifest's size, nothing it does not name, and the palm prop the props
+// layer draws in their place (tools/arcade-art/trees/palm-prop.mjs) beside the other props.
+let treeNote = null;
+try {
+  const treeManifest = JSON.parse(fs.readFileSync(path.join(repo, 'public', 'arcade', 'trees', 'manifest.json'), 'utf8'));
+  const named = [...Object.values(treeManifest.species || {}), ...Object.values(treeManifest.textures || {})];
+  if (!has.has('public/arcade/trees/manifest.json')) bad('missing from the archive: public/arcade/trees/manifest.json');
+  let treeBytes = 0;
+  for (const f of named) {
+    const rel = `public/arcade/trees/${f.file}`;
+    if (!has.has(rel)) { bad(`missing from the archive: ${rel}`); continue; }
+    let buf = null;
+    try { buf = asar.extractFile(asarFile, rel.split('/').join(path.sep)); } catch (_) { bad(`cannot read from the archive: ${rel}`); }
+    if (buf && buf.length !== f.bytes) bad(`not the size the tree manifest gives: ${rel}`);
+    if (buf) treeBytes += buf.length;
+  }
+  for (const f of under('public/arcade/trees')) {
+    const rel = f.path.slice('public/arcade/trees/'.length);
+    if (rel !== 'manifest.json' && !named.some((n) => n.file === rel)) bad(`in the archive but not in the tree manifest: ${f.path}`);
+  }
+  for (const k of ['leaves', 'leavesAux', 'bark', 'barkNormal']) if (!(treeManifest.textures || {})[k]) bad(`the tree manifest names no ${k} texture`);
+  if (Object.keys(treeManifest.species || {}).length < 20) bad('the tree manifest names fewer than twenty species');
+  if (treeBytes > 25 * 1048576) bad(`the trees weigh ${(treeBytes / 1048576).toFixed(1)} MB (the budget is 25)`);
+  const palm = (JSON.parse(fs.readFileSync(path.join(repo, 'public', 'arcade', 'props', 'manifest.json'), 'utf8')).kinds || {}).palm;
+  if (!palm) bad('the props manifest has no palm (the tree build writes it)');
+  else for (const f of palm.variants || [palm.file]) if (!has.has(`public/arcade/props/${f}`)) bad(`missing from the archive: public/arcade/props/${f}`);
+  treeNote = `${Object.keys(treeManifest.species || {}).length} species, 4 textures, ${(treeBytes / 1048576).toFixed(1)} MB`;
+} catch (error) { bad(`public/arcade/trees/manifest.json is missing or unreadable: ${error.message}`); }
 if (fs.existsSync(path.join(resources, 'course-art'))) bad('resources/course-art is in the package: the game ships no real-course art packs');
 for (const f of ['LICENSE.txt', 'NOTICE.md', 'CREDITS.md', 'SOUND-CREDITS.md']) if (!fs.existsSync(path.join(unpacked, f))) bad(`missing beside the .exe: ${f}`);
 const product = require(path.join(repo, 'lib', 'product.js'));
@@ -141,7 +202,9 @@ console.log(`app.asar        ${mb(fs.statSync(asarFile).size)}, ${files.length} 
 console.log(`node_modules    ${deps.join(', ')}`);
 console.log(`arcade assets   ${under('public/arcade/props').length} props, ${under('public/arcade/sfx').length} sfx files, ${under('public/arcade/voice').length} voice files`);
 if (bundle && tour) console.log(`arcade stages   ${bundle.courses.length} courses bundled (${tour.stages.length} match stages, ${tour.tiebreaks.length} tiebreak arenas), revision ${bundle.revision}, app ${bundle.appVersion}`);
-if (skies) console.log(`sky photos      ${skies.files.length} bundled (${skies.files.map((f) => f.file.replace(/_4k\.hdr$/, '')).join(', ')}), ${mb(skyBytes)}`);
+if (skies) console.log(skies.files.length ? `sky photos      ${skies.files.length} bundled (${skies.files.map((f) => `${f.file.replace(/_4k\.hdr$/, '')} for ${(f.stages || []).join(', ')}`).join('; ')}), ${mb(skyBytes)}` : 'sky photos      none bundled (every stage has its own panorama)');
+if (envNote) console.log(`stage world     ${envNote}`);
+if (treeNote) console.log(`stage trees     ${treeNote}`);   // v3:tree-realism
 console.log(`signature       ${signature}`);
 if (problems.length) {
   console.error(`\nNOT SOUND: ${problems.length} problem(s)`);

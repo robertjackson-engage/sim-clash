@@ -210,6 +210,25 @@ const props = [
   ...cacti,
 ].filter((p) => L.FLOATING_PROP_KINDS.includes(p.kind) || (openGround(p.x, p.y, 3) && L.signedDistance(p.x, p.y, tee) < -3 && offLine(p.x, p.y, L.SLIM_PROP_KINDS.includes(p.kind) ? 6 : 9)));
 
+// ---- gadgets (docs/gadgets.md): what a swing can hit
+//   RISKY   the Gate Ring hangs on the line at the flag where a 132 to 145 mph drive is
+//           coming down toward the pool: through it and the ball flies on over the water
+//           (a 150 mph drive passes over the top of it and needs no help).
+//           The apron beyond the pool is a x3 landing ring.
+//   SAFE    the Caravan Road, a speed strip down the left fairway, runs a lay-up on toward
+//           the turn; the Oasis Spring, a pad at the end of the right fairway, throws a
+//           ball that reaches it over the bunker at the green.
+//   ROCKET  coins up the Rocket's climb to the Upper Court.
+const gateDrive = L.flight(height, TEE, PIN, { speedMph: 138, vla: 13, spin: 2700 });
+const courtRocket = L.flight(height, TEE, [16, 327], { speedMph: 150, vla: 12, spin: 2600, ball: 'rocket' });
+const gadgets = [
+  gateDrive.ring('gate-ring', 186, { radius: 8, strength: 1.25 }),
+  L.gadget('zone', 'gate-x3', 16, 239, { radius: 8, mult: 3 }),
+  L.gadget('strip', 'caravan-road', -58, 228, { size: [30, 34], heading: 62, strength: 8, maxMps: 10 }),
+  L.gadget('pad', 'oasis-spring', 82, 188, { radius: 6, heading: L.bearing([82, 188], PIN), angle: 50, minMps: 33, maxMps: 33 }),   // onto the front of the green: a putt, not a tap-in
+  courtRocket.coins('court-coins', 50, 290, 7),
+];
+
 module.exports = {
   id: 'pharaohs-gate',
   stage: {
@@ -258,6 +277,7 @@ module.exports = {
     L.capsule([[-90, 372], [16, 374], [120, 372]], 30),
   ],
   props,
+  gadgets,
   // far out over the dunes on every side, and up in the cliff city
   obLine: L.rect(-252, -122, 272, 486),
   height,

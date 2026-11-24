@@ -15,6 +15,7 @@
 import * as THREE from 'three';
 import { Reflector } from 'three/addons/objects/Reflector.js';
 import { RENDER_CONFIG } from './config.js';
+import { ENV_TEX_GLSL } from './env-materials.js';   // v3:environment the ground sets (basalt, ice) the stages' lava and ice are drawn with
 
 // GLSL: sum of directional ripples -> height gradient -> normal. Kept gentle (small
 // amplitudes) so the plane reads as calm pond water, not surf. Directions fan out by
@@ -61,6 +62,21 @@ const GLOW_GLSL = /* glsl */`
       float pool = smoothstep(0.35, 0.8, arcNoise(q * 0.45 - vec2(s * 0.4, 0.0)));
       vec3 lava = mix(uArcCrust, uArcGlow, smoothstep(0.42, 0.86, vein) * (0.45 + 0.55 * pool));
       lava = mix(lava, uArcHot * 1.5, smoothstep(0.8, 0.99, vein) * (0.2 + 0.8 * pool));
+      #ifdef WATER_ENV
+      {
+        // v3:environment a real crust: plates of the basalt set riding the flow, the melt glowing
+        // through their cracks, brighter where the crust is thin. Two copies a half cycle
+        // apart are cross-faded, so the crust travels without ever stretching.
+        vec2 dir = vec2(0.8, 0.6);
+        float ph = fract(t * uArcFlow.z * 0.5), ph2 = fract(ph + 0.5);
+        vec4 c0 = envC(5.0, p / uWaterFx.w - dir * ph * 0.7), c1 = envC(5.0, p / uWaterFx.w - dir * ph2 * 0.7 + 0.43);
+        vec4 cr = mix(c0, c1, abs(ph * 2.0 - 1.0));
+        float thin = smoothstep(0.3, 0.85, vein) * (0.4 + 0.6 * pool);            // where the melt is near the top
+        float crack = 1.0 - smoothstep(0.16 + 0.2 * thin, 0.36 + 0.3 * thin, cr.a);
+        vec3 plate = uArcCrust * 2.2 * cr.rgb * (0.5 + 0.9 * cr.a);
+        lava = mix(mix(plate, lava, 0.35 + 0.4 * thin), mix(uArcGlow, uArcHot * 1.6, thin * crack), crack);
+      }
+      #endif
       lava *= 0.86 + 0.14 * sin(t * 0.9 + n * 6.0);
       outCol = mix(col, lava, uArcFlow.x);
     } else {
@@ -72,6 +88,46 @@ const GLOW_GLSL = /* glsl */`
       outCol = col + (uArcGlow * smoothstep(0.58, 0.85, b) + uArcHot * smoothstep(0.42, 0.15, b)) * (uArcFlow.x * shimmer * graze);
     }
     return outCol;
+  }
+  #endif
+`;
+
+// v3:environment WATER WORTH LOOKING AT (arcade stages, behind WATER_ENV; quality.js env.waterFx):
+// caustics shimmering on a shallow bed, sparkle scattered on the ripples, the rings a ball
+// leaves where it goes in, and the generated basalt and ice sets for a volcano's lava
+// crust and a frozen tarn. uWaterFx: caustics, sparkle, what it is (0 water, 1 lava, 2 ice),
+// the set's tile (m). uRing[i]: a splash at world (x, z), the time it landed, its strength.
+const ENV_WATER_GLSL = /* glsl */`
+  #ifdef WATER_ENV
+  ${ENV_TEX_GLSL}
+  uniform vec4 uRing[4];
+  uniform vec4 uWaterFx;
+  float wHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+  float wNoise(vec2 p) {
+    vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(wHash(i), wHash(i + vec2(1.0, 0.0)), f.x), mix(wHash(i + vec2(0.0, 1.0)), wHash(i + vec2(1.0, 1.0)), f.x), f.y);
+  }
+  // the bright net light draws on a shallow bed: thin lines where three warped waves cross
+  float caustics(vec2 p, float t) {
+    vec2 q = p * 0.95;
+    float a = sin(q.x * 1.7 + t * 0.9 + sin(q.y * 2.3 + t * 0.6) * 1.3);
+    float b = sin(q.y * 1.9 - t * 0.7 + sin(q.x * 2.1 - t * 0.8) * 1.3);
+    float c = sin((q.x + q.y) * 1.3 + t * 0.5 + sin((q.x - q.y) * 1.7) * 1.2);
+    return pow(1.0 - abs((a + b + c) / 3.0), 7.0);
+  }
+  // rings spreading from where a ball went in: their brightness, and the way they tilt the surface
+  float splashRings(vec2 p, float t, out vec2 push) {
+    float s = 0.0; push = vec2(0.0);
+    for (int i = 0; i < 4; i++) {
+      float age = t - uRing[i].z;
+      if (uRing[i].w <= 0.0 || age < 0.0 || age > 5.0) continue;
+      vec2 dv = p - uRing[i].xy; float d = length(dv);
+      float r = 0.3 + age * 1.7;
+      float band = exp(-pow((d - r) / (0.1 + 0.05 * age), 2.0)) + 0.55 * exp(-pow((d - r * 0.55) / (0.08 + 0.04 * age), 2.0));
+      float k = band * uRing[i].w * (1.0 - age / 5.0);
+      s += k; push += dv / max(d, 1e-3) * k;
+    }
+    return s;
   }
   #endif
 `;
@@ -115,11 +171,23 @@ const POND_FRAG = /* glsl */`
   #include <fog_pars_fragment>
   #include <logdepthbuf_pars_fragment>
   ${RIPPLE}
+  ${ENV_WATER_GLSL}
   ${GLOW_GLSL}
   void main() {
     #include <logdepthbuf_fragment>
     vec3 N = rippleNormal(vWorldPos.xz, uTime, uChop);
     vec3 V = normalize(cameraPosition - vWorldPos);
+    #ifdef WATER_ENV
+    vec2 ringPush; float rings = splashRings(vWorldPos.xz, uTime, ringPush);
+    N = normalize(N + vec3(ringPush.x, 0.0, ringPush.y) * 0.45);
+    vec4 iceT = vec4(1.0);
+    if (uWaterFx.z > 1.5) {
+      // ice: frosted and scratched, a dull mirror; the scratches turn the light
+      iceT = envC(6.0, vWorldPos.xz / uWaterFx.w);
+      vec3 iceN = envN(6.0, vWorldPos.xz / uWaterFx.w);
+      N = normalize(vec3(iceN.x * 0.35, 1.0, -iceN.y * 0.35));
+    }
+    #endif
     // Schlick Fresnel, floored: a calm pond mirrors well above water's 2% at normal
     // incidence once the sky and banks are bright behind the viewer
     float F = mix(0.22, 1.0, 0.02 + 0.98 * pow(1.0 - max(dot(V, N), 0.0), 5.0));
@@ -133,9 +201,20 @@ const POND_FRAG = /* glsl */`
                                 : texture2D(uSky, equirectUv(reflect(-V, N))).rgb * color;
     // the body: dark, a little green-brown (algae, tannin), lit by the daylight
     vec3 body = uDeep * (0.45 + 0.55 * clamp(uSunDir.y * 1.5, 0.0, 1.0));
+    #ifdef WATER_ENV
+    if (uWaterFx.z > 1.5) { body = body * iceT.rgb * (0.75 + 0.5 * iceT.a); F *= 0.55 + 0.3 * iceT.a; }
+    #endif
     vec3 col = mix(body, mirror, F);
     vec3 H = normalize(uSunDir + V);
     col += uSunColor * pow(max(dot(N, H), 0.0), 380.0) * 3.0 * step(0.0, uSunDir.y);
+    #ifdef WATER_ENV
+    {
+      // sparkle: the small ripples' own glints, scattered and flickering, round the sun's path
+      vec3 N2 = rippleNormal(vWorldPos.xz * 4.7 + 13.0, uTime * 1.7, uChop * 1.6);
+      float sp = pow(max(dot(normalize(N + N2 * 0.6), H), 0.0), 140.0) * step(0.55, wNoise(vWorldPos.xz * 2.3 + uTime * 0.6));
+      col += uSunColor * sp * uWaterFx.y * step(0.0, uSunDir.y) * step(uWaterFx.z, 0.5);
+    }
+    #endif
     float alpha = 1.0;
     if (uDepthOn > 0.5) {
       // water column under this pixel along the view ray (terrain-only depth pre-pass)
@@ -152,9 +231,24 @@ const POND_FRAG = /* glsl */`
       float deepM = thick * clamp(V.y, 0.12, 1.0);
       col = mix(col, uSilt * day, exp(-deepM / uArcWater.y) * uArcWater.w);
       float lap = 0.5 + 0.5 * sin(uTime * 1.4 + (vWorldPos.x + vWorldPos.z) * 0.7);
+      #ifdef WATER_ENV
+      // the bed lit through clear shallows: the caustic net, fading as the water deepens
+      float clearK = exp(-deepM / max(uArcWater.y * 0.7, 0.05)) * step(uWaterFx.z, 0.5);
+      col += uSilt * day * caustics(vWorldPos.xz + N.xz * 1.2, uTime) * uWaterFx.x * clearK;
+      // foam that follows the bank, its edge broken up, and a thinner line lapping out from it
+      float fn = wNoise(vWorldPos.xz * 1.9 + vec2(uTime * 0.13, -uTime * 0.09));
+      float fd = deepM * (0.7 + 0.6 * fn);
+      float rim = 1.0 - smoothstep(0.35 * uArcWater.z, uArcWater.z * (1.0 + 0.5 * lap), fd);
+      float out2 = fd / max(uArcWater.z, 1e-3) - (2.0 + 1.3 * fract(uTime * 0.11 + fn * 0.35));
+      rim = max(rim, (1.0 - smoothstep(0.0, 0.45, abs(out2))) * 0.55 * smoothstep(0.35, 0.6, fn) * (1.0 - fract(uTime * 0.11 + fn * 0.35)));
+      col = mix(col, uArcFoam * day, rim);
+      // ... and the water is thin enough at the bank to show the bed through it
+      alpha = mix(0.5, 1.0, clamp(deepM / max(uArcWater.y * 0.35, 0.05) + rim + step(0.5, uWaterFx.z), 0.0, 1.0));
+      #else
       float rim = 1.0 - smoothstep(0.35 * uArcWater.z, uArcWater.z * (1.0 + 0.5 * lap), deepM);
       col = mix(col, uArcFoam * day, rim);
       alpha = 1.0;
+      #endif
       #else
       col = mix(col, mix(col, uSilt, 0.35), clear * (1.0 - F));
       alpha = 1.0 - clear * (1.0 - F) * 0.9;
@@ -162,6 +256,9 @@ const POND_FRAG = /* glsl */`
     }
     #ifdef WATER_GLOW
     col = arcGlow(col, vWorldPos.xz, N, V, uTime);
+    #endif
+    #ifdef WATER_ENV
+    col = mix(col, uArcFoam * (0.45 + 0.55 * clamp(uSunDir.y * 1.5, 0.0, 1.0)), clamp(rings, 0.0, 1.0) * 0.85);
     #endif
     gl_FragColor = vec4(col, alpha);
     #include <tonemapping_fragment>
@@ -272,7 +369,7 @@ const SEA_FRAG = /* glsl */`
   uniform sampler2D uSky, uSeaMask;
   uniform vec4 uMaskRect;         // grid corner (sim m, less half a cell); 1 / its width, height
   #ifdef WATER_ARCADE
-  uniform vec4 uArcSea;           // arcade look: reflection kept, shallows' reach (m), foam wash (m)
+  uniform vec4 uArcSea;           // arcade look: reflection kept, shallows' reach (m), foam wash (m), island (1: past the grid it is all sea)
   uniform vec3 uArcFoam;
   #endif
   varying vec3 vWorldPos;
@@ -286,15 +383,26 @@ const SEA_FRAG = /* glsl */`
     return mix(mix(seaHash(i), seaHash(i + vec2(1.0, 0.0)), f.x), mix(seaHash(i + vec2(0.0, 1.0)), seaHash(i + vec2(1.0, 1.0)), f.x), f.y);
   }
   vec3 seaSky(vec3 d) { d.y = abs(d.y); return texture2D(uSky, equirectUv(normalize(d))).rgb; }
+  ${ENV_WATER_GLSL}
   ${GLOW_GLSL}
   void main() {
     #include <logdepthbuf_fragment>
     vec2 sim = vec2(vWorldPos.x, -vWorldPos.z);
     vec2 uv = (sim - uMaskRect.xy) * uMaskRect.zw;
     vec4 m = texture2D(uSeaMask, clamp(uv, 0.0, 1.0));
+    float outM = length(max(max(-uv, uv - 1.0), 0.0) / uMaskRect.zw);
+    #ifdef WATER_ARCADE
+    // v3:environment an island stage: past the grid's edge it is open sea all round (the ground
+    // apron runs down under it, horizon.js), whatever the edge itself was
+    if (m.r < 0.5 && (uArcSea.w < 0.5 || outM < 0.5)) discard;
+    #else
     if (m.r < 0.5) discard;
+    #endif
     // past the grid the shore only gets farther
-    float shore = m.g * 255.0 * ${SHORE_STEP_M.toFixed(2)} + length(max(max(-uv, uv - 1.0), 0.0) / uMaskRect.zw);
+    float shore = m.g * 255.0 * ${SHORE_STEP_M.toFixed(2)} + outM;
+    #ifdef WATER_ARCADE
+    if (m.r < 0.5) shore = 26.0 + outM * 0.35;   // off the island's own beach: clear shallows, no surf line
+    #endif
     vec3 V = normalize(cameraPosition - vWorldPos);
     // a pixel's footprint on the water, stretched where the view grazes it
     float foot = vEye * 0.0012 / max(0.05, V.y);
@@ -318,6 +426,16 @@ const SEA_FRAG = /* glsl */`
       s *= 0.93;
     }
     vec3 N = normalize(vec3(-g.x, 1.0, g.y));   // sim north is world -z
+    #ifdef WATER_ENV
+    vec2 ringPush; float rings = splashRings(vWorldPos.xz, uTime, ringPush);
+    N = normalize(N + vec3(ringPush.x, 0.0, ringPush.y) * 0.45);
+    vec4 iceT = vec4(1.0);
+    if (uWaterFx.z > 1.5) {
+      iceT = envC(6.0, vWorldPos.xz / uWaterFx.w);
+      vec3 iceN = envN(6.0, vWorldPos.xz / uWaterFx.w);
+      N = normalize(vec3(iceN.x * 0.35, 1.0, -iceN.y * 0.35));
+    }
+    #endif
     // Fresnel, less of it where sub-pixel chop shadows and masks the facets
     float F = (0.02 + 0.98 * pow(1.0 - max(dot(V, N), 0.0), 5.0)) * (1.0 - 0.45 * clamp(rough * 6.0, 0.0, 1.0));
     #ifdef WATER_ARCADE
@@ -339,11 +457,27 @@ const SEA_FRAG = /* glsl */`
     #ifdef WATER_ARCADE
     body = mix(body, uSeaShallow * day, exp(-shore / uArcSea.y) * 0.92);   // arcade look: a wide turquoise band off the shore
     #endif
+    #ifdef WATER_ENV
+    if (uWaterFx.z > 1.5) { body = body * iceT.rgb * (0.75 + 0.5 * iceT.a); F *= 0.55 + 0.3 * iceT.a; }
+    else if (uWaterFx.z < 0.5) {
+      // the sand lit through the clear shallows off the beach: the caustic net, gone by a few metres of water
+      float nearK = 1.0 - smoothstep(60.0, 260.0, vEye);
+      body += uSeaShallow * day * caustics(sim + N.xz * 1.5, uTime) * uWaterFx.x * exp(-shore / (uArcSea.y * 0.45)) * nearK;
+    }
+    #endif
     vec3 col = mix(body, sky, F);
     // the sun's glitter: sharp on near water, a broad sheen where the chop is sub-pixel
     vec3 H = normalize(uSunDir + V);
     float shin = mix(1400.0, 90.0, clamp(rough * 8.0, 0.0, 1.0));
     col += uSunColor * pow(max(dot(N, H), 0.0), shin) * (0.002 * shin + 0.3) * step(0.0, uSunDir.y);
+    #ifdef WATER_ENV
+    {
+      // sparkle: single glints scattered along the sun's path, flickering
+      float sn = wNoise(sim * 1.9 + uTime * 0.7) * wNoise(sim * 0.37 - uTime * 0.21);
+      float sp = pow(max(dot(normalize(N + vec3(0.0, 0.0, 0.0)), H), 0.0), 26.0) * smoothstep(0.42, 0.62, sn);
+      col += uSunColor * sp * uWaterFx.y * 1.4 * step(0.0, uSunDir.y) * step(uWaterFx.z, 0.5) * (1.0 - smoothstep(300.0, 1400.0, vEye));
+    }
+    #endif
     // surf: broken lines running in to the waterline (bands of shore distance moving
     // shoreward), a wash along it, and whitecaps on the crests in a strong wind
     float zone = 1.0 - smoothstep(2.0, 22.0 + 25.0 * wind, shore);
@@ -365,6 +499,9 @@ const SEA_FRAG = /* glsl */`
     #ifdef WATER_GLOW
     // the glow under the surf: the foam keeps its own colour
     col = mix(arcGlow(col, sim, N, V, uTime), col, foam * 0.95);
+    #endif
+    #ifdef WATER_ENV
+    col = mix(col, uArcFoam * day, clamp(rings, 0.0, 1.0) * 0.85);
     #endif
     gl_FragColor = vec4(col, 1.0);
     #include <tonemapping_fragment>
@@ -405,11 +542,12 @@ function buildSea(sea, shared, center, look = null) {
     uniforms.uSeaDeep.value.set(s.deep ?? look.deep);
     uniforms.uSeaScatter.value.set(s.scatter ?? look.shallow);
     uniforms.uSeaShallow.value.set(s.shallow ?? look.shallow);
-    uniforms.uArcSea = { value: new THREE.Vector4(s.reflect ?? 1, s.shallowReachM ?? 14, s.foamM ?? 1.3, 0) };
+    uniforms.uArcSea = { value: new THREE.Vector4(s.reflect ?? 1, s.shallowReachM ?? 14, s.foamM ?? 1.3, look.island ? 1 : 0) };
     uniforms.uArcFoam = shared.uArcFoam;
     if (shared.uArcFlow) Object.assign(uniforms, { uArcGlow: shared.uArcGlow, uArcHot: shared.uArcHot, uArcCrust: shared.uArcCrust, uArcFlow: shared.uArcFlow });
+    if (shared.uWaterFx) Object.assign(uniforms, { uEnvTex: shared.uEnvTex, uRing: shared.uRing, uWaterFx: shared.uWaterFx });
   }
-  const mat = new THREE.ShaderMaterial({ name: 'Sea', defines: look ? { WATER_ARCADE: '', ...(shared.uArcFlow ? { WATER_GLOW: '' } : {}) } : {}, uniforms, vertexShader: SEA_VERT, fragmentShader: SEA_FRAG, fog: true });
+  const mat = new THREE.ShaderMaterial({ name: 'Sea', defines: look ? { WATER_ARCADE: '', ...(shared.uArcFlow ? { WATER_GLOW: '' } : {}), ...(shared.uWaterFx ? { WATER_ENV: '' } : {}) } : {}, uniforms, vertexShader: SEA_VERT, fragmentShader: SEA_FRAG, fog: true });
   mat.userData.disposeTextures = [mask];
   // out past the horizon haze band (9.5 km), inside the camera's far plane
   const mesh = new THREE.Mesh(new THREE.CircleGeometry(9000, 96), mat);
@@ -423,6 +561,57 @@ function buildSea(sea, shared, center, look = null) {
     uniforms.uWindDir.value.set(Math.sin(toDeg * Math.PI / 180), Math.cos(toDeg * Math.PI / 180));
   };
   return { mesh, setWind };
+}
+
+// v3:environment Embers off the lava: point sprites that rise, drift and burn out, each on its own
+// clock, placed over the lava ponds (and round the course's centre when the sea is lava).
+function buildEmbers(ponds, seaMesh, seaCenter, uTime, glow) {
+  const spots = [];
+  for (const p of ponds) { const s = p.userData.sphere; if (s) spots.push({ x: s.center.x, y: s.center.y, z: s.center.z, r: s.radius * 0.8 }); }
+  if (seaMesh) spots.push({ x: seaCenter ? seaCenter.x : seaMesh.position.x, y: seaMesh.position.y, z: seaCenter ? -seaCenter.y : seaMesh.position.z, r: 260 });
+  if (!spots.length) return null;
+  const n = Math.min(420, 140 * spots.length);
+  const pos = new Float32Array(n * 3), seed = new Float32Array(n * 3);
+  let h = 0x1234abcd;
+  const rnd = () => { h ^= h << 13; h ^= h >>> 17; h ^= h << 5; return ((h >>> 0) % 100000) / 100000; };
+  for (let i = 0; i < n; i++) {
+    const s = spots[i % spots.length], a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * s.r;
+    pos[i * 3] = s.x + Math.cos(a) * r; pos[i * 3 + 1] = s.y; pos[i * 3 + 2] = s.z + Math.sin(a) * r;
+    seed[i * 3] = rnd(); seed[i * 3 + 1] = 0.5 + rnd(); seed[i * 3 + 2] = rnd();
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('aSeed', new THREE.BufferAttribute(seed, 3));
+  const mat = new THREE.ShaderMaterial({
+    name: 'LavaEmbers',
+    uniforms: { uTime, uHot: { value: new THREE.Color(glow.hot ?? '#ffd24a') }, uGlow: { value: new THREE.Color(glow.color ?? '#ff4a0c') } },
+    vertexShader: /* glsl */`
+      attribute vec3 aSeed; uniform float uTime; varying float vLife;
+      void main() {
+        float life = fract(uTime * 0.11 * aSeed.y + aSeed.x);
+        vLife = life;
+        vec3 p = position;
+        p.y += 0.2 + life * (9.0 + 14.0 * aSeed.z);
+        p.x += sin(uTime * 0.9 + aSeed.x * 40.0) * (0.4 + 1.6 * life) + life * 3.0;
+        p.z += cos(uTime * 0.7 + aSeed.z * 31.0) * (0.4 + 1.6 * life);
+        vec4 mv = viewMatrix * vec4(p, 1.0);
+        gl_Position = projectionMatrix * mv;
+        gl_PointSize = clamp((2.2 + 3.5 * aSeed.z) * (1.0 - life * 0.7) * 160.0 / max(-mv.z, 1.0), 1.0, 9.0);
+      }`,
+    fragmentShader: /* glsl */`
+      uniform vec3 uHot, uGlow; varying float vLife;
+      void main() {
+        float d = length(gl_PointCoord - 0.5);
+        float a = (1.0 - smoothstep(0.15, 0.5, d)) * sin(vLife * 3.14159) ;
+        gl_FragColor = vec4(mix(uHot, uGlow, vLife) * 2.2 * a, a);
+      }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
+  });
+  const pts = new THREE.Points(g, mat);
+  pts.frustumCulled = false;
+  pts.name = 'lavaEmbers';
+  pts.userData.noAO = true;
+  return pts;
 }
 
 // ponds: water-shore.js coursePonds (grown outline + water level per pond);
@@ -465,7 +654,16 @@ export function buildWater(ponds, sunDir, depth, sea = null, seaCenter = null, l
       shared.uArcCrust = { value: new THREE.Color(g.crust ?? '#000000') };
       shared.uArcFlow = { value: new THREE.Vector4(g.strength ?? 1, 1 / Math.max(0.5, g.scaleM ?? 12), g.speed ?? 0.05, g.mode === 'neon' ? 1 : 0) };
     }
+    // v3:environment the stages' extras (WATER_ENV): only with the ground sets' array and a graphics setting that allows them
+    if (look.fx > 0 && look.envTex) {
+      const kind = look.glow?.mode === 'lava' ? 1 : look.surface === 'ice' ? 2 : 0;
+      shared.uEnvTex = { value: look.envTex };
+      shared.uRing = { value: [0, 1, 2, 3].map(() => new THREE.Vector4(0, 0, -100, 0)) };
+      shared.uWaterFx = { value: new THREE.Vector4((look.caustics ?? 0.5) * (look.fx > 1 ? 1 : 0.7), look.sparkle ?? 1, kind, kind === 1 ? 7 : 9) };
+    }
   }
+  const envOn = !!shared.uWaterFx;
+  let ringAt = 0;
   const open = sea
     ? buildSea(sea, shared, seaCenter || { x: sea.minX + (sea.nx * sea.cellM) / 2, y: sea.minY + (sea.ny * sea.cellM) / 2 }, look)
     : null;
@@ -480,7 +678,7 @@ export function buildWater(ponds, sunDir, depth, sea = null, seaCenter = null, l
     // a hair over the flattened water line: the bank where it rises out draws the shore
     const level = p.level + 0.03;
     const m = reflect ? mirrorPond(g, shared, mirrorSkip, mirrorOnly) : skyPond(g, shared);
-    if (look) m.material.defines = { ...m.material.defines, WATER_ARCADE: '', ...(look.glow ? { WATER_GLOW: '' } : {}) };
+    if (look) m.material.defines = { ...m.material.defines, WATER_ARCADE: '', ...(look.glow ? { WATER_GLOW: '' } : {}), ...(envOn ? { WATER_ENV: '' } : {}) };
     m.rotation.x = -Math.PI / 2;
     m.position.y = level;
     m.updateMatrixWorld(true);
@@ -532,8 +730,17 @@ export function buildWater(ponds, sunDir, depth, sea = null, seaCenter = null, l
     shared.uDepthOn.value = near && shared.uDepthTex.value ? 1 : 0;
     return near;
   };
+  // v3:environment embers rising off a lava lake (one draw, animated in its vertex shader)
+  const embers = envOn && look.glow?.mode === 'lava' ? buildEmbers(meshes, open ? open.mesh : null, seaCenter, shared.uTime, look.glow) : null;
   return {
     meshes, waterMeshes: meshes,
+    extras: embers ? [embers] : [],
+    // a ball going in at world (x, z): rings spread from the spot for five seconds
+    splash: (x, z, strength = 1) => {
+      if (!envOn) return;
+      shared.uRing.value[ringAt].set(x, z, shared.uTime.value, strength);
+      ringAt = (ringAt + 1) % 4;
+    },
     sea: open ? open.mesh : null,
     // the day's wind ({ mph, toDeg }): ponds ruffle with it, the sea runs downwind
     setWind: (wind) => {

@@ -173,6 +173,27 @@ const props = D.clean([
   P('fireworks', -140, 300, 30, 0), P('fireworks', -60, 320, 30, 0),
 ], { surfaces, tee: TEE, pin: PIN, dry: inland });
 
+// ---- gadgets (docs/gadgets.md): what a swing can hit
+//   RISKY   the Updraft, a wind tunnel standing in the cove on the line of Smugglers' Cut,
+//           holds a ball up as it crosses: a drive of 130 mph that would have been in the
+//           sea makes the headland. The landing there is a x2 ring, with the smugglers'
+//           crates beside it (a ball launched at 100 mph or more smashes one for coins).
+//   SAFE    the Cliff Rail along the fairway's seaward edge kicks a ball that is running
+//           for the cliff back onto the grass; the Headland Runner, a speed strip at the
+//           corner, sweeps a drive that reaches it west along the headland.
+//   ROCKET  coins over the cove along the Lighthouse Line.
+const cutLine = L.bearing(TEE, [-40, 236]);
+const lighthouseLine = L.flight(height, TEE, PIN, { speedMph: 117, vla: 17.5, spin: 6000, ball: 'rocket' });
+const gadgets = [
+  L.gadget('fan', 'updraft', -27.5, 162, { size: [26, 80, 44], heading: cutLine, strength: 2, lift: 8 }),
+  L.gadget('zone', 'cut-x2', -38, 233, { radius: 12, mult: 2 }),
+  L.gadget('breakable', 'crates-a', -52, 224, { radius: 2.6, height: 4, breakMph: 100, style: 'crate' }),
+  L.gadget('breakable', 'crates-b', -24, 252, { radius: 2.6, height: 4, breakMph: 100, style: 'crate' }),
+  { id: 'cliff-rail', kind: 'rail', points: [[-8, 118], [-9, 140], [-10, 162], [-9, 184]], strength: 6 },
+  L.gadget('strip', 'headland-runner', 14, 224, { size: [26, 36], heading: 283, strength: 8, maxMps: 11 }),
+  lighthouseLine.coins('cove-coins', 50, 240, 7),
+];
+
 module.exports = {
   id: 'lighthouse-point',
   stage: {
@@ -202,6 +223,7 @@ module.exports = {
   trees,
   woods: [],
   props,
+  gadgets,
   // the sea is the hazard on the west side; the line only matters on land
   obLine: [[-325, -92], [112, -92], [112, 425], [-325, 425]],
   height,

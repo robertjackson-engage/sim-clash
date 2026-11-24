@@ -224,6 +224,25 @@ P('cloud', -190, 600, 24); P('cloud', 150, 560, 18); P('cloud', -40, 800, 26); P
 // needles of ice on the far ranges
 for (const [x, y, hM] of [[-420, 640, 150], [-360, 900, 190], [-60, 1040, 230], [300, 960, 200], [470, 620, 160], [-480, 260, 120], [460, 200, 130], [140, 1180, 260]]) P('ice-spire', x, y, hM, (x + y) % 360);
 
+// ---- gadgets (docs/gadgets.md): what a swing can hit
+//   ROCKET  coins up the full Rocket's flight, and nothing hangs in its way: the hero carry
+//           is the hole. The Headwall Step, a pad on the snow under the valley's lip, throws
+//           a Rocket that came up short (struck at about 96 to 102 mph) up into the hanging
+//           valley. The valley floor
+//           is Blue Ice from its middle on: a Rocket that lands there slides on toward the
+//           Bench. Two snowmen stand in the valley (a ball goes through one for coins).
+//   RISKY   the Ice Ramp, a pad at the Bench's far edge, throws a ball that reaches it over
+//           the crevasse onto the summit, short of the green.
+const expressRocket = L.flight(height, TEE, PIN, { speedMph: 125, vla: 13, spin: 2600, ball: 'rocket' });
+const gadgets = [
+  L.gadget('pad', 'headwall-step', 7, 240, { radius: 8, heading: L.bearing(TEE, PIN), angle: 58, minMps: 25, maxMps: 25 }),
+  L.gadget('ice', 'blue-ice', 2, 388, { size: [70, 76], heading: 0, friction: 0.6 }),
+  L.gadget('breakable', 'snowman-west', -30, 330, { radius: 2.4, height: 5, breakMph: 100, keep: 1, style: 'snowman' }),
+  L.gadget('breakable', 'snowman-east', 34, 356, { radius: 2.4, height: 5, breakMph: 100, keep: 1, style: 'snowman' }),
+  L.gadget('pad', 'ice-ramp', 14, 534, { radius: 6, heading: L.bearing([14, 534], [20, 616]), angle: 50, minMps: 38, maxMps: 38 }),
+  expressRocket.coins('express-coins', 80, 330, 7),
+];
+
 module.exports = {
   id: 'summit-express',
   stage: {
@@ -262,6 +281,7 @@ module.exports = {
   trees,
   woods,
   props,
+  gadgets,
   // wide round base camp; up the mountain the line runs just beyond the two aretes' crests and
   // behind the summit: a ball that goes over one is dropped on the crest, looking down at the hole
   obLine: [[-240, -98], [258, -98], [258, 120], [176, 196], [112, 262], [110, 340], [114, 430], [116, 520], [126, 600], [118, 700], [60, 728],

@@ -233,6 +233,13 @@ props.push(
   P('bird-flock', -40, 190, 14, 40), P('bird-flock', 90, 150, 12, 300), P('bird-flock', 40, 40, 12, 120),
 );
 
+// ---- gadgets (docs/gadgets.md): sudden death stays pure. Nothing here touches the ball:
+// only a coin trail along the flight that finishes by the flag (collect all 6 for the bonus).
+const flagFlight = L.flight(height, TEE, PIN, { speedMph: 68, vla: 32, spin: 10500 });
+const gadgets = [
+  flagFlight.coins('summit-coins', 20, Math.floor(flagFlight.carryM) - 8, 6, { reach: 4 }),
+];
+
 module.exports = {
   id: 'ice-pick',
   extent: { minX: -200, minY: -90, maxX: 200, maxY: 300 },
@@ -251,6 +258,7 @@ module.exports = {
   trees,
   woods: [],
   props,
+  gadgets,
   obLine: L.rect(-190, -80, 190, 290),
   height,
   sea: false,

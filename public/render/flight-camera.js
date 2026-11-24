@@ -816,3 +816,35 @@ function maxFilter(a, r) {
 function boxFilter(a, r) {
   return a.map((_, i) => { let s = 0, n = 0; for (let k = Math.max(0, i - r); k <= Math.min(a.length - 1, i + r); k++) { s += a[k]; n++; } return s / n; });
 }
+
+// v3:modes ------------------------------------------------------------------------------
+// For a camera path planned elsewhere (public/arcade/replay-core.js: the alternate cameras
+// an instant replay films a shot with): the clearance the chase cameras above give
+// themselves, as a function. `pos` is the path ([{ x, y, z }], one per `dt`), `balls` the
+// ball at the same instants (null: no sight line is kept). Every camera position is lifted,
+// smoothly, to stay `clearM` (a number, or one per sample) above the ground under it, above
+// whatever `topAt(x, y)` says must be cleared there (tree crowns, props: -Infinity in the
+// open) and, with `sight`, above any ground between it and the ball. Lifted in place;
+// returns the lift given to each sample. Nothing above this line is changed by it.
+export function liftCameraPath(pos, balls, { dt = FOLLOW_DT, groundAt = () => 0, topAt = null, clearM = CAM_CLEARANCE_M, sight = true, smoothS = 0.25 } = {}) {
+  const need = pos.map((c, i) => {
+    let top = groundAt(c.x, c.y) + (Array.isArray(clearM) ? clearM[i] : clearM);
+    if (topAt) top = Math.max(top, topAt(c.x, c.y, c.z));   // (the camera's own height too: a caller may leave what towers over it to be passed on the side)
+    const b = sight && balls ? balls[i] : null;
+    if (b) {
+      const bz = Math.max(b.z, groundAt(b.x, b.y)) + 0.1;
+      for (const u of [0.2, 0.4, 0.6, 0.78]) {
+        const h = groundAt(lerp(c.x, b.x, u), lerp(c.y, b.y, u)) + 0.05;
+        top = Math.max(top, (h - u * bz) / (1 - u));
+      }
+    }
+    return Math.max(0, top - c.z);
+  });
+  if (!need.some((v) => v > 0)) return need;
+  const rr = Math.max(1, Math.round(smoothS / dt));
+  const lift = boxFilter(maxFilter(need, rr), rr);
+  pos.forEach((c, i) => { c.z += lift[i]; });
+  return lift;
+}
+// v3:modes the small tools of this file, for the same caller (the look kept on the ball, the two filters, the ease)
+export { leash as leashLook, boxFilter as boxSmooth, maxFilter as maxSpread, smoother as easeInOut };

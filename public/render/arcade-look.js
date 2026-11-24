@@ -23,6 +23,7 @@ import * as THREE from 'three';
 import { makePin } from './pin-flag.js';
 import { RocketFx, makeGlow } from './shot-fx.js';
 import { ballSkinColor } from './ball-skins.js';
+import { envTextures, loadEnvTextures, envSandMaps } from './env-materials.js';   // v3:environment
 
 export const LOOKS = Object.freeze(['real', 'arcade']);
 export const DEFAULT_LOOK = 'real';
@@ -71,6 +72,14 @@ export const ARCADE_LOOK = {
     // colours in strata `strataM` apart, taking over between `to` and `from` (the cosine of
     // the slope: 0.8 is 37 degrees, 0.6 is 53). null = the turf everywhere, as it was.
     cliff: { a: '#9a8a72', b: '#75675a', from: 0.6, to: 0.8, strataM: 3 },
+    // v3:environment the ground's own materials (env-materials.js; turf.js TURF_ENV): the set the
+    // unmown ground is drawn with ('rough', 'snow', 'basalt', 'earth', 'sand'), tile sizes
+    // (m), how strongly the sets' colour detail and relief are laid on, snow's sparkle.
+    // null: the plain painted ground, as it was.
+    env: { rough: 'rough', mownTileM: 1.5, greenTileM: 0.7, roughTileM: 1.5, rockTileM: 15, sandTileM: 3.2, detail: 0.75, roughDetail: 0.55, normal: 0.5, rockDetail: 1, sparkle: 0 },
+    // 3D blades of grass round the camera (grass-field.js), by graphics setting:
+    // { mul: x their height, rough: false where the unmown ground is not grass }
+    blades: { mul: 1.5, rough: true },
     // night golf (themes): { lift, edge, edgeGain, greenEdge, greenEdgeGain }. The mown
     // ground gives back `lift` of its own colour unlit, and the fairway's and the green's
     // edges glow. null compiles none of it (turf.js TURF_GLOW).
@@ -87,6 +96,10 @@ export const ARCADE_LOOK = {
     reflect: 0.55,          // share of the mirror / sky reflection kept (1 = the real look)
     glint: 1.6,             // the sun's glitter, x the real look's
     chopMul: 1,             // the ripples' height, x what the day's wind gives (a frozen tarn: 0.15)
+    // v3:environment the stages' extras (water.js WATER_ENV; High and Ultra graphics):
+    caustics: 0.55,         // the light's net on a shallow bed
+    sparkle: 1,             // glints scattered on the ripples round the sun's path
+    surface: 'water',       // 'ice': the generated ice set, frosted and scratched (lava is water.glow.mode)
     // self-lit water (themes): { mode: 'lava' | 'neon', color, hot, crust, strength, scaleM, speed }.
     // null compiles none of it (water.js WATER_GLOW).
     glow: null,
@@ -118,6 +131,29 @@ export const ARCADE_LOOK = {
     // a painted sky in place of a photo (themes; arcade-sky.js paintSky's spec, plus
     // `light`: the whole sky preset that goes with it). null = the photo.
     paint: null,
+    // v3:environment a PANORAMA made for the theme (far-world.js; public/arcade/env/manifest.json),
+    // on a themed stage only: { id, gain (the picture's brightness on screen), envLuma (the
+    // sky's mean brightness as a light), envSun, minSunAltDeg / maxSunAltDeg (the key light
+    // takes the picture's own sun, its height held between these), glare { core, halo },
+    // billow { amount, speed }, clouds { cover, opacity, heightM, sizeM, speed, color, shade },
+    // flash { color, strength }, light { ...a whole sky preset's numbers to use instead } }.
+    // null = the photo or the painted sky above.
+    pano: { id: 'tropical-day', gain: 1.08, envLuma: 0.66, envSun: 5, minSunAltDeg: 20, glare: { core: 0, halo: 1.6 }, light: { environmentIntensity: 1.0 }, clouds: { cover: 0.3, opacity: 0.4, heightM: 2600, sizeM: 3400, color: '#fff6e6', shade: '#b9d2ee' } },
+    // the far world's layers, drawn over the panorama (far-world.js FAR_LAYER_TYPES), standing
+    // on the stage's low ground (its sea level) unless they give a baseM of their own:
+    // [{ type, distM, baseM, heightM, freq, seed, cover, color, top, haze, snowline, glow, opacity }]
+    far: [
+      { type: 'islands', distM: 9500, heightM: 700, freq: 5, seed: 3, cover: 0.42, color: '#3d79a6', top: '#63a9b4', haze: 0.55 },
+      { type: 'islands', distM: 4400, heightM: 330, freq: 7, seed: 11, cover: 0.3, color: '#2c7f74', top: '#77c873', haze: 0.22 },
+    ],
+    // the air under a panorama (postfx.js ENV_FOG; scene._applyEnvAir): { falloffM (the haze
+    // thins by 1/e this far up), densityMul, sunGlow, sunTight, max, gain, colorMix }
+    air: { falloffM: 170, sunGlow: 0.2, sunTight: 9 },
+    // what stands past the course's own edge (horizon.js buildGroundApron's look; scene.js):
+    // { island: the land runs down into the sea all round within this many metres (null: the
+    // rolling country it always was), hills (x their height), woods (0..1), straw (0..1),
+    // vary (x the colour patches), color (hex: the far ground, in place of palette.base) }
+    ground: { island: 150, hills: 0.6, woods: 0, straw: 0.2, vary: 0.7, color: null },
   },
   // --- the frame: tone mapping, grade, bloom (postfx.js) ---
   grade: {
@@ -126,6 +162,18 @@ export const ARCADE_LOOK = {
     saturation: 1.2,
     vignette: 0.2,
     bloom: { strength: 0.12, radius: 0.55, threshold: 1.4 },
+    // v3:environment the theme's grade (postfx.js GRADE_ARCADE), in display space after the tone
+    // curve, so the HUD (drawn by the page over the canvas) is never touched by it:
+    film: 0.14,             // a filmic S: 0 none, 1 a full smoothstep
+    vibrance: 0.16,         // lifts weak colours more than strong ones
+    shadows: '#1838a8',     // a colour for the shadows ...
+    highlights: '#ffb347',  // ... and one for the highlights,
+    tint: 0.05,             // this strong
+    // depth of field (postfx.js ENV_DOF), only on the pin close-up and the title backdrop:
+    // { rangeM (in focus this far behind the subject), maxPx, near }
+    dof: { rangeM: 26, maxPx: 7, near: 0.5 },
+    // motion blur (ENV_BLUR), only in the ball cam at speed: strength at 70 m/s and above
+    motionBlur: 0.55,
   },
   // --- trees (trees.js): the leaf tint per species, how far the photo atlas takes it, its brightness ---
   trees: {
@@ -241,12 +289,12 @@ const volcanoSky = (over = {}) => ({
 const TIME_LAYERS = {
   day: {},
   golden: {
-    sky: { preset: 'golden', paint: null },
+    sky: { preset: 'golden', paint: null, pano: null, far: null, air: null },
     light: { sunColor: '#ffb469', sunIntensityMul: 1.08, sunAltitudeDeg: 12, environmentMul: 1.5, exposureMul: 1.0 },
     fog: { color: '#ffc59a', colorMix: 0.6, densityMul: 0.8 },
   },
   dusk: {
-    sky: { preset: null, backgroundIntensity: 1, paint: duskSky() },
+    sky: { preset: null, backgroundIntensity: 1, paint: duskSky(), pano: null, far: null, air: null },
     light: { shadowRadiusMul: 2.6, fill: { sky: '#b3a4ff', ground: '#7a5a4a', intensity: 0.75 } },
     fog: { color: '#a8648c', colorMix: 0.6, densityMul: 1 },
     turf: { glow: { lift: 0.14, edge: '#ffe9a8', edgeGain: 0.5, greenEdge: '#ffffff', greenEdgeGain: 0.7 } },
@@ -255,7 +303,7 @@ const TIME_LAYERS = {
     props: { emissive: 0.9, self: 0.1 },
   },
   night: {
-    sky: { preset: null, backgroundIntensity: 1, paint: nightSky() },
+    sky: { preset: null, backgroundIntensity: 1, paint: nightSky(), pano: null, far: null, air: null },
     light: { shadowRadiusMul: 2.8, fill: { sky: '#9db4ff', ground: '#3a4a66', intensity: 0.85 } },
     fog: { color: '#0b1430', colorMix: 1, densityMul: 1 },
     water: { reflect: 0.8, glint: 0.6 },
@@ -277,13 +325,34 @@ export const ARCADE_THEMES = Object.freeze({
   // Canyon Run: red rock, a turquoise river, dusty juniper scrub
   canyon: {
     look: {
-      palette: { base: '#c4703c', rough: '#b96a3b', wood: '#8a4e2c', range: '#c98a4a', fairwayA: '#8cc640', fairwayB: '#7db838', greenA: '#a4dc4e', greenB: '#96d045', tee: '#93cf46', bunker: '#ffe3b0', water: '#22b3c2' },
-      turf: { collar: '#c2e65e', sand: '#ffe4b4', sandGlow: 0.2, cliff: { a: '#cc6a3c', b: '#a04626', strataM: 4.5 } },
-      water: { deep: '#0f7f96', shallow: '#62e6cf', sea: { deep: '#0f6f9e', scatter: '#2cc0c8', shallow: '#62e6cf' } },
-      light: { sunColor: '#ffc88e', sunAltitudeDeg: 26, sunIntensityMul: 1.1 },
-      fog: { color: '#ffb98c', colorMix: 0.65, densityMul: 0.6 },
-      sky: { preset: 'morning' },
+      // v3:env-polish the hues are kept APART: the walls are red rock (with cream bands), the
+      // unmown ground is tan dust, the mown turf a cool green, the water teal, and the air
+      // toward the horizon a pale dusty rose; the grade no longer pours orange over all of it
+      palette: { base: '#d0a670', rough: '#cb9c66', wood: '#8a5a3a', range: '#d4aa74', fairwayA: '#78c04a', fairwayB: '#6ab342', greenA: '#8fd458', greenB: '#82c84f', tee: '#80c44e', bunker: '#ffebc8', water: '#1fb0c4' },
+      turf: { collar: '#b4e06a', sand: '#ffeccc', sandGlow: 0.2, cliff: { a: '#b9553a', b: '#7a3324', c: '#e2b48c', strataM: 4.5 }, env: { rough: 'earth', roughTileM: 3.4, roughDetail: 0.8, rockTileM: 13 }, blades: { rough: false } },
+      water: { deep: '#0c7890', shallow: '#5fe6d2', sea: { deep: '#0d6c9c', scatter: '#2abcc8', shallow: '#5fe6d2' } },
+      light: { sunColor: '#ffdcb0', sunAltitudeDeg: 26, sunIntensityMul: 1.1 },
+      fog: { color: '#ecd3c6', colorMix: 0.65, densityMul: 0.6, panoMix: 0.55 },
+      sky: { preset: 'morning', pano: null, far: null, air: null, ground: { island: null, hills: 1.5, woods: 0, straw: 0, vary: 1.1, color: '#bf9a6e' } },
+      grade: { saturation: 1.1, vibrance: 0.1, shadows: '#24408e', highlights: '#ffc88e', tint: 0.045, film: 0.16 },
       trees: { species: { oak: 'pine', maple: 'pine', birch: 'pine', fir: 'pine' }, scale: 0.85, leaves: { oak: '#9aa85a', maple: '#9aa85a', birch: '#a8b464', pine: '#8ea252', fir: '#8ea252' }, leafMix: 0.85, leafGain: 1.5 },
+    },
+    // the stages' own hour (Canyon Run, Sky Fortress): the sun going down over mesa country
+    times: {
+      golden: {
+        sky: {
+          // v3:env-polish a warm WHITE sun from 20 degrees up (short enough shadows to read the hole),
+          // a fill with the sky's teal in it and little of its orange: shadows go cool
+          pano: { id: 'canyon-golden', gain: 1.04, envLuma: 0.6, envSun: 3, envSat: 0.55, envTint: '#e2eaff', minSunAltDeg: 20, glare: { core: 0, halo: 1.3 }, light: { environmentIntensity: 1.0, sunColor: '#ffe6c6', sunIntensity: 4.0, exposure: 0.9 }, clouds: { cover: 0.26, opacity: 0.4, heightM: 3000, sizeM: 3600, color: '#ffd2b0', shade: '#a8708a' } },
+          far: [
+            { type: 'mesas', distM: 9000, heightM: 900, freq: 5, seed: 4, color: '#9a6a6a', top: '#d9a288', haze: 0.62 },
+            { type: 'mesas', distM: 3800, heightM: 480, freq: 7, seed: 10, color: '#93452f', top: '#d98458', haze: 0.26 },
+          ],
+          air: { falloffM: 220, sunGlow: 0.18, sunTight: 7, colorMix: 0.5 },
+        },
+        light: { sunColor: '#ffe6c6' },
+        fog: { color: '#ecd3c6', colorMix: 0.6 },
+      },
     },
   },
 
@@ -295,7 +364,17 @@ export const ARCADE_THEMES = Object.freeze({
       water: { deep: '#0d4f8c', shallow: '#3fc3c9', glint: 2.0, sea: { deep: '#0e4a9a', scatter: '#2a9fc4', shallow: '#4fd3d0', shallowReachM: 30, foamM: 4.5 } },
       light: { sunColor: '#fff0d4', sunAltitudeDeg: 30, sunIntensityMul: 1.05, environmentMul: 1.35 },
       fog: { color: '#dfeaf2', colorMix: 0.5, densityMul: 0.8 },
-      sky: { preset: 'morning' },
+      sky: {
+        preset: 'morning',
+        pano: { id: 'links-day', gain: 1.06, envLuma: 0.62, envSun: 4, minSunAltDeg: 22, glare: { core: 0, halo: 1.2 }, light: { environmentIntensity: 1.0 }, clouds: { cover: 0.36, opacity: 0.45, heightM: 1800, sizeM: 2600, speed: 1.6, color: '#f4f8ff', shade: '#7f93ad' } },
+        far: [
+          { type: 'islands', distM: 11000, heightM: 420, freq: 4, seed: 5, cover: 0.34, color: '#56708c', top: '#7f9a8a', haze: 0.6 },
+          { type: 'stacks', distM: 3200, heightM: 210, freq: 26, seed: 2, cover: 0.2, color: '#4a5560', top: '#8a927f', haze: 0.3 },
+        ],
+        air: { falloffM: 120, sunGlow: 0.12, densityMul: 1.15 },
+        ground: { island: null, hills: 1.0, woods: 0.15, straw: 0.8, vary: 1 },
+      },
+      grade: { shadows: '#12366e', highlights: '#fff1d6', tint: 0.05, film: 0.2, vibrance: 0.12 },
       trees: { leaves: { oak: '#6a9a3a', maple: '#6a9a3a', birch: '#8ab04a', pine: '#4f8a44', fir: '#467f48' }, leafGain: 1.5, scale: 0.9 },
     },
   },
@@ -303,8 +382,8 @@ export const ARCADE_THEMES = Object.freeze({
   // Volcano Drop: basalt and ash, a lake of molten rock, an ember sky
   volcano: {
     look: {
-      palette: { base: '#3b2b29', rough: '#4a3530', wood: '#2a1d1c', range: '#4a3a34', fairwayA: '#86c63c', fairwayB: '#78b835', greenA: '#a8e04c', greenB: '#9ad444', tee: '#8ecb42', bunker: '#6b625c', water: '#ff5a14' },
-      turf: { collar: '#c6ea5c', sand: '#70665f', sandMix: 0.9, sandGain: 0.9, sandGlow: 0.05, sandTint: '#8a7f78', cliff: { a: '#40302e', b: '#221a1c', strataM: 5 }, glow: { lift: 0.16, edge: '#ffb060', edgeGain: 0.45, greenEdge: '#ffe9c0', greenEdgeGain: 0.8 } },
+      palette: { base: '#3b2b29', rough: '#4a3530', wood: '#2a1d1c', range: '#4a3a34', fairwayA: '#63b548', fairwayB: '#57a841', greenA: '#7fcf58', greenB: '#72c350', tee: '#6cbc4c', bunker: '#6b625c', water: '#ff5a14' },   // v3:env-polish (cooler, deeper greens: the light on them is warm)
+      turf: { collar: '#a4dc66', sand: '#70665f', sandMix: 0.9, sandGain: 0.9, sandGlow: 0.05, sandTint: '#8a7f78', cliff: { a: '#5b4743', b: '#2f2529', c: '#8a6c60', strataM: 5, set2Mix: 0.45 }, glow: { lift: 0.05, edge: '#ffb060', edgeGain: 0.3, greenEdge: '#ffe9c0', greenEdgeGain: 0.45 }, env: { rough: 'basalt', roughTileM: 6, roughDetail: 1, normal: 0.7 }, blades: { rough: false } },
       water: {
         deep: '#a82604', shallow: '#ffb21f', shallowReachM: 2.2, shallowMix: 0.95, foam: '#fff2a8', foamM: 0.45, reflect: 0.04, glint: 0, chopMul: 0.5,
         glow: { mode: 'lava', color: '#ff4a0c', hot: '#ffd24a', crust: '#2a0803', strength: 1, scaleM: 16, speed: 0.045 },
@@ -312,8 +391,8 @@ export const ARCADE_THEMES = Object.freeze({
       },
       light: { shadowRadiusMul: 2.4, fill: { sky: '#b08a90', ground: '#ff6a2a', intensity: 0.5 } },
       fog: { color: '#4a1c10', colorMix: 0.85, densityMul: 1 },
-      sky: { preset: null, backgroundIntensity: 1, paint: volcanoSky() },
-      grade: { bloom: { strength: 0.18, radius: 0.55, threshold: 1.28 }, vignette: 0.3, saturation: 1.22 },
+      sky: { preset: null, backgroundIntensity: 1, paint: volcanoSky(), pano: null, far: null, air: null, ground: { island: null, hills: 1.3, woods: 0, straw: 0, vary: 1.3, color: '#2c2022' } },
+      grade: { bloom: { strength: 0.18, radius: 0.55, threshold: 1.28 }, vignette: 0.3, saturation: 1.22, shadows: '#2a0a22', highlights: '#ff6a24', tint: 0.08, film: 0.22 },
       trees: { species: 'birch', leaves: { birch: '#7a3b22' }, leafMix: 0.9, leafGain: 1.0, scale: 0.9, fx: { paint: { birch: '#8a3a1c' }, paintMix: 0.8, uplight: '#ff5a1e', uplightGain: 0.5 } },
       flag: { glow: 0.3 },
       trail: { color: '#7df9ff', core: '#ffffff', outline: { color: '#1a0503', strength: 0.55 } },
@@ -323,7 +402,22 @@ export const ARCADE_THEMES = Object.freeze({
     // there is no blue sky over a volcano: every time of day is its own ash and ember
     times: {
       golden: { sky: { preset: null, paint: volcanoSky() }, light: { sunColor: '#ffc88e', sunIntensityMul: 1.12, sunAltitudeDeg: 21, environmentMul: 1.45 }, fog: { color: '#5e2413', colorMix: 0.85, densityMul: 1 } },
-      dusk: { sky: { paint: volcanoSky({ gain: 0.6, light: { sunColor: '#ffdcc4', sunIntensity: 2.6, sunAzimuthDeg: 240, sunAltitudeDeg: 34, environmentIntensity: 1.0, exposure: 0.95, fogDensity: 0.0005 } }) }, fog: { color: '#3a140c', colorMix: 0.9 }, light: { fill: { sky: '#b08a90', ground: '#ff6a2a', intensity: 0.55 } } },
+      dusk: { sky: {
+        // v3:env-polish a playable hole, not a night: the key is a warm WHITE from well up (the tee, the
+        // island green, the flag and the ball read at once), the sky's own red is all but
+        // taken out of the fill (envSat) and the fill pulled cool (envTint), so mown turf
+        // stays green under it; the sky is drawn a little under the lava, which is the
+        // brightest warm thing in the frame
+        pano: { id: 'volcano-dusk', gain: 0.86, envLuma: 0.66, envSun: 1.2, envSat: 0.12, envTint: '#d4dcff', minSunAltDeg: 38, light: { sunColor: '#fff3e2', sunIntensity: 3.5, exposure: 1.0 }, glare: { core: 0, halo: 0.7 }, billow: { amount: 0.0016, speed: 0.07 }, flash: { color: '#ff5a14', strength: 0.4 }, clouds: { cover: 0.42, opacity: 0.5, heightM: 1500, sizeM: 2200, speed: 1.4, color: '#6a3026', shade: '#1c0f14' } },
+        far: [
+          { type: 'cones', distM: 7000, heightM: 1300, freq: 7, seed: 4, cover: 0.45, color: '#2a171b', top: '#ff6a1a', glow: 1.4, haze: 0.45 },
+          { type: 'mountains', distM: 3000, heightM: 330, freq: 6, seed: 9, color: '#1c1216', top: '#3a2226', snowline: 3, haze: 0.25 },
+        ],
+        air: { falloffM: 110, sunGlow: 0.08, densityMul: 0.55, max: 0.7, colorMix: 0.6, gain: 0.9 },
+        paint: volcanoSky({ gain: 0.6, light: { sunColor: '#ffdcc4', sunIntensity: 2.6, sunAzimuthDeg: 240, sunAltitudeDeg: 34, environmentIntensity: 1.0, exposure: 0.95, fogDensity: 0.0005 } }) }, fog: { color: '#6e4a50', colorMix: 0.9, panoMix: 0.55 }, light: { fill: { sky: '#c9d0e6', ground: '#ff7a3a', intensity: 0.6 } },
+        // (the dusk layer's own night-golf glow would light the turf from inside: this hole is lit, so only a trace of it, and the edges)
+        turf: { glow: { lift: 0.11, edge: '#ffb060', edgeGain: 0.35, greenEdge: '#ffe9c0', greenEdgeGain: 0.55 } },
+        grade: { saturation: 1.1, shadows: '#141a3c', highlights: '#ffbe84', tint: 0.04, vignette: 0.24 } },
       night: { sky: { paint: volcanoSky({ gain: 0.42, stars: 0.3, disc: null, light: { sunColor: '#ffe0cc', sunIntensity: 2.0, sunAzimuthDeg: 205, sunAltitudeDeg: 55, environmentIntensity: 1.0, exposure: 0.95, fogDensity: 0.0005 } }) }, fog: { color: '#2a0d08', colorMix: 1 }, light: { fill: { sky: '#a88a98', ground: '#ff6a2a', intensity: 0.6 } }, turf: { glow: { edge: '#ffb060', greenEdge: '#ffe9c0' } } },
     },
   },
@@ -333,15 +427,24 @@ export const ARCADE_THEMES = Object.freeze({
     look: {
       palette: { base: '#eef4fb', rough: '#e4edf7', wood: '#cfdcea', range: '#dfe9f3', fairwayA: '#6fc05c', fairwayB: '#62b453', greenA: '#8ad86c', greenB: '#7dcc62', tee: '#7cc864', bunker: '#d8c49a', water: '#a9d8f0' },
       // baseLift: snow gives back a third of its own colour unlit, or a low sun leaves it grey
-      turf: { collar: '#a6e486', sand: '#e2cfa6', sandGlow: 0.14, saturation: 0.98, normalScale: 0.22, cliff: { a: '#8e98aa', b: '#7a8498', strataM: 6 }, glow: { lift: 0, baseLift: 0.34, edge: null, greenEdge: null } },
+      turf: { collar: '#a6e486', sand: '#e2cfa6', sandGlow: 0.14, saturation: 0.98, normalScale: 0.22, cliff: { a: '#8f8a86', b: '#5d5a60', c: '#b8b1a8', strataM: 6, cap: '#eef4fb', capAmount: 0.9 }, glow: { lift: 0, baseLift: 0.34, edge: null, greenEdge: null }, env: { rough: 'snow', roughTileM: 7, roughDetail: 0.7, normal: 0.8, sparkle: 1 }, blades: { rough: false } },
       water: {
-        deep: '#86c2e6', shallow: '#dcf3ff', shallowReachM: 2.5, shallowMix: 0.8, foam: '#ffffff', foamM: 0.5, reflect: 0.8, glint: 2.2, chopMul: 0.12,
+        deep: '#86c2e6', shallow: '#dcf3ff', shallowReachM: 2.5, shallowMix: 0.8, foam: '#ffffff', foamM: 0.5, reflect: 0.8, glint: 2.2, chopMul: 0.12, surface: 'ice', caustics: 0, sparkle: 0,
         sea: { deep: '#5fa8d8', scatter: '#a9dcf0', shallow: '#dcf3ff', shallowReachM: 40, foamM: 5, reflect: 0.7 },
       },
       light: { sunColor: '#fff4e2', sunAltitudeDeg: 27, sunIntensityMul: 0.92, environmentMul: 1.2, exposureMul: 0.9 },
       fog: { color: '#e4eefa', colorMix: 0.8, densityMul: 0.9 },
-      sky: { preset: 'morning', backgroundIntensity: 1.05 },
-      grade: { saturation: 1.12, bloom: { strength: 0.1, radius: 0.5, threshold: 1.7 } },
+      sky: {
+        preset: 'morning', backgroundIntensity: 1.05,
+        pano: { id: 'alpine-day', gain: 1.05, envLuma: 0.5, envSun: 5, minSunAltDeg: 20, glare: { core: 0, halo: 1.4 }, light: { environmentIntensity: 1.0 }, clouds: { cover: 0.22, opacity: 0.3, heightM: 3600, sizeM: 4200, color: '#ffffff', shade: '#a9c0e8' } },
+        far: [
+          { type: 'mountains', distM: 11000, heightM: 1500, freq: 5, seed: 6, color: '#8ea2c8', top: '#f4f8ff', snowline: 0.14, haze: 0.5 },
+          { type: 'mountains', distM: 4600, heightM: 520, freq: 7, seed: 13, color: '#6f86ad', top: '#eef4ff', snowline: 0.3, haze: 0.32 },
+        ],
+        air: { falloffM: 260, sunGlow: 0.1, densityMul: 0.9 },
+        ground: { island: null, hills: 2.2, woods: 0.25, straw: 0, vary: 0.35, color: '#e4edf7' },
+      },
+      grade: { saturation: 1.12, bloom: { strength: 0.1, radius: 0.5, threshold: 1.7 }, shadows: '#1746c4', highlights: '#fff6e6', tint: 0.07, film: 0.16, vibrance: 0.1 },
       trees: {
         species: { oak: 'fir', maple: 'fir', birch: 'pine' }, leaves: { fir: '#3f8a5c', pine: '#4a9460' }, leafMix: 0.85, leafGain: 1.35,
         fx: { snow: '#f4f9ff', snowAmount: 0.8 },
@@ -351,6 +454,18 @@ export const ARCADE_THEMES = Object.freeze({
       ball: { halo: { color: '#0d1b3a', px: 48, alpha: 0.6 } },
     },
     times: {
+      // Ice Pick's hour: the sun going down behind the peaks, the aurora up
+      golden: {
+        sky: {
+          pano: { id: 'alpine-golden', gain: 1.12, envLuma: 0.36, envSun: 3, minSunAltDeg: 11, glare: { core: 0, halo: 1.2 }, billow: { amount: 0.0022, speed: 0.11, fromDeg: 14, toDeg: 30 }, light: { environmentIntensity: 1.0, sunIntensity: 3.4 } },
+          far: [
+            { type: 'mountains', distM: 11000, heightM: 1500, freq: 5, seed: 6, color: '#5f6cab', top: '#ffb6cf', snowline: 0.16, haze: 0.5 },
+            { type: 'mountains', distM: 4600, heightM: 520, freq: 7, seed: 13, color: '#46549a', top: '#f0b4d6', snowline: 0.32, haze: 0.32 },
+          ],
+          air: { falloffM: 260, sunGlow: 0.2, densityMul: 0.9 },
+        },
+        grade: { shadows: '#1c2c9c', highlights: '#ff8ab4', tint: 0.08 },
+      },
       // moonlit snow is already bright: no lift, a quieter fill
       night: { light: { fill: { sky: '#9db4ff', ground: '#8ea4d8', intensity: 0.55 } }, turf: { glow: { lift: 0.2, baseLift: 0.16 } } },
       dusk: { turf: { glow: { baseLift: 0.22 } } },
@@ -361,12 +476,22 @@ export const ARCADE_THEMES = Object.freeze({
   sakura: {
     look: {
       palette: { base: '#6fb04c', rough: '#62a546', wood: '#3f7a3a', range: '#7dba52', fairwayA: '#90d054', fairwayB: '#83c54c', greenA: '#a6e262', greenB: '#99d75a', tee: '#96d458', bunker: '#f6ecd9', water: '#2f8a5c' },
-      turf: { collar: '#c2ec7a', cliff: { a: '#938d82', b: '#6f6a62', strataM: 2.6 } },
+      turf: { collar: '#c2ec7a', cliff: { a: '#938d82', b: '#6a655f', c: '#b5ad9c', strataM: 2.6, cap: '#6c9c48', capAmount: 0.7 } },
       water: { deep: '#1f6b4a', shallow: '#86e6a6', shallowReachM: 1.2, foam: '#f0fff2', foamM: 0.12, reflect: 0.72, glint: 1.2, chopMul: 0.45 },
       light: { sunColor: '#ffe4e0', sunAltitudeDeg: 30, environmentMul: 1.5 },
       fog: { color: '#ffd4e4', colorMix: 0.7, densityMul: 0.95 },
-      sky: { preset: 'morning' },
-      grade: { saturation: 1.18 },
+      sky: {
+        preset: 'morning',
+        pano: { id: 'sakura-day', gain: 1.05, envLuma: 0.66, envSun: 4, minSunAltDeg: 22, glare: { core: 0, halo: 1.0 }, light: { environmentIntensity: 1.0 }, clouds: { cover: 0.3, opacity: 0.35, heightM: 2400, sizeM: 3000, color: '#ffffff', shade: '#f1cfe0' } },
+        far: [
+          { type: 'dunes', distM: 9000, heightM: 1500, freq: 4, seed: 8, color: '#7da3c0', top: '#9fc0d4', haze: 0.55 },
+          { type: 'dunes', distM: 4800, heightM: 760, freq: 6, seed: 15, color: '#5a9c8c', top: '#8cc4a8', haze: 0.34 },
+          { type: 'dunes', distM: 2300, heightM: 330, freq: 9, seed: 21, color: '#4f9a5e', top: '#ffbfdc', haze: 0.16 },
+        ],
+        air: { falloffM: 90, sunGlow: 0.14, densityMul: 1.25 },
+        ground: { island: null, hills: 1.4, woods: 0.5, straw: 0, vary: 0.8 },
+      },
+      grade: { saturation: 1.18, shadows: '#2f5a6e', highlights: '#ffc4dc', tint: 0.06, film: 0.12 },
       trees: {
         species: { fir: 'pine' }, leaves: { oak: '#ff8fc0', maple: '#ffb3d6', birch: '#ffe1ee', pine: '#4f9a4a' }, leafMix: 0.6, leafGain: 1.5,
         fx: { paint: { oak: '#ff86bc', maple: '#ffaed4', birch: '#ffe6f1' }, paintMix: 0.92 },
@@ -383,9 +508,23 @@ export const ARCADE_THEMES = Object.freeze({
       water: { deep: '#1a6a55', shallow: '#66dca4', foam: '#eaffe2', reflect: 0.5, sea: { deep: '#176a5c', scatter: '#3fc0a0', shallow: '#74e2b0' } },
       light: { sunColor: '#fff0c4', sunAltitudeDeg: 36, sunIntensityMul: 1.05, environmentMul: 1.3 },
       fog: { color: '#b4e4ac', colorMix: 0.75, densityMul: 1.7 },
-      sky: { preset: 'morning' },
-      grade: { saturation: 1.24, contrast: 1.08 },
+      sky: { preset: 'morning', pano: null, far: null, air: null, ground: { island: null, hills: 1.6, woods: 0.9, straw: 0, vary: 1.0 } },
+      grade: { saturation: 1.24, contrast: 1.08, shadows: '#0c3a26', highlights: '#ffc246', tint: 0.07, film: 0.18 },
       trees: { species: { pine: 'maple', fir: 'oak' }, scale: 1.18, leaves: { oak: '#2f9a3a', maple: '#3fae35', birch: '#6fc840' }, leafMix: 0.85, leafGain: 1.5 },
+    },
+    // Temple Run's hour: a low sun through the mist
+    times: {
+      golden: {
+        sky: {
+          pano: { id: 'jungle-golden', gain: 1.08, envLuma: 0.54, envSun: 3, envSat: 0.6, minSunAltDeg: 18, glare: { core: 0, halo: 1.4 }, light: { environmentIntensity: 1.0, sunColor: '#ffe6bc' }, clouds: { cover: 0.4, opacity: 0.4, heightM: 1300, sizeM: 2000, color: '#ffd9a0', shade: '#8a9a7a' } },
+          far: [
+            { type: 'mountains', distM: 8500, heightM: 1500, freq: 4, seed: 7, color: '#6d9080', top: '#8fae8a', snowline: 3, haze: 0.6 },
+            { type: 'stacks', distM: 4200, heightM: 560, freq: 34, seed: 5, cover: 0.5, color: '#5d8a70', top: '#86ad84', haze: 0.55 },
+            { type: 'stacks', distM: 2300, heightM: 280, freq: 22, seed: 14, cover: 0.35, color: '#3f7a50', top: '#74a868', haze: 0.34 },
+          ],
+          air: { falloffM: 70, sunGlow: 0.3, sunTight: 6, densityMul: 1.2 },
+        },
+      },
     },
   },
 
@@ -393,11 +532,28 @@ export const ARCADE_THEMES = Object.freeze({
   desert: {
     look: {
       palette: { base: '#dcb56c', rough: '#d4aa60', wood: '#b9955a', range: '#d8b872', fairwayA: '#86c444', fairwayB: '#78b83c', greenA: '#9eda4e', greenB: '#90ce46', tee: '#8ccc46', bunker: '#fff6dc', water: '#1fb6cf' },
-      turf: { collar: '#c0e85e', sand: '#fff8e4', sandGain: 1.16, sandGlow: 0.28, cliff: { a: '#e2b26c', b: '#bd8648', strataM: 3.6 } },
+      turf: { collar: '#c0e85e', sand: '#fff8e4', sandGain: 1.16, sandGlow: 0.28, cliff: { a: '#d79c62', b: '#a3643a', c: '#f2d6a6', strataM: 3.6 }, env: { rough: 'sand', roughTileM: 5.5, roughDetail: 0.85, normal: 0.9 }, blades: { rough: false } },
       light: { sunColor: '#fff2cc', sunAltitudeDeg: 38, sunIntensityMul: 1.0, environmentMul: 1.3 },
-      fog: { color: '#f6dfb0', colorMix: 0.75, densityMul: 0.8 },
-      sky: { preset: 'midday' },
+      fog: { color: '#f2e0cc', colorMix: 0.75, densityMul: 0.8, panoMix: 0.5 },
+      sky: { preset: 'midday', pano: null, far: null, air: null, ground: { island: null, hills: 1.8, woods: 0, straw: 0, vary: 0.5, color: '#d9ad62' } },
+      grade: { saturation: 1.1, vibrance: 0.1, shadows: '#30347c', highlights: '#ffc47c', tint: 0.045, film: 0.16 },   // v3:env-polish (was a strong orange and purple split)
       trees: { species: { fir: 'oak', pine: 'oak', maple: 'oak' }, scale: 0.85, leaves: { oak: '#8f9a4a', birch: '#a0a856' }, leafMix: 0.85, leafGain: 1.35 },
+    },
+    // Pharaoh's Gate's hour: the sun into the dunes, a far city in the haze
+    times: {
+      golden: {
+        sky: {
+          // v3:env-polish as the canyon: a warm white sun, a cool fill, pale dusty air
+          pano: { id: 'desert-golden', gain: 1.04, envLuma: 0.58, envSun: 3, envSat: 0.55, envTint: '#d8e2ff', minSunAltDeg: 20, glare: { core: 0, halo: 1.5 }, light: { environmentIntensity: 1.0, sunColor: '#ffe8c8', sunIntensity: 4.0, exposure: 0.9 } },
+          far: [
+            { type: 'dunes', distM: 8000, heightM: 520, freq: 5, seed: 6, color: '#b98a6e', top: '#ecc294', haze: 0.6 },
+            { type: 'dunes', distM: 3200, heightM: 240, freq: 8, seed: 12, color: '#d09a5c', top: '#fbd698', haze: 0.24 },
+          ],
+          air: { falloffM: 200, sunGlow: 0.2, sunTight: 6, densityMul: 1.0, colorMix: 0.45 },
+        },
+        light: { sunColor: '#ffe8c8' },
+        fog: { color: '#f2e0cc', colorMix: 0.6 },
+      },
     },
   },
 
@@ -415,10 +571,18 @@ export const ARCADE_THEMES = Object.freeze({
       trees: { leaves: { oak: '#2f9a62', maple: '#2f9a62', birch: '#49b070', pine: '#2a8a5c', fir: '#2a8a5c' }, leafMix: 0.8, leafGain: 1.2, fx: { uplight: '#ffb060', uplightGain: 0.7 } },
       flag: { colors: { cloth: '#ffe81f', hem: '#ff9f0a', ink: '#1a1030' } },
       trail: { color: '#3df2ff', core: '#ffffff' },
+      sky: { pano: null, far: null, air: null, ground: { island: null, hills: 0.3, woods: 0, straw: 0, vary: 0.4, color: '#141a34' } },
+      grade: { shadows: '#0a5ac8', highlights: '#ff3ccf', tint: 0.08, film: 0.2 },
     },
     times: {
       night: {
         sky: {
+          pano: { id: 'neon-night', gain: 1.25, envLuma: 0.2, envSun: 1.5, minSunAltDeg: 50, glare: { core: 0, halo: 0.5 }, billow: { amount: 0.0007, speed: 0.04 } },
+          far: [
+            { type: 'skyline', distM: 3600, heightM: 620, freq: 110, seed: 3, color: '#1c1648', top: '#ff9af0', glow: 1.3, haze: 0.3 },
+            { type: 'skyline', distM: 1700, heightM: 300, freq: 64, seed: 7, color: '#0f0b2a', top: '#7ff0ff', glow: 1.5, haze: 0.12 },
+          ],
+          air: { falloffM: 140, sunGlow: 0.05, densityMul: 1.0 },
           paint: nightSky({
             zenith: '#04030d', mid: '#100a2e', horizon: '#3c1668',
             glows: [{ color: '#ff3df2', widthDeg: 360, heightDeg: 7, strength: 0.4 }, { color: '#ff8a3c', azDeg: 0, widthDeg: 140, heightDeg: 5, strength: 0.5 }, { color: '#3d8aff', azDeg: 180, widthDeg: 160, heightDeg: 8, strength: 0.25 }],
@@ -443,12 +607,20 @@ export const ARCADE_THEMES = Object.freeze({
       turf: { stripeGain: 1.05, crossGain: 0.85, stripeM: 5, collar: '#b8f060', cliff: { a: '#9ca2ae', b: '#7a808c', strataM: 2 } },
       light: { sunColor: '#fff4dc', sunAltitudeDeg: 34 },
       fog: { color: '#dcecff', colorMix: 0.5, densityMul: 0.6 },
-      sky: { preset: 'midday' },
+      sky: { preset: 'midday', pano: null, far: null, air: null, ground: { island: null, hills: 0.5, woods: 0.6, straw: 0, vary: 0.6 } },
       trees: { leaves: { oak: '#56b03a', maple: '#56b03a', birch: '#7cc848', pine: '#3f9a44', fir: '#3a9048' }, leafGain: 1.6 },
     },
     times: {
       night: {
-        sky: { paint: nightSky({ glows: [{ color: '#6a8cff', widthDeg: 360, heightDeg: 11, strength: 0.4 }], stars: 0.5, light: { sunColor: '#f2f6ff', sunIntensity: 2.5, sunAzimuthDeg: 200, sunAltitudeDeg: 62, environmentIntensity: 1.0, exposure: 0.98, fogDensity: 0.00024 } }) },
+        grade: { shadows: '#0c2a78', highlights: '#e4f1ff', tint: 0.05, film: 0.18 },
+        sky: {
+          pano: { id: 'stadium-night', gain: 1.3, envLuma: 0.16, envSun: 1.2, minSunAltDeg: 52, glare: { core: 0, halo: 0.4 }, billow: { amount: 0, speed: 0 } },
+          far: [
+            { type: 'skyline', distM: 6000, heightM: 150, freq: 150, seed: 5, color: '#0a1024', top: '#ffd9a0', glow: 0.9, haze: 0.45 },
+            { type: 'dunes', distM: 1500, heightM: 70, freq: 30, seed: 12, color: '#060c14', top: '#0c1620', haze: 0.1 },
+          ],
+          air: { falloffM: 120, sunGlow: 0.04, densityMul: 1.0 },
+          paint: nightSky({ glows: [{ color: '#6a8cff', widthDeg: 360, heightDeg: 11, strength: 0.4 }], stars: 0.5, light: { sunColor: '#f2f6ff', sunIntensity: 2.5, sunAzimuthDeg: 200, sunAltitudeDeg: 62, environmentIntensity: 1.0, exposure: 0.98, fogDensity: 0.00024 } }) },
         light: { fill: { sky: '#c4d4ff', ground: '#4a6a4a', intensity: 1.0 } },
         turf: { glow: { lift: 0.3, edge: '#ffffff', edgeGain: 0.8, greenEdge: '#ffffff', greenEdgeGain: 1.6 } },
         props: { emissive: 1.15 },
@@ -467,6 +639,9 @@ function layer(base, over) {
   return out;
 }
 const RESOLVED = new Map();
+const PANO_FILL = Object.freeze({ gain: 1, envLuma: 0.5, envSun: 3, minSunAltDeg: 12, glare: { core: 0, halo: 1 }, light: { environmentIntensity: 1.0 }, clouds: { cover: 0, opacity: 0, heightM: 2600, sizeM: 3400, color: '#ffffff', shade: '#808890' } });
+const AIR_FILL = Object.freeze({ falloffM: 160, sunGlow: 0.2, sunTight: 9 });
+const GROUND_FILL = Object.freeze({ island: null, hills: 1, woods: 1, straw: 1, vary: 1, color: null });
 
 // The time of day a theme is drawn at: the one asked for, unless the theme has only one.
 export const themeTimeOfDay = (theme, timeOfDay) => ARCADE_THEMES[parseTheme(theme)]?.always || parseTimeOfDay(timeOfDay);
@@ -486,6 +661,10 @@ export function resolveLook(theme, timeOfDay) {
     L = layer(ARCADE_LOOK, def.look || {});
     L = layer(L, TIME_LAYERS[time]);
     L = layer(L, def.times?.[time] || {});
+    // v3:environment a theme's panorama, air and far ground are whole objects: what it leaves out is the neutral value, not the lagoon's
+    if (L.sky.pano) L.sky = { ...L.sky, pano: layer(PANO_FILL, L.sky.pano) };
+    if (L.sky.air) L.sky = { ...L.sky, air: layer(AIR_FILL, L.sky.air) };
+    if (L.sky.ground) L.sky = { ...L.sky, ground: layer(GROUND_FILL, L.sky.ground) };
     L.theme = t;
     L.timeOfDay = time;
     RESOLVED.set(key, L);
@@ -562,14 +741,32 @@ export function lookSkyPreset(preset, look) {
   };
 }
 
+// v3:environment under a panorama the sky preset takes the panorama's own light numbers (sky.pano.light)
+export function lookPanoPreset(preset, scene) {
+  const sky = lookSkyPano(scene);
+  return sky && sky.pano.light && preset ? { ...preset, ...sky.pano.light } : preset;
+}
+
 // The painted sky a theme brings in place of a sky photo (arcade-sky.js paintSky's spec), or null.
 export const lookSkyPaint = (look) => lookOf(look)?.sky.paint ?? null;
+
+// v3:environment The panorama a themed stage is under (far-world.js), with the far layers that
+// stand in front of it: the look's whole `sky` ({ pano, far, ... }), or null. Only for a
+// course that names a theme (a real course played in the arcade look keeps its sky photo:
+// far islands have no business round an inland parkland course), and never in the real look.
+export function lookSkyPano(scene) {
+  if (!scene || typeof scene !== 'object' || scene.look !== 'arcade' || !scene._arcadeLook) return null;
+  const sky = scene._arcadeLook.sky;
+  return sky.pano && sky.pano.id ? sky : null;
+}
 
 // The haze colour (a linear THREE.Color, changed in place).
 export function lookFogColor(color, look) {
   const L = lookOf(look);
   if (!L) return color;
-  return color.lerp(new THREE.Color(L.fog.color), L.fog.colorMix);
+  // v3:environment under a panorama the haze is the picture's own horizon: only a touch of the theme's pastel
+  const mix = look && typeof look === 'object' && look._panoSky ? (L.fog.panoMix ?? L.fog.colorMix * 0.25) : L.fog.colorMix;
+  return color.lerp(new THREE.Color(L.fog.color), mix);
 }
 
 // The shadow's softness (the light's PCF radius).
@@ -589,6 +786,10 @@ export function lookSkySetting(scene, setting) {
 export const lookFlagColors = (look) => lookOf(look)?.flag.colors;   // undefined = pin-flag.js's red
 export const lookTurf = (look) => lookOf(look)?.turf ?? null;        // makeTurfMaterial({ arcade })
 export const lookWater = (look) => lookOf(look)?.water ?? null;      // buildWater(..., look)
+// v3:environment the look's grade (its depth of field and motion blur numbers), or null in the real look
+export const lookGrade = (scene) => lookOf(scene)?.grade ?? null;
+// v3:environment what a themed stage stands in, past its own edge (horizon.js buildGroundApron's look), or null
+export const lookGround = (scene) => (scene && typeof scene === 'object' && scene.look === 'arcade' && scene._arcadeLook ? scene._arcadeLook.sky.ground ?? null : null);
 export const lookTrees = (look) => lookOf(look)?.trees ?? null;      // new TreeField(..., { look })
 export const lookProps = (look) => lookOf(look)?.props ?? null;      // PropsLayer({ style })
 
@@ -620,6 +821,18 @@ export function lookSand(mat, look) {
   mat.color.multiplyScalar(L.turf.sandGain);
   mat.emissive.set(L.turf.sand);
   mat.emissiveIntensity = L.turf.sandGlow;
+  // v3:environment the generated sand set in place of the sand photo: wind ripples and rake lines that
+  // catch a low sun. Its colour map is DETAIL round mid grey, so the material's own colour
+  // is the look's sand (over the grey's linear value, 0.214).
+  const maps = L.turf.env && mat.map && mat.map.repeat ? envSandMaps(mat.map.repeat.x * (2.0 / (L.turf.env.sandTileM ?? 3.2)), mat.map.repeat.y * (2.0 / (L.turf.env.sandTileM ?? 3.2))) : null;
+  if (maps) {
+    mat.map = maps.map; mat.normalMap = maps.normalMap;
+    mat.normalScale.set(0.9, 0.9);
+    mat.color.set(L.turf.sand).multiplyScalar((0.6 * L.turf.sandGain) / 0.214);
+    if (L.turf.sandTint) mat.color.multiply(new THREE.Color(L.turf.sandTint));
+    mat.userData.disposeTextures = [...(mat.userData.disposeTextures || []), maps.map, maps.normalMap];
+    mat.needsUpdate = true;
+  }
   return mat;
 }
 
@@ -660,6 +873,12 @@ export function lookCourse(scene) {
   if (L.character.fescue != null) scene._fescue = L.character.fescue;
   scene._pal = lookPalette(scene._pal, scene);
   for (const m of [scene._macro, ...(scene._hdMacros || [])]) if (m) Object.assign(m, L.turf.macro);
+  // v3:environment the ground's material sets, on their way before the turf is built (a bare stand-in for a scene fetches nothing)
+  if (L.turf.env && scene.renderer) {
+    const size = scene.quality?.preset?.env?.ground === 1 ? 512 : 1024;
+    scene._envTex = envTextures(size);
+    loadEnvTextures({ size, anisotropy: Math.min(8, scene.renderer.capabilities.getMaxAnisotropy()) });
+  }
 }
 
 // The tracer ribbon's options (shot-fx.js ShotTracer) for a look: undefined = its defaults.

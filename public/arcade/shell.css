@@ -392,3 +392,31 @@ html[data-product="simclash"] #shotpanel { top: 244px; }
 @media (prefers-reduced-motion: reduce) {
   .sc-root *, .sc-boot * { animation-duration: .01s !important; animation-iteration-count: 1 !important; transition-duration: .01s !important; }
 }
+
+/* v3:modes ------------------------------------------------------ the newer modes (docs/modes.md)
+   A mode module draws in its own root inside #hud (class md-root). While the menus are up the play HUD is hidden;
+   the root of the mode whose lobby is the screen that is up shows (html.sc-modescreen), over the stage, with the
+   shell's own shade out of its way. In play (html.sc-game) it shows like the rest of the HUD. */
+html[data-product="simclash"].sc-menu.sc-modescreen #hud > .md-root { visibility: visible !important; }
+html.sc-menu.sc-modescreen .sc-root .sc-shade { opacity: 0; }
+
+/* v3:modes the main menu with the newer modes in the build: the ways of playing as tiles in one column,
+   the rest (highlights, players, settings, how to play, quit) in a second column beside it */
+.sc-main.sc-main-split { width: calc(var(--u) * 72); }
+.sc-main-split .sc-main-head { margin-bottom: calc(var(--u) * 1.2); }
+.sc-main-split .sc-main-list { flex-direction: row; align-items: flex-start; gap: calc(var(--u) * 1.6); }
+.sc-main-col { display: flex; flex-direction: column; gap: calc(var(--u) * .62); min-width: 0; }
+.sc-main-games { flex: 0 0 calc(var(--u) * 43); }
+.sc-main-more { flex: 0 0 calc(var(--u) * 27); padding-top: calc(var(--u) * .1); }
+.sc-main-split .sc-main-list .sc-big { height: calc(var(--u) * 5.9); }
+.sc-main-split .sc-main-list .sc-big > b { font-size: calc(var(--u) * 3.6); }
+.sc-main-split .sc-main-list .sc-big > span { padding-top: .3em; font-size: calc(var(--u) * 1.12); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sc-main-split .sc-main-list .sc-small { height: calc(var(--u) * 4.6); grid-template-columns: auto 1fr; grid-template-rows: auto auto; align-content: center; }
+.sc-main-split .sc-main-list .sc-small .sc-n { grid-row: 1 / span 2; }
+.sc-main-split .sc-main-list .sc-small > b { grid-column: 2; grid-row: 1; font-size: calc(var(--u) * 2.1); }
+.sc-main-split .sc-main-list .sc-small > span { grid-column: 2; grid-row: 2; padding-top: .3em; font-size: calc(var(--u) * .95); text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sc-main-split .sc-item .sc-n:empty { visibility: hidden; }
+.sc-item.sc-tone-party { border-image: linear-gradient(180deg, var(--sc-p1) 25%, var(--sc-p2) 25% 50%, #2fe6a8 50% 75%, #f277d0 75%) 1; }
+.sc-item.sc-tone-gold { border-left-color: var(--sc-gold); }
+.sc-step.sc-tone-party { border-image: linear-gradient(90deg, var(--sc-p1) 25%, var(--sc-p2) 25% 50%, #2fe6a8 50% 75%, #f277d0 75%) 1; }
+.sc-step.sc-tone-gold { border-top-color: var(--sc-gold); }

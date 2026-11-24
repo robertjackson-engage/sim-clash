@@ -42,7 +42,7 @@ settings or data. They still cannot run at the same time: both listen on ports 9
 Beside it in `resources/`:
 
 - `arcade-data/`: the stage courses, `arcade-tour.json` and `bundle.json` (about 6.5 MB),
-  and `sky.json` with `sky/`: the two sky photos the stages are lit by (31 MB)
+  and `sky.json` with an empty `sky/` (no stage needs a sky photo any more: see below)
 
 Beside the `.exe`: `LICENSE.txt`, `NOTICE.md`, `CREDITS.md`, `SOUND-CREDITS.md`, and
 Electron's own licence files.
@@ -88,15 +88,25 @@ Tests: `test/arcade-bundle.test.js`.
 ## How the skies reach a player's PC
 
 The game never downloads anything, and its server serves `/sky/<file>` only when the file is
-already in `<data>/sky-cache`. Nine of the fifteen stages are lit by a sky photo that is not
-inside the app (the golden-hour sky and the morning sky; the dusk, night and volcano skies
-are painted by code, and midday is the one HDRI inside `app.asar`). So those two photos
-ship beside the stages:
+already in `<data>/sky-cache`.
+
+**Today no sky photo ships beside the stages.** Every stage is drawn under its own generated
+panorama (`public/arcade/env/sky`, inside `app.asar` with its checksum in
+`public/arcade/env/manifest.json`; docs/arcade-look.md, "The world round a stage"), so the
+two Poly Haven photos that used to be installed with the stages (32 MB) are gone from the
+installer: `sky.json` lists no file and `installSkyBundle()` copies nothing. If a panorama
+cannot be loaded the page falls back to the stage's sky photo, finds it is not on disk, and
+uses the midday sky inside the app. The legacy three-hole Arcade Classics course (on no
+menu, no theme, so no panorama) plays under that midday sky too.
+
+The steps below are how a sky photo WOULD reach a player's PC, and are kept working (and
+tested with stand-in files) for a stage that names a theme and hour with no panorama:
 
 1. **Which files.** `tools/arcade-holes/sky-files.mjs` asks the look itself
-   (`public/render/arcade-look.js`) which sky preset each bundled course resolves to: today
-   `kloppenheim_06_puresky_4k.hdr` (8 courses) and `rustig_koppie_puresky_4k.hdr` (4). Each
-   file is pinned there with its SHA-256, size, Poly Haven page, authors and licence (CC0).
+   (`public/render/arcade-look.js`) what each stage on the tour is lit by: a panorama (no
+   file), a painted sky (no file), or a sky preset's photo. The two photos a stage could
+   fall back to (`kloppenheim_06_puresky_4k.hdr`, `rustig_koppie_puresky_4k.hdr`) stay
+   pinned there with SHA-256, size, Poly Haven page, authors and licence (CC0).
    A stage that needs a sky with no row stops the build and fails `test/sky-bundle.test.mjs`.
 2. **Build time.** `npm run prepare:sky` (`tools/arcade-holes/sky-bundle.mjs`) puts the
    files in `build/arcade-data/sky/` and writes `sky.json`. It takes each file from, in
@@ -136,10 +146,11 @@ cd .scratch/pkg
 BIRDIE_PORT=8334 BIRDIE_OC_PORT=9964 BIRDIE_DATA_DIR=../data BIRDIE_ENRICH=0 BIRDIE_SKY_PREFETCH=0 BIRDIE_ARCADE_DIR=../../dist/win-unpacked/resources/arcade-data node server.js
 ```
 
-It should log `[arcade] installed 16 stage course(s) from the bundle`,
-`[sky] installed 2 sky photo(s) from the bundle` and `[course] loaded cached: Lagoon Island`;
-`GET /api/match` should list 12 stages and 3 tiebreak arenas, and
-`GET /sky/kloppenheim_06_puresky_4k.hdr` should answer 200 with 17 MB.
+It should log `[arcade] installed 16 stage course(s) from the bundle` and
+`[course] loaded cached: Lagoon Island` (and no `[sky] installed` line: no sky photo is
+bundled); `GET /api/match` should list 12 stages and 3 tiebreak arenas,
+`GET /arcade/env/sky/tropical-day.webp` should answer 200 as `image/webp`, and
+`GET /sky/kloppenheim_06_puresky_4k.hdr` should answer 404 at once.
 
 ## The installer and the first start
 
@@ -215,8 +226,8 @@ $env:BIRDIE_ARCADE_DIR = "$dest\resources\arcade-data"
 & "$dest\Sim Clash.exe" "$dest\resources\app.asar\server.js"
 ```
 
-It should print `[arcade] installed 16 stage course(s) from the bundle`,
-`[sky] installed 2 sky photo(s) from the bundle` and `[course] loaded cached: Lagoon Island`.
+It should print `[arcade] installed 16 stage course(s) from the bundle` and
+`[course] loaded cached: Lagoon Island`.
 From a second terminal, `Invoke-RestMethod http://localhost:8334/api/match` lists 12 stages
 and 3 tiebreak arenas.
 Stop it with Ctrl+C, close that terminal (so `ELECTRON_RUN_AS_NODE` is gone), then:

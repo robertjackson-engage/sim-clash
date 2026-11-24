@@ -38,10 +38,12 @@ if (typeof window !== 'undefined' && typeof window.addEventListener === 'functio
   window.addEventListener('keydown', (e) => { if (activeShell) activeShell._key(e); }, true);
 }
 
+const HOWTO_PAGES = 5;   // v3:modes (was four: a page for the party games, Bullseye and the duel)
 const KEYS_HELP = [
   ['← →', 'AIM (SHIFT: BIGGER STEPS)'], ['A', 'AUTO AIM'], ['B', 'THE BALL TRAY'], ['1 … 9', 'ARM A POWER-UP BALL'],
   ['V', 'VIEW FROM ABOVE'], ['F', 'FLY OVER THE HOLE'], ['T', 'TEST SWING (NO MONITOR NEEDED)'], ['D', 'SHOT DATA PANELS'],
   ['S', 'SOUND ON / OFF'], ['ESC', 'MENU · BACK'], ['F11', 'FULL SCREEN'],
+  ['X', 'PARTY: WHO YOUR TRICK IS FOR'], ['P', 'PLAY THE REPLAY ON OFFER'],   // v3:modes
 ];
 
 /**
@@ -101,6 +103,8 @@ export class Shell {
     this._wireScene();
     this._wireEvents();
     if (matchUI) matchUI.shell = true;   // the match menu says EXIT TO MAIN MENU (match.js menuItems)
+    this.modes = {};            // v3:modes the mode modules that are in the build: { bullseye, duel, highlights } -> their UI
+    this.party = !!(matchUI && typeof matchUI.openPartyLobby === 'function');   // v3:modes PARTY: the match UI's own lobby for 2 to 4
     this._watchMatch();
     this._load();
     this._apply();
@@ -193,6 +197,7 @@ export class Shell {
     }
     if (ar) this.snap = ar;
     this._loaded = true;
+    await this._loadModes();   // v3:modes
     await this._loadConnect();
     this._render();
     if (this.m.screen === 'connect' && !this.connect.module) { this.m.back(); this._apply(); }   // ?connect=1 in a build without the wizard
@@ -218,6 +223,64 @@ export class Shell {
     const st = await this.fetchJson('/api/connect/status');
     const chosen = st && (st.chosen === true || st.configured === true || st.firstRun === false || !!(st.device || st.monitor || st.selected || st.deviceId || st.monitorId));
     this.connect.due = !!st && st.ok !== false && !chosen && !(st.connected === true) && lsGet(LS.connectDone) !== '1';
+  }
+  /**
+   * v3:modes The newer modes (docs/modes.md). Each is a module of its own beside this file,
+   * public/arcade/<id>.js, exporting
+   *
+   *     mount(ctx) -> ui
+   *
+   * ctx: { id, shell, doc, hud, scene, audio, events, fetchJson, toast, getState, isAnimating,
+   *        players() (the roster), profiles(), stages(), arenas(), sync() }
+   * ui:  { root        the element it draws in (it appends it to ctx.hud itself)
+   *        lobbyOpen   true while its lobby / menu screen is up (a menu: swings are held)
+   *        live        true while a game of this mode is on (play itself: swings count)
+   *        openLobby() the main menu picked it        closeLobby() ESC took it down
+   *        key(e)      (optional) a key while its screen or its game is up: true when it took it }
+   * It draws its own screens and reads its own keys, as the match UI does; the shell only
+   * follows it: lobbyOpen -> the screen '<id>', live -> play (mode '<id>'), neither -> the
+   * main menu. It calls ctx.sync() whenever lobbyOpen / live change. A module that is not in
+   * the build (404) simply has no entry in the main menu.
+   */
+  async _loadModes() {
+    if (this._modesLoaded) return;
+    this._modesLoaded = true;
+    const hud = this.doc.getElementById('hud') || this.doc.body;
+    for (const id of ['bullseye', 'duel', 'highlights']) {
+      try {
+        const mod = await import(`./${id}.js`);
+        const mount = mod && (mod.mount || (mod.default && mod.default.mount));
+        if (typeof mount !== 'function') continue;
+        const ui = mount({
+          id, shell: this, doc: this.doc, hud, scene: this.scene, audio: this.audio, events: this.events, fetchJson: this.fetchJson, toast: this.toast,
+          getState: this.getState, isAnimating: this.isAnimating,
+          players: () => this.players, profiles: () => this.profiles, stages: () => this.stages, arenas: () => this.arenas,
+          sync: () => this._syncMode(id),
+        });
+        if (!ui) continue;
+        this.modes[id] = ui;
+        this._syncMode(id);
+      } catch (e) {
+        if (!/Failed to fetch|404|Cannot find module|error loading dynamically imported module/i.test(String(e && e.message))) console.warn(`[shell] the ${id} mode would not start`, e);
+      }
+    }
+  }
+  /** Follow a mode's UI: its lobby is the screen '<id>', a live game is play, neither is the main menu. */
+  _syncMode(id) {
+    const ui = this.modes[id];
+    if (!ui) return;
+    clearTimeout(this._modeLeave);
+    if (ui.live && !ui.lobbyOpen) {
+      if (this.m.stack[0] !== 'game' || this.mode !== id) { this.mode = id; this.m.go('game'); this._hideCard(); this._apply(); }
+    } else if (ui.lobbyOpen) {
+      if (this.m.screen !== id) { this.mode = null; this.m.go(id); this._apply(); }
+    } else if (this.mode === id || this.m.screen === id) {
+      // neither: back to the main menu, unless a lobby or a game shows up in a moment (PLAY AGAIN)
+      this._modeLeave = setTimeout(() => {
+        if (ui.live || ui.lobbyOpen) return;
+        if (this.mode === id || this.m.screen === id) { this.mode = null; this.m.go('main'); this._apply(); }
+      }, 350);
+    }
   }
   async _refreshProfiles() {
     const mm = await this.fetchJson('/api/match');
@@ -285,7 +348,8 @@ export class Shell {
     h.classList.toggle('sc-menu', !inGame);
     h.classList.toggle('sc-game', inGame);
     h.classList.toggle('sc-lobby', s === 'versus');
-    for (const k of ['versus', 'solo', 'practice']) h.classList.toggle(`sc-mode-${k}`, inGame && this.mode === k);
+    for (const k of ['versus', 'solo', 'practice', 'bullseye', 'duel', 'highlights' /* v3:modes */]) h.classList.toggle(`sc-mode-${k}`, inGame && this.mode === k);
+    h.classList.toggle('sc-modescreen', !!this.modes[s]);   // v3:modes a mode's own lobby is up (shell.css: its root shows, the shade steps aside)
     this.root.dataset.screen = s;
     if (!inGame && this.scene && this.scene.__scLineup) { try { this.scene.__scLineup(null); } catch (_) { /* no course yet */ } }
     this._sendGate();
@@ -302,6 +366,7 @@ export class Shell {
     this._lastT = t;
     if (!sc || !sc.geo || !sc.free || !sc.pinSim || !sc.ballSim) return;
     const want = this.m.stack[0] !== 'game';
+    sc.backdrop = want;   // v3:environment the stage behind the menus: the scene softens its focus on it (scene.js _lensStep)
     if (!want) {
       if (this._orbiting) { this._orbiting = false; if (sc.camMode === 'free') sc.enterFreeCam(false); }
       return;
@@ -322,7 +387,8 @@ export class Shell {
     // model that stands on it (shell-core.js backdropOrbit: the usual swing where that is
     // clear, else a narrower, closer or higher one). Planned again when the stage or its
     // models change (they load a moment after the ground); eased, so the camera never jumps.
-    const obst = sc.props && typeof sc.props.obstacles === 'function' ? sc.props.obstacles() : [];
+    const obst = (sc.props && typeof sc.props.obstacles === 'function' ? sc.props.obstacles() : []).concat(sc.worldEvents && typeof sc.worldEvents.obstacles === 'function' ? sc.worldEvents.obstacles() : []);   // v3:living and the ways the living world's flyers travel
+    if (sc.gadgets && typeof sc.gadgets.obstacles === 'function') for (const o of sc.gadgets.obstacles()) obst.push(o);   // v3:gadgets the orbit keeps clear of a wall or a cannon like a prop
     const planKey = `${sc.geo.name}|${pin.x.toFixed(0)},${pin.y.toFixed(0)}|${ball.x.toFixed(0)},${ball.y.toFixed(0)}|${(sc.props && sc.props.version) || 0}|${obst.length}`;
     if (this._orbitPlanKey !== planKey) {
       this._orbitPlanKey = planKey;
@@ -387,6 +453,7 @@ export class Shell {
     const a = (this.snap && this.snap.assist) || {};
     const soundOn = this.sound ? !!this.sound.get() : false;
     const cam = seg('seg-shotcam'), gfx = seg('seg-gfx');
+    const life = seg('seg-life'), clock = seg('seg-worldclock');   // v3:living
     const near = (list, v) => list.reduce((best, x) => (Math.abs(x - v) < Math.abs(best - v) ? x : best), list[0]);
     return [
       { id: 'sound', label: 'SOUND', value: this.audio ? (soundOn ? 'on' : 'off') : 'none', options: this.audio ? [['on', 'ON'], ['off', 'OFF']] : [['none', 'OFF FOR THIS WINDOW']],
@@ -405,6 +472,11 @@ export class Shell {
         set: (v) => this._setAssist({ tapInFt: +v }) },
       { id: 'graphics', label: 'GRAPHICS', value: gfx.value, options: [['auto', 'AUTO'], ['ultra', 'ULTRA'], ['high', 'HIGH'], ['low', 'LOW']],
         set: (v) => gfx.btns.find((b) => b.dataset.value === v)?.click() },
+      // v3:living how much moves through a stage and answers the game; the day moving on through a match (docs/living-world.md)
+      ...(life.btns.length ? [{ id: 'life', label: 'WORLD LIFE', value: life.value, options: [['full', 'FULL'], ['calm', 'CALM'], ['off', 'OFF']], hint: 'BOATS, BIRDS, WEATHER, AND THE WORLD ANSWERING A SHOT',
+        set: (v) => life.btns.find((b) => b.dataset.value === v)?.click() }] : []),
+      ...(clock.btns.length ? [{ id: 'worldclock', label: 'WORLD CLOCK', value: clock.value, options: [['off', 'OFF'], ['on', 'ON']], hint: 'IN A LONG MATCH EVERY HOLE IS PLAYED A LITTLE LATER IN THE DAY',
+        set: (v) => clock.btns.find((b) => b.dataset.value === v)?.click() }] : []),
       { id: 'monitor', label: 'LAUNCH MONITOR', link: 'monitor', value: this.lm.connected ? 'CONNECTED' : 'WAITING' },
       { id: 'credits', label: 'CREDITS', link: 'credits', value: '' },
     ];
@@ -416,7 +488,7 @@ export class Shell {
 
   _items(screen = this.m.screen) {
     switch (screen) {
-      case 'main': return mainItems({ canQuit: this.canQuit });
+      case 'main': return mainItems({ canQuit: this.canQuit, modes: [...Object.keys(this.modes || {}), ...(this.party ? ['party'] : [])] });   // v3:modes
       case 'solo': return [{ id: 'player' }, ...soloItems({ stages: this.stages.length, bests: this.bests, playerId: this._soloPlayer()?.id || null })];
       case 'solo-stage': case 'practice-stage': return this._stageList(screen);
       case 'practice': return PRACTICE_GAMES.map((g) => ({ ...g, disabled: ![...this.stages, ...this.arenas].some((s) => g.fits(s)) }));
@@ -437,6 +509,7 @@ export class Shell {
     const take = () => { e.preventDefault(); e.stopImmediatePropagation(); };
     if (s === 'versus') return;   // the match lobby has its own keys
     if (s === 'connect') return;  // and so has the connection wizard
+    if (this.modes[s]) return;    // v3:modes and a mode's lobby (its module listens itself)
     if (s === 'game') {
       if (typing) return;
       const lower = k.toLowerCase();
@@ -450,6 +523,7 @@ export class Shell {
         if (sw && !e.repeat) { take(); this._swing(sw.id); return; }
       }
       if (this.mode === 'versus') return;   // Esc / M: the match menu
+      if (this.modes[this.mode]) return;    // v3:modes Esc / M: the mode's own menu
       if (lower === 'm' && this.run && this.run.kind !== 'free') { e.stopImmediatePropagation(); return; }   // no mulligans in a scored run
       if (k === 'Escape' && !e.repeat) {
         if (this.arcade && this.arcade.trayOpen) return;   // the ball tray closes first
@@ -535,8 +609,10 @@ export class Shell {
       this.ui.exitAsk = false; this.ui.ask = null; this.ui.playerOpen = null; this.ui.removeAsk = null; this.ui.note = '';
       if (eff.from === 'versus') this.matchUI?.closeLobby?.();
       if (eff.from === 'connect') this._closeConnect();
+      if (this.modes[eff.from]) { try { this.modes[eff.from].closeLobby?.(); } catch (_) { /* gone */ } }   // v3:modes
     }
     if (eff.type === 'open' && eff.screen === 'versus') this._openLobby();
+    if (eff.type === 'open' && this.modes[eff.screen]) { try { this.modes[eff.screen].openLobby?.(); } catch (e) { console.warn(e); } }   // v3:modes
     this._apply();
   }
 
@@ -547,8 +623,15 @@ export class Shell {
       const i = row.options.findIndex(([v]) => v === row.value);
       const next = row.options[Math.max(0, Math.min(row.options.length - 1, (i < 0 ? 0 : i) + dir))];
       if (next && next[0] !== row.value) this._setOption(index, next[0], true);
+    } else if (screen === 'main') {
+      // v3:modes left / right step between the two columns of the main menu (the games, the rest), keeping the row
+      const items = this._items('main');
+      const games = items.filter((it) => it.game).length, rest = items.length - games;
+      if (!items.some((it) => it.mode) || !games || !rest) return;
+      const to = index < games ? (dir > 0 ? games + Math.min(rest - 1, index) : -1) : (dir < 0 ? Math.min(games - 1, index - games) : -1);
+      if (to >= 0 && this.m.setCursor(to, 'main').type === 'move') this._markCursor();
     } else if (screen === 'solo' && index === 0) this._cyclePlayer(dir);
-    else if (screen === 'howto') { this.ui.howto = (this.ui.howto + dir + 4) % 4; this._render(); }
+    else if (screen === 'howto') { this.ui.howto = (this.ui.howto + dir + HOWTO_PAGES) % HOWTO_PAGES; this._render(); }
   }
   _setOption(rowIndex, value, quiet = false) {
     const row = this._settingsRows()[rowIndex];
@@ -574,6 +657,7 @@ export class Shell {
     switch (screen) {
       case 'main':
         if (it.id === 'quit') { try { window.close(); } catch (_) { /* a browser tab stays */ } return; }
+        this._lobbyKind = it.id === 'party' ? 'party' : 'versus';   // v3:modes which lobby the match UI opens (_openLobby)
         this._do(this.m.open(it.to));
         return;
       case 'solo':
@@ -598,7 +682,7 @@ export class Shell {
         if (it.link) { this._do(this.m.open(it.link)); return; }
         if (it.options) { const i = it.options.findIndex(([v]) => v === it.value); this._setOption(index, it.options[(i + 1) % it.options.length][0], true); }
         return;
-      case 'howto': this.ui.howto = (this.ui.howto + 1) % 4; this._render(); return;
+      case 'howto': this.ui.howto = (this.ui.howto + 1) % HOWTO_PAGES; this._render(); return;
       case 'monitor': case 'credits': this._do(this.m.back()); return;
       case 'pause': this._pauseDo(it); return;
       case 'result': this._resultDo(it.id); return;
@@ -612,11 +696,12 @@ export class Shell {
       case 'back': this._do(this._fx(this.m.back())); break;
       case 'menu':   // the MENU button of the solo / practice header
         if (this.mode === 'versus') { this.matchUI?.openMenu?.(); break; }
+        if (this.modes[this.mode]) { this.modes[this.mode].openMenu?.(); break; }   // v3:modes
         this._do(this._fx(this.m.open('pause')));
         break;
       case 'quick-two': this._quickTwo(); break;
       case 'remove': this._removePlayer(el.dataset.id); break;
-      case 'page': this._cue('ui-tick'); this.ui.howto = (this.ui.howto + (+el.dataset.dir || 1) + 4) % 4; this._render(); break;
+      case 'page': this._cue('ui-tick'); this.ui.howto = (this.ui.howto + (+el.dataset.dir || 1) + HOWTO_PAGES) % HOWTO_PAGES; this._render(); break;
       case 'swing': this._swing(el.dataset.id || 'auto'); break;
       case 'swing-more': this._cue('ui-tick'); this._toggleSwing(); break;
       case 'sliders': this._toggleSwing(false); this.openSliders?.(); break;
@@ -636,7 +721,9 @@ export class Shell {
     if (mu.lobbyOpen) return;
     // START must be live the moment the lobby is up: two players ready (made on the spot the
     // first time), a quick match, a random stage. Enter starts.
-    Promise.resolve(mu.openLobby()).then(async () => {
+    const party = this._lobbyKind === 'party' && typeof mu.openPartyLobby === 'function';   // v3:modes PARTY: the same UI's lobby for two to four
+    this._lobbyKind = null;
+    Promise.resolve(party ? mu.openPartyLobby() : mu.openLobby()).then(async () => {
       if (!mu.lobbyOpen || mu.match) return;
       if ((mu.players || []).length < 2 && typeof mu._quickTwo === 'function') { try { await mu._quickTwo(); } catch (_) { /* the lobby offers it as a button */ } }
       if (mu.lobbyOpen && !mu.lobbyUi.picker) mu.screen?.querySelector?.('[data-mt="start"]:not([disabled])')?.focus({ preventScroll: true });
@@ -978,13 +1065,22 @@ export class Shell {
   _main() {
     const items = this._items('main');
     const stage = this._stageName();
-    return `<section class="sc-main">
+    // v3:modes with the newer modes there are more ways of playing than one column holds: the games are
+    // tiles in the first column, the rest (highlights, players, settings ...) a second column beside it.
+    // The cursor still walks one list (down the games, then down the rest); left / right step across.
+    const split = items.some((it) => it.mode);
+    const btn = (it, i, big) => `<button type="button" class="sc-item sc-tone-${it.tone} ${big ? 'sc-big' : 'sc-small'}" data-i="${i}">
+          <i class="sc-n">${i < 9 ? i + 1 : ''}</i><b>${esc(it.label)}</b><span>${esc(it.sub)}</span></button>`;
+    const list = split
+      ? `<div class="sc-main-col sc-main-games">${items.map((it, i) => (it.game ? btn(it, i, true) : '')).join('')}</div>
+        <div class="sc-main-col sc-main-more">${items.map((it, i) => (it.game ? '' : btn(it, i, false))).join('')}</div>`
+      : items.map((it, i) => btn(it, i, i < 3)).join('');
+    return `<section class="sc-main ${split ? 'sc-main-split' : ''}">
       <header class="sc-main-head">${this._wordmark('sc-wm-md')}<span class="sc-main-tag">PICK A GAME</span></header>
       <nav class="sc-list sc-main-list" data-list="main" aria-label="Main menu">
-        ${items.map((it, i) => `<button type="button" class="sc-item sc-tone-${it.tone} ${i < 3 ? 'sc-big' : 'sc-small'}" data-i="${i}">
-          <i class="sc-n">${i + 1}</i><b>${esc(it.label)}</b><span>${esc(it.sub)}</span></button>`).join('')}
+        ${list}
       </nav>
-      ${this._hints([['↑ ↓', 'CHOOSE'], ['ENTER', 'GO'], ['1 – ' + items.length, 'JUMP'], ['ESC', 'TITLE']])}
+      ${this._hints([['↑ ↓', 'CHOOSE'], ...(split ? [['← →', 'ACROSS']] : []), ['ENTER', 'GO'], ['1 – ' + Math.min(9, items.length), 'JUMP'], ['ESC', 'TITLE']])}
     </section>
     ${stage ? `<aside class="sc-now"><span>ON SCREEN</span><b>${esc(stage.toUpperCase())}</b></aside>` : (this._loaded && !this.stages.length ? '<aside class="sc-now sc-warn"><span>NO STAGES INSTALLED</span><b>RUN: NPM RUN ARCADE:HOLES</b></aside>' : '')}`;
   }
@@ -1176,6 +1272,13 @@ export class Shell {
           <div class="sc-step sc-tone-p1"><i>1P</i><b>SOLO</b><span>The tour alone, stage after stage, for a total against par. Your best score is kept. Or any single stage.</span></div>
           <div class="sc-step sc-tone-p2"><i>∞</i><b>PRACTICE</b><span>Free play on any stage, closest to the pin, a putting challenge, up and down. Nothing counts.</span></div>
         </div>` },
+      // v3:modes the newer games (docs/modes.md)
+      { title: 'MORE GAMES', body: `<div class="sc-steps">
+          <div class="sc-step sc-tone-party"><i>2–4</i><b>PARTY</b><span>Up to four on one bay. SKINS: the lowest score alone takes the hole, a tie carries it over. STROKE RACE: lowest total. ELIMINATION: the highest score on each hole is out. A player who can no longer matter to a hole picks up.</span></div>
+          <div class="sc-step sc-tone-gold"><i>◎</i><b>BULLSEYE</b><span>Darts with a golf ball on the three arenas. Three balls a turn; the rings round the pin score 50, 25, 15, 10, 5. Play for a high score, or count down to exactly zero.</span></div>
+          <div class="sc-step sc-tone-duel"><i>?!</i><b>TRICK SHOT DUEL</b><span>Hit any shot. The game calls what made it special (carry, bend, how close) and the other player must match it or take a letter. Spell the word and you lose.</span></div>
+        </div>
+        <p class="sc-lead sc-lead-2">HELP in a lobby is a handicap for one player: easy putting and a power-up, then a forward tee. A great shot is replayed from another camera (any key or a swing skips it), and HIGHLIGHTS keeps the best of the night.</p>` },
       { title: 'THE BALLS', body: `<p class="sc-lead">Streaks, level-ups and match chests earn power-up balls. Arm one before you swing: <kbd>B</kbd> opens the tray, a number key arms.</p>
         <div class="sc-balls">${balls.map(ballCard).join('') || '<p class="sc-empty">THE BALLS LOAD WITH THE GAME</p>'}</div>
         ${tricks.length ? `<p class="sc-lead sc-lead-2">In a match, TRICKS are played on your opponent's next shot: ${tricks.map((t) => esc(String(t.name).toUpperCase())).join(' · ')}.</p>` : ''}` },

@@ -1339,6 +1339,72 @@ const MODELS = {
       k.add(box(W + 0.4, 0.1, 0.14, 0, 1.0, 1.12), '#ffffff');
     },
   },
+
+  // ---- v3:stadium the stadium kit's stand-ins: what is drawn if a kit GLB is missing. Plain
+  // on purpose (the models are tools/arcade-art/blender/stadium.py); the two stands keep the
+  // kit's own frame (front edge on z = 0, running back to -z) and its tier lines, so the
+  // crowd (crowd.js) still sits on them.
+  'stand-section': {
+    h: 39, shadow: true, baseY: 0,
+    build(k) {
+      k.add(box(24, 4.8, 2.5, 0, -1.5, -1.25), '#c9cdd6');
+      for (let r = 0; r < 20; r += 2) k.add(box(24, 3.3 + 0.405 * r + 1.5, 1.8, 0, -1.5, -(2.5 + 0.9 * r + 0.9)), r % 4 ? '#2b3348' : '#3a4460');
+      k.add(box(24, 12.9, 4.4, 0, -1.5, -22.7), '#a3a9b6');
+      for (let r = 0; r < 21; r += 3) k.add(box(24, 14.6 + 0.56 * r - 11.4, 2.58, 0, 11.4, -(24 + 0.86 * r + 1.29)), r % 2 ? '#2b3348' : '#3a4460');
+      k.add(box(24, 12, 2.5, 0, 17, -45.25), '#e6eaf1');
+      k.add(place(new THREE.BoxGeometry(24, 0.4, 37.5), 0, 35.8, -29, -0.136), '#e3e8f0');
+      k.add(box(24, 1.6, 0.2, 0, 0.45, 0.05), '#ffd21f', { glow: 1.6, mode: 4 });
+      k.add(box(24, 1.3, 0.2, 0, 14.0, -23.5), '#3dff8a', { glow: 1.6, mode: 4 });
+    },
+  },
+  'stand-corner': {
+    h: 61, shadow: true, baseY: 0,
+    build(k) {
+      MODELS['stand-section'].build(k);
+      k.add(box(7, 33, 7, 0, 17, -50.5), '#e6eaf1');
+      k.add(box(6.4, 2.5, 0.6, 0, 48.5, -46.4), '#fff6d8', { glow: 3 });
+    },
+  },
+  'led-board': {
+    h: 1.25, shadow: false,
+    build(k) { k.add(box(12, 1.25, 0.3), '#14171f'); k.add(box(11.8, 1.05, 0.06, 0, 0.1, 0.17), '#ffd21f', { glow: 1.8, mode: 4 }); },
+  },
+  'ad-board': {
+    h: 2.4, shadow: false,
+    build(k) { k.add(box(6.4, 1.9, 0.24, 0, 0.35, 0), '#f4f4ee'); k.add(box(6.1, 1.6, 0.06, 0, 0.5, 0.14), '#1f5fd0', { glow: 0.7 }); k.add(box(6.4, 0.3, 1.7), '#737a88'); },
+  },
+  barrier: {
+    h: 0.9, shadow: false,
+    build(k) { for (let j = 0; j < 4; j++) k.add(box(1.96, 0.87, 0.7, -3 + j * 2, 0, 0), j % 2 ? '#f4f4ee' : '#e8372c'); },
+  },
+  'camera-tower': {
+    h: 11.4, shadow: true,
+    build(k) {
+      for (const [x, z] of [[-1.6, -1.6], [1.6, -1.6], [-1.6, 1.6], [1.6, 1.6]]) k.add(box(0.18, 8.2, 0.18, x, 0, z), '#8a93a5');
+      k.add(box(4.4, 0.22, 4.4, 0, 8.2, 0), '#3a4152');
+      k.add(box(4.9, 0.16, 4.9, 0, 11, 0), '#1f5fd0');
+      k.add(box(0.55, 0.6, 1.25, 0, 9.75, 1.3), '#23262e');
+    },
+  },
+  tunnel: {
+    h: 7.4, shadow: true,
+    build(k) {
+      for (let i = 0; i < 8; i++) k.add(place(new THREE.CylinderGeometry(3.7, 3.7, 1.8, 10, 1, true, 0, PI), 0, 0.2, -(i * 1.8 + 0.9), PI / 2, 0, PI / 2), i % 2 ? '#f4f4ee' : '#1f5fd0');
+      for (const s of [-1, 1]) k.add(box(1.3, 5.9, 1.3, s * 4.3, -0.4, 0.3), '#e6eaf1');
+      k.add(box(9.9, 1.7, 1, 0, 4.9, 0.3), '#14171f');
+      k.add(box(9.4, 1.4, 0.06, 0, 5.05, 0.84), '#3dff8a', { glow: 1.6, mode: 4 });
+    },
+  },
+  podium: {
+    h: 10.8, shadow: false,
+    build(k) {
+      for (const s of [-1, 1]) k.add(box(1.1, 8.6, 1.1, s * 8, 0, 0), '#c8ccd6');
+      k.add(box(17.2, 1, 1, 0, 8.2, 0), '#c8ccd6');
+      k.add(box(11, 1.5, 0.3, 0, 9.3, 0.55), '#14171f');
+      k.add(box(10.6, 1.3, 0.06, 0, 9.4, 0.72), '#ffd21f', { glow: 1.8, mode: 4 });
+      k.add(box(9.6, 3.4, 0.25, 0, 0, -2.6), '#f4f4ee');
+    },
+  },
 };
 
 // A target ring's band as flat geometry about the origin: outer diameter `d`, the band

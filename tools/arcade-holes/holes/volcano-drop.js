@@ -220,6 +220,26 @@ const props = D.clean([
   P('bird-flock', -10, 100, 8, 0), P('bird-flock', 80, 180, 8, 120), P('bird-flock', -100, 60, 8, 240), P('airship', 150, 380, 30, 250),
 ], { surfaces, tee: TEE, pin: PIN, dry: gentle });
 
+// ---- gadgets (docs/gadgets.md): what a swing can hit
+//   RISKY   the Jaws Ring hangs in the gate between the fangs: thread it for coins and a
+//           little more carry. The flag is a x3 bullseye.
+//   SAFE    the Ash Terrace is a x2 landing.
+//   ROCKET  coins over the Jaws, along the Rocket lob's flight.
+//   and the lava spits: three vents (in front of the reef on the line, and either side of
+//   the island) erupt on a four second cycle from the moment of impact. A ball that is about
+//   to go into the lava over one while it is firing is thrown up and on, usually onto rock.
+//   They are low (14 m): a ball that is flying to the island passes over them untouched.
+const jawsLob = L.flight(height, TEE, PIN, { speedMph: 68, vla: 32, spin: 10500, ball: 'rocket' });
+const gadgets = [
+  L.gadget('ring', 'jaws-ring', 0, 88, { z: 65.5, radius: 8, heading: 0, strength: 1.05 }),
+  L.gadget('zone', 'flag-x3', PIN[0], PIN[1], { radius: 5, mult: 3 }),
+  L.gadget('zone', 'terrace-x2', -84, 102, { radius: 14, mult: 2 }),
+  L.gadget('geyser', 'reef-vent', 0, 110, { radius: 6, height: 14, strength: 24, cycle: 4, offset: 1, burst: 2 }),
+  L.gadget('geyser', 'west-vent', -42, 140, { radius: 6, height: 14, strength: 24, cycle: 4, offset: 3, burst: 2 }),
+  L.gadget('geyser', 'east-vent', 30, 150, { radius: 6, height: 14, strength: 24, cycle: 4, offset: 2, burst: 2 }),
+  jawsLob.coins('jaws-coins', 30, 140, 6),
+];
+
 module.exports = {
   id: 'volcano-drop',
   extent: { minX: -215, minY: -95, maxX: 195, maxY: 345 },
@@ -239,6 +259,7 @@ module.exports = {
   trees,
   woods: [],
   props,
+  gadgets,
   // the outer flank, well beyond the rim: out of bounds is not a way to lose a ball here
   obLine: L.rect(-198, -78, 178, 328),
   height,

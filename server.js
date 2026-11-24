@@ -39,7 +39,8 @@ const { createSavedShots } = require('./lib/saved-shots');
 const { createLeagues, LeagueError, initials } = require('./lib/leagues');
 const { PredictError, predictCarries, predictShot } = require('./lib/predict');
 const { ArcadeError, ArcadeState, gradeShot } = require('./lib/arcade');
-const { createMatch, MatchError, MATCH_TIERS, MATCH_FORMATS, tierFor, normalizeProfile, applyRewards } = require('./lib/match');
+const { createMatch, MatchError, MATCH_TIERS, MATCH_FORMATS, tierFor, normalizeProfile, applyRewards,
+  PARTY_FORMATS, PARTY_HOLES, HELP_LEVELS, partyFormatFor, applyPartyRewards, suggestHelp /* v3:modes party, handicaps */ } = require('./lib/match');
 const { serveHdAsset, publicHdMetadata, pickDescriptor } = require('./lib/hd-http');
 const { makeNonce, verifyReadinessAck } = require('./lib/hd-readiness');
 const { googleTilesConfig } = require('./lib/google-tiles-config');
@@ -209,9 +210,15 @@ function settleMatch() {
   matchSettled = true;
   // v2:menu the two profiles and the escrow as they stand, in case the deciding swing is taken back
   matchPayout = { winnerId: s.winnerId, loserId: s.loserId, winner: { ...matchProfile(s.winnerId) }, loser: { ...matchProfile(s.loserId) }, escrow: matchEscrow ? { ...matchEscrow } : null, chest: [], coins: 0 };
+  if (s.party && Array.isArray(s.placings)) {
+    // v3:modes a party: every player's profile moves (first: the win and its rewards; last: the drop; between: a loss on the record)
+    matchPayout.all = matchProfiles(s.placings);
+    Object.assign(matchLedger, applyPartyRewards(matchProfiles(s.placings), s.rewards));
+  } else {
   const next = applyRewards(matchProfile(s.winnerId), matchProfile(s.loserId), s.rewards);
   matchLedger[s.winnerId] = next.winner;
   matchLedger[s.loserId] = next.loser;
+  }
   saveMatchLedger();
   releaseMatchStakes();   // paid out with the rewards
   const { chest = [], coins = 0, pot = 0 } = s.rewards.winner;
@@ -262,8 +269,11 @@ function undoMatchShot() {
   match.undoLastShot(game);   // a MatchError when there is nothing to take back
   if (!wasOver || !matchSettled || !matchPayout) return;
   const pay = matchPayout;
+  if (pay.all) Object.assign(matchLedger, pay.all);   // v3:modes a party: every profile as it was
+  else {
   matchLedger[pay.winnerId] = pay.winner;
   matchLedger[pay.loserId] = pay.loser;
+  }
   saveMatchLedger();
   if (pay.escrow) {
     matchEscrow = pay.escrow;
@@ -370,20 +380,25 @@ function startMatch(cfg) {
   if (game.leagueRound) throw new MatchError('Finish or leave the league round first', 409);
   const ids = Array.isArray(cfg.playerIds) ? cfg.playerIds.map(String) : [];
   const pls = ids.map((id) => leagues.player(id));
-  if (pls.length !== 2 || pls.some((x) => !x)) throw new MatchError('Pick two players from the roster');
-  const staked = !(cfg.stakes == null || cfg.stakes === false || cfg.stakes === '');
+  const party = Boolean(partyFormatFor(cfg.format));   // v3:modes PARTY: 'skins' | 'stroke' | 'elim', two to four players
+  if (party && (pls.length < 2 || pls.length > 4 || pls.some((x) => !x))) throw new MatchError('Pick two to four players from the roster');
+  if (!party && (pls.length !== 2 || pls.some((x) => !x))) throw new MatchError('Pick two players from the roster');
+  // v3:modes help: { <playerId>: level 0 to 3 | { charges, tee, putting } } (a handicap; lib/match.js HELP_LEVELS)
+  const helpOf = (id) => (cfg.help && typeof cfg.help === 'object' && cfg.help[id] != null ? cfg.help[id] : undefined);
+  const staked = !party && !(cfg.stakes == null || cfg.stakes === false || cfg.stakes === '');   // v3:modes a party is always a friendly: no entry fee is held
   const tier = staked ? tierFor(cfg.stakes) : null;
   if (staked && !tier) throw new MatchError('No such stakes tier');
   const broke = tier && pls.find((x) => matchProfile(x.id).coins < tier.entryFee);
   if (broke) throw new MatchError(`${broke.name} can't cover the ${tier.entryFee} coin entry fee`, 409);
   dropSolo();   // v2:shell a match takes the bay from a solo run
+  dropModes();  // v3:modes ... and from a bullseye game or a duel
   dropMatch();   // a finished one still on its result screen
   if (game.practice) game.endPractice();
   match = createMatch({
     game,
     tour: matchTour(),
     timeouts: MATCH_TIMEOUTS,
-    players: pls.map((x) => ({ id: x.id, name: x.name, initials: initials(x.name), handicap: x.handicap, profile: matchProfile(x.id) })),
+    players: pls.map((x) => ({ id: x.id, name: x.name, initials: initials(x.name), handicap: x.handicap, profile: matchProfile(x.id), help: helpOf(x.id) /* v3:modes */ })),
     options: {
       format: cfg.format, holes: cfg.holes, stage: cfg.stage, order: cfg.order, tieRule: cfg.tieRule, powerups: cfg.powerups,
       putting: cfg.putting,   // v2:playability 'easy' | 'assist' | 'off' (default 'assist': the match's putting assist)
@@ -519,6 +534,7 @@ function startSolo(cfg) {
     try { leagues.setActivePlayer(player.id); } catch (e) { throw new SoloError(e.message, 409); }
   }
   dropMatch();
+  dropModes();  // v3:modes
   dropSolo({ quiet: true });
   if (game.practice) game.endPractice();
   game.leagueRound = null;
@@ -536,6 +552,93 @@ function setGamePlayer() {
   game.player = p ? { id: p.id, name: p.name, initials: initials(p.name), handicap: p.handicap } : null;
 }
 setGamePlayer();
+// v3:modes ---- the other game modes (docs/modes.md): BULLSEYE, TRICK SHOT DUEL, HIGHLIGHTS ----
+// A mode lives in its own file (lib/<id>-mode.js: its rules are a pure engine beside it) and
+// is registered below with one line. What a mode is, to this server:
+//   id                      names its routes (GET /api/<id>, POST /api/<id>/<action>), its event
+//                           ('<id>': its state, sent on connect and after every change) and
+//                           its mark on a shot (result[id])
+//   active                  (getter) a game of this mode has the bay: every swing is its own
+//   state()                 what the event and GET /api/<id> carry (null: no game)
+//   info()                  (optional) more for GET /api/<id>: high scores, the arenas, ...
+//   drop()                  end the game and let go of the bay (safe when there is none)
+//   beforeShot(game)        a swing arrived: null drops it (not played, nothing counted), else
+//                           { armed?: ball id, curses?: [trick ids], putting?: 'easy'|'assist'|'off', free?: true }
+//   afterShot(game, result) the game has played it: what is returned rides on the shot as result[id]
+//   handle(action, body)    POST /api/<id>/<action>: returns the answer's extra fields (or
+//                           nothing; may be async); throws ctx.ModeError(message, status) to refuse
+//   onShot(result, about)   (optional) every shot the bay plays, in any mode (the highlights)
+// The modes, a match and a solo run are one at a time: starting any of them drops the others
+// (ctx.takeBay). Rules, routes and state of each: docs/modes.md.
+class ModeError extends Error {
+  constructor(message, status = 400) { super(message); this.status = status; }
+}
+const modes = [];
+const activeMode = () => (match ? null : modes.find((md) => md.active) || null);
+function dropModes(except = null) {
+  for (const md of modes) {
+    if (md.id === except) continue;
+    try { md.drop(); } catch (error) { console.error(`[${md.id}] drop: ${error.message}`); }
+  }
+}
+function modeChanged(id) {
+  const md = modes.find((x) => x.id === id);
+  const st = md ? md.state() : null;
+  broadcast(id, st);
+  broadcast('state', game.state());
+  updatePlayerInfo();
+  return st;
+}
+const modeCtx = {
+  ModeError, game, arcade, leagues, initials, dataDir: DATA_DIR,
+  broadcast: (event, data) => broadcast(event, data),
+  tour: () => matchTour(),                       // the Clash Tour manifest (stages, tiebreaks: the arenas), or null
+  profile: (id) => ({ ...matchProfile(String(id)) }),
+  player: (id) => leagues.player(String(id)),
+  // The bay is this mode's: whatever else was being played is dropped (a match, a solo run,
+  // a practice game, another mode).
+  takeBay(id) {
+    dropSolo();
+    dropMatch();
+    dropModes(id);
+    if (game.practice) game.endPractice();
+    game.leagueRound = null;
+  },
+  // Put a stage's course (a file of the tour manifest) in the bay, on its tee, with a wind
+  // of its own. Resolves null, or the reason it would not load.
+  async loadStage(file) {
+    const rolls = stageWindRolls;
+    try {
+      const no = SIMCLASH ? courseRefusal({ cached: file }, { loadCached }) : null;
+      if (no) return no.message;
+      const result = await activationManager.activate({ cached: file });
+      if (result.status !== 'committed') return (result.diagnostic && result.diagnostic.message) || result.status;
+    } catch (e) {
+      return e.message;
+    }
+    if (game.practice) game.endPractice();
+    game.reset();
+    if (stageWindRolls === rolls) rollStageWind();
+    return null;
+  },
+  wind: () => stageWind.current,                 // the wind rolled for the hole in the bay (lib/arcade-wind.js), or null
+  rollWind: () => rollStageWind(),
+  changed: (id) => modeChanged(id),              // after any change: the mode's event, then 'state'
+  setGamePlayer: () => setGamePlayer(),          // the round is the active player's again
+  matchState: () => matchState(),
+  // what has the bay right now ('match' | 'solo' | a mode's id), or null: its stage must stay where it is (the highlights reel asks before it loads another)
+  busy: () => (match && match.active ? 'match' : solo && solo.active ? 'solo' : ((modes.find((md) => md.active) || {}).id || null)),
+  json: (res, obj, code) => json(res, obj, code),
+};
+function registerMode(file) {
+  try {
+    const md = require(file).create(modeCtx);
+    if (md && md.id) modes.push(md);
+  } catch (error) {
+    if (error.code !== 'MODULE_NOT_FOUND' || !String(error.message).includes(file.replace(/^\.\//, ''))) console.error(`[modes] ${file} did not start: ${error.stack || error.message}`);
+  }
+}
+// (registered once the server's own pieces exist: see "v3:modes the modes" near the end)
 const sseClients = new Set();
 // HD bundle runtime state, kept OUTSIDE the serializable course object so absolute
 // paths + Float32 heights never leak through course JSON. An ARRAY — one descriptor
@@ -659,6 +762,7 @@ function playShot(ballData, clubName, clubData = null, source = null) {   // v2:
   // course loads, not over a result card). A practice game on the stage plays on.
   if (solo && !match && !game.practice && !solo.acceptsSwing) {
     console.log(`[solo] swing ignored (${solo.phase})`);
+    broadcast('swing-ignored', { by: 'solo', phase: solo.phase });   // v3:modes the page is told (a swing skips a replay that is playing)
     return null;
   }
   let shooter = null;
@@ -672,6 +776,23 @@ function playShot(ballData, clubName, clubData = null, source = null) {   // v2:
     }
     if (!shooter) {
       console.log(`[match] swing ignored (${match.phase})`);
+      broadcast('swing-ignored', { by: 'match', phase: match.phase });   // v3:modes the page is told (a swing skips a replay that is playing)
+      return null;
+    }
+  }
+  // v3:modes a mode's game has the bay (bullseye, a trick-shot duel): the swing is its own
+  const owner = activeMode();
+  let ownerShot = null;
+  if (owner) {
+    try {
+      ownerShot = game.course && !game.practice ? owner.beforeShot(game) : null;
+    } catch (error) {
+      console.error(`[${owner.id}] dropped: ${error.stack || error.message}`);
+      owner.drop();
+      return null;
+    }
+    if (!ownerShot) {
+      console.log(`[${owner.id}] swing ignored`);
       return null;
     }
   }
@@ -692,7 +813,12 @@ function playShot(ballData, clubName, clubData = null, source = null) {   // v2:
   if (shooter) {
     pu = shooter.armed;
     free = shooter.free === true;
-    game.shotMods = arcade.enabled || pu || shooter.curses.length ? arcade.shotMods(pu, { curses: shooter.curses, putting: match.putting }) : null;   // v2:playability the match's own putting assist (lib/match.js putting)
+    game.shotMods = arcade.enabled || pu || shooter.curses.length ? arcade.shotMods(pu, { curses: shooter.curses, putting: shooter.putting || match.putting /* v3:modes a handicapped player's own putting level */ }) : null;   // v2:playability the match's own putting assist (lib/match.js putting)
+  } else if (ownerShot) {   // v3:modes the mode says what the ball is (never the bay's shelf)
+    pu = ownerShot.armed || null;
+    free = ownerShot.free === true;
+    const curses = Array.isArray(ownerShot.curses) ? ownerShot.curses : [];
+    game.shotMods = arcade.enabled || pu || curses.length ? arcade.shotMods(pu, { curses, ...(ownerShot.putting ? { putting: ownerShot.putting } : {}) }) : null;
   } else {
     const freeBall = boosted ? soloFreeBall() : null;
     free = Boolean(freeBall);
@@ -702,7 +828,7 @@ function playShot(ballData, clubName, clubData = null, source = null) {   // v2:
   let result;
   try { result = game.handleShot(ballData, clubName); } finally { game.shotMods = null; }
   if (!result) {   // no shot played: the ball goes back on the shelf, still armed (a match's or a free one was never taken)
-    if (pu && !shooter && !free) { arcade.refund(pu); broadcast('arcade-state', arcade.snapshot()); }
+    if (pu && !shooter && !ownerShot && !free) { arcade.refund(pu); broadcast('arcade-state', arcade.snapshot()); }
     return null;
   }
   result.shotId = ++shotSeq;
@@ -739,9 +865,24 @@ function playShot(ballData, clubName, clubData = null, source = null) {   // v2:
       shooter = null;
     }
   }
+  // v3:modes the shot is the mode's: it scores it and brings up whoever is next
+  if (ownerShot) {
+    try {
+      result[owner.id] = owner.afterShot(game, result) || null;
+    } catch (error) {
+      console.error(`[${owner.id}] dropped: ${error.stack || error.message}`);
+      owner.drop();
+      ownerShot = null;
+    }
+  }
+  // v3:modes every shot is offered to the modes that listen (the highlights reel)
+  for (const md of modes) {
+    if (typeof md.onShot !== 'function') continue;
+    try { md.onShot(result, { before, match: shooter ? matchState() : null, solo: solo ? soloState() : null, mode: ownerShot ? owner.id : null }); } catch (error) { console.error(`[${md.id}] onShot: ${error.message}`); }
+  }
   // v2:shell a solo run keeps the score of the stage (lib/solo.js); a pick-up ends the hole in the game too
   let soloEv = null;
-  if (solo && !shooter && !before.practice && solo.acceptsSwing) {
+  if (solo && !shooter && !ownerShot && !before.practice && solo.acceptsSwing) {
     soloEv = solo.recordShot(result);
     if (soloEv) {
       result.solo = { runId: solo.id, kind: solo.kind, ...soloEv };
@@ -752,6 +893,7 @@ function playShot(ballData, clubName, clubData = null, source = null) {   // v2:
   broadcast('shot', result);
   if (result.arcade) broadcast('arcade', result.arcade);
   if (soloEv) broadcast('solo', soloState());   // v2:shell
+  if (ownerShot) broadcast(owner.id, owner.state());   // v3:modes
   if (shooter) {
     settleMatch();   // pays out once the match is decided (no-op before)
     driveMatch();    // the result screen's safety timeout
@@ -993,7 +1135,7 @@ const activationManager = createCourseActivationManager({
 });
 
 // ---------- HTTP ----------
-const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.wasm': 'application/wasm' };
+const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.wasm': 'application/wasm', '.webp': 'image/webp' };   // v3:env-polish (.webp: the stage skies and ground sets, public/arcade/env)
 // ES modules served from node_modules (keeps the app fully offline-capable). three.js is
 // always used; 3d-tiles-renderer is only fetched when Google 3D tiles are configured.
 const VENDOR = { '/vendor/three/': 'three', '/vendor/3d-tiles-renderer/': '3d-tiles-renderer' };
@@ -1030,6 +1172,7 @@ const server = http.createServer(async (req, res) => {
       const cid = `c${++sseSeq}${Math.random().toString(36).slice(2, 8)}`;
       res.write(`event: hello\ndata: ${JSON.stringify({ cid, product: PRODUCT_MODE, shell: shellGate.state() })}\n\n`);
       res.write(`event: solo\ndata: ${JSON.stringify(soloState())}\n\n`);
+      for (const md of modes) res.write(`event: ${md.id}\ndata: ${JSON.stringify(md.state())}\n\n`);   // v3:modes
       sseClients.add(res);
       sseCids.add(cid);
       req.on('close', () => { sseClients.delete(res); sseCids.delete(cid); shellGate.drop(cid); /* v2:shell a page that left the menus by closing does not hold the gate */ });
@@ -1101,7 +1244,13 @@ const server = http.createServer(async (req, res) => {
       // tour: the Clash Tour manifest (null: none built); profiles: every roster player's
       // (wallets: the same, under the name the first match UI read)
       const profiles = matchProfiles(leagues.state().players.map((x) => x.id));
-      return json(res, { ok: true, match: matchState(), tour: matchTour(), tiers: MATCH_TIERS, formats: MATCH_FORMATS, profiles, wallets: profiles });
+      return json(res, { ok: true, match: matchState(), tour: matchTour(), tiers: MATCH_TIERS, formats: MATCH_FORMATS, profiles, wallets: profiles,
+        partyFormats: PARTY_FORMATS, partyHoles: PARTY_HOLES, helpLevels: HELP_LEVELS /* v3:modes */ });
+    }
+    // v3:modes GET /api/<mode>: its state, and whatever else it has to show (high scores, arenas)
+    if (req.method !== 'POST') {
+      const md = modes.find((x) => p === `/api/${x.id}`);
+      if (md) return json(res, { ok: true, [md.id]: md.state(), ...(typeof md.info === 'function' ? md.info() : {}) });
     }
     if (p === '/api/courses/cached') return json(res, listCached());
     if (p === '/api/courses') {
@@ -1114,12 +1263,31 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === 'POST') {
       const body = await readBody(req);
+      // v3:modes POST /api/<mode>/<action> (docs/modes.md): answers { ok: true, <mode>: state, ... } or { ok: false, error }
+      {
+        const md = modes.find((x) => p.startsWith(`/api/${x.id}/`));
+        if (md) {
+          let extra;
+          try {
+            extra = await md.handle(p.slice(`/api/${md.id}/`.length), body);
+          } catch (error) {
+            if (!(error instanceof ModeError)) throw error;
+            return json(res, { ok: false, error: error.message }, error.status);
+          }
+          return json(res, { ok: true, [md.id]: modeChanged(md.id), ...(extra && typeof extra === 'object' ? extra : {}) });
+        }
+        // a mode's game has the bay: the round's own moves wait (as in a match)
+        const busy = activeMode();
+        if (busy && (p === '/api/drop' || p === '/api/mulligan' || p === '/api/next-hole')) return json(res, { ok: false, error: `A ${busy.label || busy.id} game is in play` }, 409);
+        if (p === '/api/reset' || (p === '/api/practice' && !body.action)) dropModes();
+      }
       if (p === '/api/load-course') {
         // v2:shell the game product: one of its own stages, from disk, or nothing
         if (SIMCLASH) {
           const no = courseRefusal(body, { loadCached });
           if (no) return json(res, { ok: false, error: no.message, code: no.code }, 403);
         }
+        dropModes();   // v3:modes
         dropSolo();    // v2:shell
         dropMatch();   // a match brings its own courses: loading one by hand ends it
         const result = await activationManager.activate(body);
@@ -1225,14 +1393,14 @@ const server = http.createServer(async (req, res) => {
             if (!match) throw new MatchError('No match to play again', 409);
             if (match.active) throw new MatchError('A match is in play: quit it first', 409);
             const last = match.config();
-            startMatch({ ...last.options, playerIds: last.players.map((x) => x.id) });
+            startMatch({ ...last.options, playerIds: last.players.map((x) => x.id), help: Object.fromEntries(last.players.map((x) => [x.id, x.help])) /* v3:modes */ });
           } else if (p === '/api/match/restart') {
             // v2:menu the match menu's RESTART MATCH: the same players and options from the top,
             // whatever the match in play is doing (rematch is for a finished one)
             if (!match) throw new MatchError('No match to restart', 409);
             const last = match.config();
             dropMatch();
-            startMatch({ ...last.options, playerIds: last.players.map((x) => x.id) });
+            startMatch({ ...last.options, playerIds: last.players.map((x) => x.id), help: Object.fromEntries(last.players.map((x) => [x.id, x.help])) /* v3:modes */ });
           } else if (p === '/api/match/grant') {
             // top up profiles: {coins, playerIds?} (every player on the roster when none are named)
             const coins = Math.round(Number(body.coins));
@@ -1245,6 +1413,10 @@ const server = http.createServer(async (req, res) => {
             broadcast('match', matchState());
             const profiles = matchProfiles(roster);
             return json(res, { ok: true, profiles, wallets: profiles });
+          } else if (p === '/api/match/suggest') {
+            // v3:modes {playerIds}: a help level for each of them from their records (never forced: the lobby offers it)
+            const ids = (Array.isArray(body.playerIds) ? body.playerIds : []).map(String).filter((id) => leagues.player(id));
+            return json(res, { ok: true, help: suggestHelp(matchProfiles(ids)), levels: HELP_LEVELS });
           } else if (p === '/api/match/abort') {
             dropMatch();
             return json(res, { ok: true, match: null });
@@ -1265,10 +1437,10 @@ const server = http.createServer(async (req, res) => {
           } else if (p === '/api/match/restart-hole') {
             match.restartHole(game);     // v2:menu both players back on the tee of this hole (a sudden death: this round)
           } else if (p === '/api/match/concede') {
-            match.concede(String(body.playerId ?? match.currentPlayerId ?? ''));
+            match.concede(String(body.playerId ?? match.currentPlayerId ?? ''), game);   // v3:modes (the game: a party plays on, somebody else may come up)
             settleMatch();
           } else if (p === '/api/match/arm') {
-            match.arm(String(body.playerId ?? match.currentPlayerId ?? ''), body.id ?? null);
+            match.arm(String(body.playerId ?? match.currentPlayerId ?? ''), body.id ?? null, body.targetId ?? null);   // v3:modes targetId: who a trick is cast on (a party)
           } else {
             throw new MatchError('No such match route', 404);
           }
@@ -1289,7 +1461,7 @@ const server = http.createServer(async (req, res) => {
         if (p === '/api/arcade/arm' && match && match.active) {
           let armed;
           try {
-            armed = match.arm(String(match.currentPlayerId ?? ''), body.id ?? null);
+            armed = match.arm(String(match.currentPlayerId ?? ''), body.id ?? null, body.targetId ?? null);   // v3:modes targetId: a trick's target in a party
           } catch (error) {
             if (!(error instanceof MatchError)) throw error;
             return json(res, { ok: false, error: error.message, code: 'MATCH' }, error.status);
@@ -1453,6 +1625,7 @@ const server = http.createServer(async (req, res) => {
         return leagueRoute(res, () => {
           leagues.removePlayer(String(body.id || ''));
           soloBests.forget(String(body.id || ''));   // v2:shell their solo bests go with them
+          for (const md of modes) { try { if (md._bests && typeof md._bests.forget === 'function') md._bests.forget(String(body.id || '')); } catch (_) { /* a store of its own */ } }   // v3:modes ... and their Bullseye bests
           setGamePlayer();
           broadcast('state', game.state());
           return {};
@@ -1678,6 +1851,10 @@ function courseGeometry() {
     // hero scenery of a hand-built arcade hole [{ id, kind, x, y, rotDeg, heightM }]
     // (tools/arcade-holes; drawn by public/render/props.js, never part of play)
     props: Array.isArray(game.course.props) ? game.course.props : null,
+    // v3:living the stage's life [{ kind, ... }] (public/render/world-life.js; drawn by public/render/world-events.js, never part of play)
+    life: Array.isArray(game.course.life) ? game.course.life : null,
+    // v3:gadgets the stage's gadgets [{ id, kind, x, y, z?, ... }] (lib/gadgets.js; drawn by public/render/gadgets.js, played by lib/physics.js)
+    gadgets: Array.isArray(game.course.gadgets) ? game.course.gadgets : null,
     arcade: game.course.arcade || null,   // v2:look the stage's theme and time of day (public/render/arcade-look.js)
     aerial,
     elevation,
@@ -1754,6 +1931,10 @@ async function bootstrap() {
   });
 }
 
+// v3:modes the modes (each is skipped quietly while its file is not in the build)
+registerMode('./lib/bullseye-mode');
+registerMode('./lib/duel-mode');
+registerMode('./lib/highlights-mode');
 const ready = bootstrap();
 connectHub.start();   // v2:connect (was: oc.start()) looks for another program on the port first, listens, and keeps trying while it is taken
 foresight.start().catch((error) => console.error('[foresight] ' + error.message));   // v2:bridge up when the setting says so (never fatal: a taken port is reported and retried)
@@ -1786,4 +1967,5 @@ module.exports = {
   connectHub,   // v2:connect
   activationManager,
   sceneryEnricher,
+  modes,   // v3:modes
 };

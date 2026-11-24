@@ -450,7 +450,10 @@ test('Temple Run: SAFE, three sensible shots and a putt or two; or the stepping 
     assert.ok(d.end.y < 312, `${label}: the drive is short of the first river`);
     const lay = hit(g, second);
     assert.equal(outcome(lay), 'fairway', `${label}: the second finds the island`);
-    assert.ok(lay.end.y > 340 && lay.end.y < 392 && lay.distToPinYd < 140, `${label}: laid up at ${lay.distToPinYd} yd`);
+    // v3:gadgets a lay-up that runs to the island's far bank is thrown over the second river onto the
+    // forecourt by the Stone Drum (a pad), instead of resting a yard from the water
+    const drummed = (lay.gadgets || []).some((h) => h.id === 'stone-drum') && lay.end.y > 415 && lay.end.y < 447;
+    assert.ok(drummed || (lay.end.y > 340 && lay.end.y < 392 && lay.distToPinYd < 140), `${label}: laid up at ${lay.distToPinYd} yd`);
     const strokes = finish(g, label);
     assert.ok(strokes >= 3 && strokes <= 5, `${label}: home in ${strokes} (a par at worst)`);
   }

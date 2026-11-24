@@ -718,8 +718,9 @@ const DETAIL_SWING = {
 // One swing on a fresh hole. at: aim at this point (else `off` degrees from the flag);
 // wind: [mph, 'head' | 'tail' | 'left' | 'right'] relative to the aim; rocket: a Rocket ball;
 // from: play it from here instead of the tee. -> { g, r, land: the first bounce (or splash) }
-function oneSwing(id, launch, { at = null, off = 0, wind = null, rocket = false, from = null, power = 1, label = '' } = {}) {
+function oneSwing(id, launch, { at = null, off = 0, wind = null, rocket = false, from = null, power = 1, label = '', gadgets = true } = {}) {
   const g = newGame(id);
+  if (gadgets === false) g.gadgets = null;   // v3:gadgets the ground alone, the stage's gadgets (lib/gadgets.js) taken off it
   if (from) { g.ball = { x: from[0], y: from[1] }; g.lie = g.surfaceAt(from[0], from[1]); g.strokes = 1; }
   g.setAimOffset(at ? Math.atan2(at[0] - g.ball.x, at[1] - g.ball.y) * 180 / Math.PI - (g.aimDeg - g.aimOffset) : off);
   if (wind) {
@@ -800,7 +801,7 @@ test('Lagoon Island: a headland tee, an island green, Skull Rock in the lagoon\'
     const safe = oneSwing(id, stock(k), { at: [46, 82], label: `${k} to the bar` });
     assert.equal(safe.r.penalty, 0);
     assert.equal(safe.r.lie, 'fairway', `${k} to the bar lies on ${safe.r.lie}`);
-    assert.ok(safe.r.distToPinYd > 75 && safe.r.distToPinYd < 105);
+    assert.ok(safe.r.distToPinYd > 50 && safe.r.distToPinYd < 105, `${safe.r.distToPinYd} yd`);   // v3:gadgets (the Bar Runner, a speed strip, runs a ball that rolls onto it on along the bar: 55 to 90 yd left, was 75 to 105)
     assert.ok(playHole(safe.g, `${id} by the bar`) <= 4, 'a pitch and two putts at worst');
   }
   assert.equal(oneSwing(id, { Speed: 60, VLA: 3, HLA: 0, TotalSpin: 2000, SpinAxis: 0 }, { at: [46, 82], label: 'topped at the bar' }).r.penalty, 0, 'a topped ball stays on the bank');
@@ -879,9 +880,12 @@ test('Canyon Run: from a butte to a mesa in the gorge: the floor, the East Rim, 
   }
   assert.ok(widthAcross(g0, 'fairway', 200, -60, 60) >= 50 && widthAcross(g0, 'fairway', 120, -60, 60) >= 40);
 
-  // straight at the flag no plain drive gets there: the mesa's wall, a penalty, dropped on the near rim
+  // straight at the flag no plain drive gets there on its own: the mesa's wall, a penalty, dropped on the near rim
+  // v3:gadgets (the ground's own claim: played here with the stage's gadgets taken off it. With them on, the line
+  // at the flag is barred by the Barricade, a wall only 150 mph breaks, and the Mesa Ring behind it carries the
+  // ball that broke it to the mesa: test/gadgets.test.js "Canyon Run, the 150 club")
   for (const [name, launch] of [['stock driver', stock('DR')], ['150 mph', DETAIL_SWING.D150], ['160 mph', DETAIL_SWING.D160], ['160 mph downwind', DETAIL_SWING.D160, [14, 'tail']]]) {
-    const { r } = oneSwing(id, launch, { wind: name.includes('downwind') ? [14, 'tail'] : null, label: `${name} at the flag` });
+    const { r } = oneSwing(id, launch, { wind: name.includes('downwind') ? [14, 'tail'] : null, label: `${name} at the flag`, gadgets: false });
     assert.equal(r.penalty, 1, `${name} at the flag`);
     assert.match(r.note, /^Water/);
     assert.ok(r.end.y < 200 && r.distToPinYd > 80, 'the drop is on the tee side of the gorge');
@@ -891,9 +895,9 @@ test('Canyon Run: from a butte to a mesa in the gorge: the floor, the East Rim, 
   for (const [name, launch] of [['150 mph drive', DETAIL_SWING.D150], ['135 mph drive', DETAIL_SWING.D135], ['3-wood', stock('W3')], ['hybrid', stock('H3')], ['5-iron', stock('I5')]]) {
     const { r } = oneSwing(id, launch, { at: [-6, 200], label: `${name} up the fairway` });
     assert.equal(r.penalty, 0, `${name} up the fairway`);
-    assert.ok(r.distToPinYd > 100 && r.distToPinYd < 150, `${name} leaves ${r.distToPinYd} yd`);
+    assert.ok(r.distToPinYd > 75 && r.distToPinYd < 150, `${name} leaves ${r.distToPinYd} yd`);   // v3:gadgets (a drive that rolls onto the Ramp Runner, a speed strip at the turn, is carried up the ramp: 85 yd left, was 100 to 150)
   }
-  const safe = oneSwing(id, stock('H3'), { at: [-6, 200], label: 'hybrid to the corner' });
+  const safe = oneSwing(id, stock('H3'), { at: [-6, 200], label: 'hybrid to the corner', gadgets: false });   // v3:gadgets (the ground's own corner: with the Ramp Runner on, the hybrid is carried up the ramp and leaves a wedge, not a 7-iron)
   assert.equal(safe.r.lie, 'fairway');
   safe.g.setAimOffset(0);
   const approach = safe.g.handleShot(stock('I7'), 'I7');
@@ -1002,7 +1006,7 @@ test('Lighthouse Point: clifftop links round a cove: the fairway, Smugglers\' Cu
   for (const [name, launch] of [['150 mph drive', DETAIL_SWING.D150], ['135 mph drive', DETAIL_SWING.D135], ['3-wood', stock('W3')], ['hybrid', stock('H3')], ['5-iron', stock('I5')]]) {
     const { r } = oneSwing(id, launch, { at: [12, 200], label: `${name} up the fairway` });
     assert.equal(r.penalty, 0, `${name} up the fairway`);
-    assert.ok(r.distToPinYd > 110 && r.distToPinYd < 150, `${name} leaves ${r.distToPinYd} yd`);
+    assert.ok(r.distToPinYd > 70 && r.distToPinYd < 150, `${name} leaves ${r.distToPinYd} yd`);   // v3:gadgets (a drive that reaches the corner is swept west by the Headland Runner, a speed strip: 80 yd left, was 110 to 150)
   }
   const safe = oneSwing(id, DETAIL_SWING.D135, { at: [12, 200], label: 'average drive up the fairway' });
   assert.equal(safe.r.lie, 'fairway');
@@ -1102,7 +1106,14 @@ test('props: set pieces for the props layer, of kinds the look stream models, cl
     // the second wave (contract section 5)
     'waterfall', 'castle', 'dragon', 'giant-tree', 'ruins', 'jumbotron', 'fireworks', 'cloud', 'airship', 'statue', 'fountain', 'tiki', 'hut', 'boat',
     'gate', 'tower', 'rock-spire', 'launch-ramp', 'crowd', 'bird-flock',
+    // v3:stadium the stadium kit
+    'stand-section', 'stand-corner', 'led-board', 'ad-board', 'barrier', 'camera-tower', 'tunnel', 'podium',
   ].sort());
+  assert.deepEqual([...L.STAND_PROP_KINDS], ['stand-section', 'stand-corner']);
+  for (const k of [...L.STAND_PROP_KINDS, 'led-board', 'ad-board', 'barrier']) assert.ok(L.PROP_KINDS.includes(k), k);
+  // a stand is judged by the ground 6 m in under its tiers, anything else where it stands
+  assert.deepEqual(L.propFoot({ kind: 'palm', x: 3, y: 4, rotDeg: 90 }), [3, 4]);
+  assert.deepEqual(L.propFoot({ kind: 'stand-section', x: 0, y: 0, rotDeg: 0 }).map((v) => Math.round(v * 1e6) / 1e6 + 0), [0, 6]);
   assert.equal(new Set(L.PROP_KINDS).size, L.PROP_KINDS.length, 'no kind twice');
   for (const special of [...L.FLAT_PROP_KINDS, ...L.SPAN_PROP_KINDS, ...L.FLOATING_PROP_KINDS, ...L.SLIM_PROP_KINDS, ...L.WIDE_PROP_KINDS]) assert.ok(L.PROP_KINDS.includes(special), special);
   assert.deepEqual([L.FLAT_PROP_KINDS, L.SPAN_PROP_KINDS, L.FLOATING_PROP_KINDS, L.WIDE_PROP_KINDS].map((k) => [...k]),
@@ -1115,7 +1126,9 @@ test('props: set pieces for the props layer, of kinds the look stream models, cl
     const g = newGame(id);
     const seen = new Set();
     for (const p of g.course.props) {
-      assert.deepEqual(Object.keys(p), ['id', 'kind', 'x', 'y', 'rotDeg', 'heightM'], `${id}: prop fields`);
+      // (v3:stadium a stand may carry its wedge and base height, and how its crowd is dressed)
+      assert.deepEqual(Object.keys(p).filter((k) => !['wedge', 'z', 'text', 'team', 'fill'].includes(k)), ['id', 'kind', 'x', 'y', 'rotDeg', 'heightM'], `${id}: prop fields`);
+      if (L.STAND_PROP_KINDS.includes(p.kind)) assert.ok(p.wedge && p.wedge.w > 4 && Number.isFinite(p.z), `${id}: ${p.id} has its wedge and its base height`);
       assert.ok(L.PROP_KINDS.includes(p.kind), `${id}: ${p.kind} has a model`);
       assert.ok(p.id.startsWith(`${g.course.arcade.holes.find((h) => p.id.startsWith(`${h}/`))}/`), `${id}: ${p.id} is named for its hole`);
       assert.ok(!seen.has(p.id), `${id}: ${p.id} once`);
@@ -1123,7 +1136,7 @@ test('props: set pieces for the props layer, of kinds the look stream models, cl
       assert.ok([p.x, p.y, p.rotDeg, p.heightM].every(Number.isFinite) && p.heightM > 0);
       // a ring lies flat (on a green, round the pin) and balloons float: anywhere will do
       if (L.FLAT_PROP_KINDS.includes(p.kind) || L.FLOATING_PROP_KINDS.includes(p.kind)) continue;
-      const on = g.surfaceAt(p.x, p.y);
+      const on = g.surfaceAt(...L.propFoot(p));   // v3:stadium (a stand: the ground under its tiers)
       assert.ok(on !== 'green' && on !== 'tee', `${id}: ${p.id} stands on a ${on}`);
       if (L.SPAN_PROP_KINDS.includes(p.kind)) continue;          // a bridge is a deck over whatever it crosses
       if (L.WIDE_PROP_KINDS.includes(p.kind)) {
@@ -1341,7 +1354,7 @@ test('Pharaoh\'s Gate: a drivable par 4 from a bluff: round the Great Sand Sea, 
   assertSoundShot(safe, lay, `${id} hybrid up the left`);
   assert.equal(lay.lie, 'fairway');
   assert.equal(lay.penalty, 0);
-  assert.ok(lay.distToPinYd > 70 && lay.distToPinYd < 130, `leaving ${lay.distToPinYd} yd`);
+  assert.ok(lay.distToPinYd > 35 && lay.distToPinYd < 130, `leaving ${lay.distToPinYd} yd`);   // v3:gadgets (the Caravan Road, a speed strip, runs it on toward the turn: 42 yd left, was 70 to 130)
   const strokes = playHole(safe, id);
   assert.ok(strokes >= 2 && strokes <= 4, `home in ${strokes} by the left fairway`);
   // a long drive up the left still finds fairway (it runs on past the turn)
@@ -1353,7 +1366,7 @@ test('Pharaoh\'s Gate: a drivable par 4 from a bluff: round the Great Sand Sea, 
   aimAt(tight, 58, 150);
   const hybrid = tight.handleShot(stock('H3'), 'H3');
   assert.equal(hybrid.lie, 'fairway');
-  assert.ok(hybrid.distToPinYd < lay.distToPinYd, 'the right side leaves less');
+  assert.ok(hybrid.distToPinYd < 100, `the right side leaves a wedge (${hybrid.distToPinYd} yd)`);   // v3:gadgets (was: less than the left lay-up leaves; the Caravan Road, a speed strip, now runs that one on to 42 yd)
   assert.ok(playHole(tight, id) <= 4);
   // from the tee the caddie makes par at worst, and the hole ends the round
   const fresh = newGame(id);
@@ -1609,19 +1622,18 @@ test('Midnight Mile: the finale, three routes round a harbour to a stadium green
     assert.ok(b.heightM >= widthAcross(g0, 'water', b.y, -80, 0), 'its length (heightM) spans the water');
   }
   assert.ok(count('boat') >= 10 && count('boat', (p) => g0.surfaceAt(p.x, p.y) !== 'water') === 0 && count('fountain', (p) => g0.surfaceAt(p.x, p.y) === 'water') >= 4, 'boats and fountains in the harbour');
-  // the stadium: a crowd on terraces round the back of the green, grandstands on the rim above them
-  const crowd = propsOf(id, 'crowd').filter((p) => dist([p.x, p.y], city.green) < city.rimR);
-  assert.ok(crowd.length >= 25, `${crowd.length} blocks of crowd in the stands`);
+  // the stadium (v3:stadium): an arc of the stadium kit's sections on the foot of the terrace wall, round the back of the green,
+  // standing on the terraces (which are still ground, level, a step above one another)
   for (let k = 0; k < city.stand.n; k++) {
-    const row = crowd.filter((p) => Math.abs(dist([p.x, p.y], city.green) - city.standR(k)) < 1);
-    assert.ok(row.length >= 5, `terrace ${k + 1} has ${row.length} blocks of crowd`);
-    const heights = row.map((p) => h(p.x, p.y));
+    const heights = [40, 76, 112, 148, 184].map((deg) => h(city.green[0] + city.standR(k) * Math.cos(deg * Math.PI / 180), city.green[1] + city.standR(k) * Math.sin(deg * Math.PI / 180)));
     assert.ok(Math.max(...heights) - Math.min(...heights) < 0.4, `terrace ${k + 1} is level`);
     if (k) assert.ok(Math.min(...heights) - stats.pinHeightM > 2.2 + 3 * k, `terrace ${k + 1} is a step above the last`);
   }
-  const stands = propsOf(id, 'grandstand');
-  assert.ok(stands.length >= 6 && stands.every((p) => h(p.x, p.y) > stats.pinHeightM + 12), 'grandstands up on the rim');
-  assert.ok(stands.filter((p) => p.y > pin[1]).length >= 5, 'most of them behind the green');
+  const sections = BUILT[id].course.props.filter((p) => L.STAND_PROP_KINDS.includes(p.kind));
+  assert.equal(sections.length, 7, 'seven sections');
+  assert.ok(sections.every((p) => Math.abs(dist([p.x, p.y], city.green) - city.stand.fromR) < 2.5), 'on the foot of the terrace wall');
+  assert.ok(sections.filter((p) => p.y > pin[1]).length >= 5, 'most of them behind the green');
+  assert.deepEqual(sections.map((p) => p.kind), ['stand-corner', 'stand-section', 'stand-section', 'stand-section', 'stand-section', 'stand-section', 'stand-corner'], 'a pylon at each end of the arc');
   assert.ok(count('fireworks') >= 6 && count('airship') === 1 && count('blimp') === 1 && count('statue') >= 2 && count('flag-banner') >= 20);
 });
 
@@ -1678,28 +1690,29 @@ test('Thunder Dome: a stadium, the stands on terraces all the way round, nothing
   assert.ok(Math.abs(h(0, -40) - arena.stageH) < 0.1 && Math.abs(stats.teeHeightM - arena.stageH) < 0.01);
   assert.ok(h(-14, -40) - arena.stageH > 6 && h(14, -40) - arena.stageH > 6, 'the tunnel has walls');
 
-  // a full house: a block of crowd on every terrace, level, all the way round
+  // a full house (v3:stadium): the bowl is eighteen sections of the stadium kit on the foot of the pitch wall, from one side of
+  // the tunnel round to the other, each with its wedge (test/stadium-kit.test.mjs measures that they close)
   const floor = L.ellipse(arena.mid[0], arena.mid[1], arena.bowl[0], arena.bowl[1], { n: 96 });
   const outside = (p) => -L.signedDistance(p.x, p.y, floor);
   const bearing = (p) => Math.atan2(p.y - arena.mid[1], p.x - arena.mid[0]) * 180 / Math.PI;
   const widestGap = (list) => { const b = list.map(bearing).sort((p, q) => p - q); return Math.max(...b.map((v, i) => (i ? v - b[i - 1] : v + 360 - b[b.length - 1]))); };
-  const crowd = propsOf(id, 'crowd');
-  assert.ok(crowd.length >= 100, `${crowd.length} blocks of crowd`);
-  for (let k = 0; k < arena.tier.n; k++) {
-    const row = crowd.filter((p) => Math.abs(outside(p) - arena.tierD(k)) < 1.2);
-    assert.ok(row.length >= 15, `terrace ${k + 1} has ${row.length} blocks of crowd`);
-    assert.ok(row.every((p) => Math.abs(h(p.x, p.y) - arena.tierH(k)) < 0.2), `the crowd on terrace ${k + 1} stands level on it`);
-    assert.ok(widestGap(row) < (k < 3 ? 75 : 45), `the widest gap in terrace ${k + 1} is ${widestGap(row).toFixed(0)} degrees (the stage and the tunnel)`);
-  }
-  assert.equal(crowd.filter((p) => !Array.from({ length: arena.tier.n }, (_, k) => k).some((k) => Math.abs(outside(p) - arena.tierD(k)) < 1.2)).length, 0, 'every block of crowd is on a terrace');
-  // roofed grandstands and screens on the rim (no gap of 45 degrees but the tunnel), floodlights behind them
-  const stands = propsOf(id, 'grandstand'), screens = propsOf(id, 'jumbotron');
-  assert.ok(stands.length >= 16 && stands.every((p) => Math.abs(h(p.x, p.y) - arena.rimH) < 0.3), 'grandstands on the rim');
-  assert.ok(widestGap([...stands, ...screens]) < 60, `the widest gap on the rim is ${widestGap([...stands, ...screens]).toFixed(0)} degrees`);
+  const sections = BUILT[id].course.props.filter((p) => L.STAND_PROP_KINDS.includes(p.kind));
+  assert.equal(sections.length, arena.sections);
+  assert.ok(sections.every((p) => Math.abs(outside(p)) < 2 && p.z === arena.baseZ), 'every section on the foot of the pitch wall, on one level');
+  assert.equal(sections.filter((p) => p.kind === 'stand-corner').length, 4, 'four corners with a pylon');
+  assert.ok(widestGap(sections) < 75, `the widest gap in the bowl is ${widestGap(sections).toFixed(0)} degrees (the stage and the tunnel)`);
+  assert.ok(sections.every((p) => Math.abs(p.x) >= arena.gapX - 8 || p.y > 30), 'none of them over the stage or the tunnel');
+  assert.equal(sections.map((p) => p.text || ' ').reverse().join('').trim().replace(/ +/g, ' '), 'SIM CLASH DOME', 'the crowd spells it, west to east');
+  // behind the stage: a small roofed stand on the rim either side of the tunnel, galleries on the bank below them
+  const stands = propsOf(id, 'grandstand'), screens = propsOf(id, 'jumbotron'), crowd = propsOf(id, 'crowd');
+  assert.ok(stands.length === 2 && stands.every((p) => Math.abs(h(p.x, p.y) - arena.rimH) < 0.3 && p.y < -20), 'two stands on the rim behind the stage');
+  assert.ok(crowd.length === 4 && crowd.every((p) => [3, 4].some((k) => Math.abs(outside(p) - arena.tierD(k)) < 1.2 && Math.abs(h(p.x, p.y) - arena.tierH(k)) < 0.2)), 'galleries level on the two upper terraces of the bank');
+  assert.ok(widestGap([...sections, ...stands]) < 45, 'stands all the way round but for the tunnel');
   assert.ok(screens.length >= 3 && screens.filter((p) => p.y > pin[1] + 60 && Math.abs(p.x) < 70).length >= 3, 'three screens behind the green');
   const lights = propsOf(id, 'floodlight');
-  assert.ok(lights.length >= 12 && lights.every((p) => p.heightM >= 40 && outside(p) > arena.concourseD + 12), 'a ring of floodlights behind the grandstands');
+  assert.ok(lights.length >= 12 && lights.every((p) => p.heightM >= 40 && outside(p) > arena.concourseD + 12), 'a ring of floodlights behind the bowl');
   assert.ok(propsOf(id, 'flag-banner').length >= 40 && propsOf(id, 'fireworks').length >= 4 && propsOf(id, 'airship').length === 1 && propsOf(id, 'blimp').length === 1);
+  assert.ok(propsOf(id, 'camera-tower').length === 4 && propsOf(id, 'tunnel').length === 1 && propsOf(id, 'podium').length === 1 && propsOf(id, 'led-board').length === 2, 'broadcast towers, the players\' tunnel, the walk-on arch, LED walls at the foot of the stage');
   const [gate] = propsOf(id, 'gate');
   assert.ok(gate && Math.abs(gate.x) < 3 && gate.y < -15 && propsOf(id, 'statue').length === 2, 'the tunnel mouth behind the tee, a trophy either side of the stage');
   assert.ok(BUILT[id].course.props.length >= 150 && BUILT[id].course.props.length <= 300, `${BUILT[id].course.props.length} props`);

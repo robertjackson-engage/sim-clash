@@ -484,7 +484,8 @@ export function dockModel(snap, catalogue, match, opts = {}) {
     const playing = match.phase === 'play' || match.phase === 'tiebreak';
     const powerups = match.options?.powerups ?? 'loadout';
     if (!playing || !me || powerups === 'off') { out.mode = 'hidden'; return out; }
-    const opp = players.find((p) => p && p.id !== me.id) || null;
+    // v3:modes a party (up to four): the opponent a trick goes to is the one the match UI says (match.targetId), never a player who is out
+    const opp = (match.targetId != null && players.find((p) => p && p.id === match.targetId && p.id !== me.id && !p.out)) || players.find((p) => p && p.id !== me.id && !p.out) || null;
     out.mode = 'match';
     out.playerId = me.id; out.playerName = String(me.name || `Player ${me.slot || 1}`);
     out.slot = me.slot === 2 ? 2 : me.slot === 1 ? 1 : (players.indexOf(me) === 1 ? 2 : 1);
@@ -1226,7 +1227,7 @@ export class ArcadeUI {
     let res = null;
     try {
       res = await this.fetchJson('/api/match/arm', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ playerId: m.playerId, id: next }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ playerId: m.playerId, id: next, ...(trick && this.match && this.match.party && m.oppId ? { targetId: m.oppId } : {}) /* v3:modes who the trick is for, in a party */ }),
       });
     } catch { res = null; }
     this.arming = false;
@@ -1265,7 +1266,7 @@ export class ArcadeUI {
     // v2:qa a match overlay owns the keyboard while it is up (the match menu's 1 to 5, the
     // stray-ball prompt, a full-bleed screen such as the lobby): this listener is on window
     // and runs before the match UI's, so without this "2: UNDO LAST SHOT" also armed ball 2
-    if (this.hud?.querySelector?.('.mt-menu:not(.hidden), .mt-stray:not(.hidden), .mt-screen:not(.hidden)')) return;
+    if (this.hud?.querySelector?.('.mt-menu:not(.hidden), .mt-stray:not(.hidden), .mt-screen:not(.hidden), .md-keys')) return;   // v3:modes .md-keys: a mode's own game is up (Bullseye): its keys are its own, and it has no ball dock
     const k = String(e.key || '');
     const take = () => { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); };
     // v2:playability R (rescue): DROP ON THE LINE, twice when it costs a stroke, while it is offered

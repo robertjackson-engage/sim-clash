@@ -1,10 +1,13 @@
 // The sky photos that ship with the game (lib/sky-bundle.js, tools/arcade-holes/sky-files.mjs).
 //
 // The game never downloads a sky and its server only serves one that is in the data dir's
-// sky-cache, so a fresh install must be handed the ones its stages are lit by. Checked here:
-// which files the stages really ask for (from the look itself), that each is pinned to a
-// source and a checksum, the install into an empty data dir, and a game server on a
-// throwaway data dir serving a bundled sky and refusing one that is not bundled.
+// sky-cache, so a fresh install must be handed the ones its stages are lit by. Since every
+// stage got its own panorama (public/arcade/env/sky, inside the app) that is NONE: the two
+// Poly Haven photos no longer ship (v3:env-polish), and the machinery stays for a stage that
+// would need one. Checked here: which files the stages really ask for (from the look
+// itself), that each photo a stage could fall back to is pinned to a source and a checksum,
+// the install into an empty data dir, and a game server on a throwaway data dir serving a
+// bundled sky and refusing one that is not bundled.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -15,7 +18,7 @@ import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { SKY_SOURCES, neededSkyFiles, skyFileOf } from '../tools/arcade-holes/sky-files.mjs';
+import { SKY_SOURCES, neededSkyFiles, skyFileOf, fallbackSkyFileOf, panoramaOf } from '../tools/arcade-holes/sky-files.mjs';
 
 const require = createRequire(import.meta.url);
 const { installSkyBundle, readSkyBundle, SKY_MANIFEST, SKY_DIR, SKY_FORMAT } = require('../lib/sky-bundle.js');
@@ -43,45 +46,66 @@ function fakeBundle(files = { [GOLDEN]: 'golden sky bytes', [MORNING]: 'morning 
   return dir;
 }
 
-test('a stage is lit by a sky photo, a painted sky, or the midday sky inside the app', () => {
+test('a stage is lit by its own panorama, a sky photo, a painted sky, or the midday sky inside the app', () => {
   const stage = (theme, timeOfDay) => ({ name: `${theme} ${timeOfDay}`, arcade: { theme, timeOfDay } });
-  assert.equal(skyFileOf(stage('tropical', 'day')), GOLDEN);      // the arcade look's own sky
-  assert.equal(skyFileOf(stage('canyon', 'golden')), GOLDEN);
-  assert.equal(skyFileOf(stage('alpine', 'golden')), GOLDEN);
-  assert.equal(skyFileOf(stage('alpine', 'day')), MORNING);
-  assert.equal(skyFileOf(stage('sakura', 'day')), MORNING);
-  assert.equal(skyFileOf(stage('volcano', 'dusk')), null);        // painted: ash and ember
-  assert.equal(skyFileOf(stage('volcano', 'golden')), null);
+  // under its own panorama a stage needs no photo on disk (the photo is only what it falls back to)
+  for (const [theme, time, pano, fallback] of [
+    ['tropical', 'day', 'tropical-day', GOLDEN], ['canyon', 'golden', 'canyon-golden', GOLDEN], ['alpine', 'golden', 'alpine-golden', GOLDEN],
+    ['alpine', 'day', 'alpine-day', MORNING], ['sakura', 'day', 'sakura-day', MORNING], ['links', 'day', 'links-day', MORNING],
+    ['volcano', 'dusk', 'volcano-dusk', null], ['stadium', 'night', 'stadium-night', null], ['neon', 'day', 'neon-night', null],
+  ]) {
+    assert.equal(panoramaOf(stage(theme, time)), pano, `${theme}/${time}`);
+    assert.equal(skyFileOf(stage(theme, time)), null, `${theme}/${time} needs no sky photo`);
+    assert.equal(fallbackSkyFileOf(stage(theme, time)), fallback, `${theme}/${time} falls back`);
+  }
+  // a theme at an hour it has no panorama for is still lit by a photo, and that photo is needed
+  assert.equal(panoramaOf(stage('canyon', 'day')), null);
+  assert.equal(skyFileOf(stage('canyon', 'day')), MORNING);
+  assert.equal(skyFileOf(stage('tropical', 'golden')), GOLDEN);
+  assert.equal(skyFileOf(stage('jungle', 'day')), MORNING);
+  assert.equal(skyFileOf(stage('volcano', 'golden')), null);      // painted: ash and ember
   assert.equal(skyFileOf(stage('canyon', 'dusk')), null);         // painted dusk
-  assert.equal(skyFileOf(stage('stadium', 'night')), null);       // painted night
-  assert.equal(skyFileOf(stage('neon', 'day')), null);            // the neon city is always a night
+  assert.equal(skyFileOf(stage('stadium', 'dusk')), null);
   assert.equal(skyFileOf(stage('desert', 'day')), null);          // midday: the sky inside the app
+  // a course with no theme (a real course in the arcade look, the legacy Arcade Classics) has no panorama
+  assert.equal(panoramaOf({ name: 'no theme', arcade: {} }), null);
   assert.equal(skyFileOf({ name: 'no theme', arcade: {} }), GOLDEN);
 });
 
-test('every sky the real stages ask for is pinned to its Poly Haven source and checksum', () => {
+test('no stage that ships needs a sky photo: each has its own panorama, and the photos they could fall back to stay pinned', () => {
   const stages = COURSES.filter((c) => c.stage).map((c) => ({ name: c.name, arcade: { theme: c.stage.theme, timeOfDay: c.stage.timeOfDay } }));
   assert.ok(stages.length >= 15, `${stages.length} stages`);
-  const needed = neededSkyFiles(stages);
-  assert.deepEqual(needed.map((n) => n.file), [GOLDEN, MORNING]);   // exactly what ships: a new sky means a new row, a credit and 15 MB
-  for (const n of needed) {
-    const s = SKY_SOURCES[n.file];
-    assert.ok(s, `${n.file} (${n.stages.join(', ')}) is not pinned in sky-files.mjs`);
-    assert.match(n.file, FILE_RE);
+  // exactly what ships: nothing (it was the two Poly Haven photos, 32 MB). A stage that brings
+  // a photo back fails here first: it means a new row below, a credit and 15 MB of installer.
+  assert.deepEqual(neededSkyFiles(stages), []);
+  const envManifest = JSON.parse(fs.readFileSync(path.join(repo, 'public', 'arcade', 'env', 'manifest.json'), 'utf8'));
+  for (const s of stages) {
+    const id = panoramaOf(s);
+    assert.ok(id && envManifest.skies[id], `${s.name} has a panorama that is in public/arcade/env/manifest.json`);
+    assert.ok(fs.existsSync(path.join(repo, 'public', 'arcade', 'env', envManifest.skies[id].file)), `${s.name}: ${envManifest.skies[id].file} is in the repo (so inside the app)`);
+  }
+  // the photos a stage would be lit by without its panorama are still pinned, for the day one is needed again
+  const fallbacks = [...new Set(stages.map(fallbackSkyFileOf).filter(Boolean))].sort();
+  assert.deepEqual(fallbacks, [GOLDEN, MORNING]);
+  for (const file of fallbacks) {
+    const s = SKY_SOURCES[file];
+    assert.ok(s, `${file} is not pinned in sky-files.mjs`);
+    assert.match(file, FILE_RE);
     assert.match(s.sha256, /^[0-9a-f]{64}$/);
     assert.ok(s.bytes > 1e6);
     assert.equal(s.licence, 'CC0 1.0');
     assert.match(s.page, /^https:\/\/polyhaven\.com\/a\/[a-z0-9_]+$/);
-    assert.equal(`${s.page.split('/').pop()}_4k.hdr`, n.file);
+    assert.equal(`${s.page.split('/').pop()}_4k.hdr`, file);
   }
-  // the golden-hour and the dusk stages by name (the two the release brief asks about)
   const of = (name) => skyFileOf(stages.find((s) => s.name === name));
-  assert.equal(of('Canyon Run'), GOLDEN);
+  assert.equal(of('Canyon Run'), null);
   assert.equal(of('Volcano Drop'), null);
   assert.equal(of('Midnight Mile'), null);
-  // and the credits name every file that ships
+  // the credits say what the stage skies are (generated for this project) and no longer say a Poly Haven photo is installed with the stages
   const credits = fs.readFileSync(path.join(repo, 'CREDITS.md'), 'utf8');
-  for (const n of needed) assert.ok(credits.includes(SKY_SOURCES[n.file].page), `CREDITS.md does not name ${n.file}`);
+  assert.match(credits, /public\/arcade\/env/);
+  assert.match(credits, /generated for this (project|game)/i);
+  assert.ok(!/arcade-data\/sky/.test(credits), 'CREDITS.md still says sky photos are installed with the stages');
 });
 
 test('no bundle, or a bundle without skies: nothing happens', () => {

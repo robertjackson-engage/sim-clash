@@ -17,8 +17,16 @@ import { ArcadeUI } from './arcade/arcade.js';
 import { ArcadeAudio } from './arcade/audio.js';
 import { planAnticipation } from './arcade/voice/anticipation.js';   // v2:voice the crowd's swell and its payoff
 import { arcadeShot } from './arcade/feel.js';
+import { cueGate, cueIntensity, gadgetSummary } from './render/gadget-core.js';   // v3:gadgets the sound a gadget contact asks for; the stage intro's list
+import { worldClockTime, WORLD_CLOCK_KEY, PLAYER_COLORS } from './render/world-life.js';   // v3:living the living world's settings and colours (docs/living-world.md)
+import { setLookThemeOverride } from './render/arcade-look.js';   // v3:living the world clock lays a time of day over a stage
+// v3:modes instant replay: a notable shot again, from another camera (docs/modes.md). Imported before the shell and the
+// match UI on purpose: while a replay plays, its own key listener must be the first to hear a key (any key skips it).
+import { ReplayDirector, jobOfShot, jobOfHighlight } from './arcade/replay.js';
+import { replayOffer, replayBeatMs } from './arcade/replay-core.js';
 // Match mode (public/arcade/match.js, docs/match.md): a head-to-head on this bay.
 import { MatchUI } from './arcade/match.js';
+import { PartyUI } from './arcade/party.js';   // v3:modes PARTY: the match UI for two to four players (it IS the match UI; a head-to-head is drawn as before)
 import { initShell } from './arcade/shell.js';   // v2:shell the game product's front end: title screen, main menu, solo, the in-game chrome
 import { mountForesightPanel } from './arcade/foresight-panel.js';   // v2:bridge the Foresight bridge's status and switch (docs/foresight-bridge.md)
 import { mountSeeOver } from './arcade/seeover.js';   // v2:seeover the see-over address camera's button and key (V)
@@ -102,6 +110,31 @@ segmented($('seg-shotcam'), [['ball', 'Ball cam'], ['follow', 'Follow the ball']
   scene.setShotCam(shotCam);
   markSeg($('seg-shotcam'), shotCam);
 });
+// v3:living WORLD LIFE: how much moves through a stage and answers the game (render/world-events.js).
+// Full; Calm (the slow and the far, and only the hole's and the match's own beats); Off (the
+// stage is the set it was). ?life=full|calm|off overrides the saved choice for this window.
+if (query.get('life')) scene.worldEvents.setMode(query.get('life'), { save: false });
+if ($('seg-life')) segmented($('seg-life'), [['full', 'Full'], ['calm', 'Calm'], ['off', 'Off']], scene.worldEvents.mode, (v) => { markSeg($('seg-life'), scene.worldEvents.setMode(v)); });
+// v3:living THE WORLD CLOCK, an option, off by default (?worldclock=1 for this window): in a match of
+// three holes or more the day moves on, every hole a little later than the last, from day through
+// the golden hour and dusk to a floodlit night on the last (render/world-life.js worldClockTime).
+// It lays that time of day over the stage's own through the look's override
+// (render/arcade-look.js setLookThemeOverride): the stage keeps its ground, trees and props and
+// takes the sky and the light of the hour. Off, every stage is as its file says.
+let worldClockOn = query.get('worldclock') ? query.get('worldclock') === '1' : (() => { try { return localStorage.getItem(WORLD_CLOCK_KEY) === '1'; } catch { return false; } })();
+if ($('seg-worldclock')) segmented($('seg-worldclock'), [['off', 'Off'], ['on', 'On']], worldClockOn ? 'on' : 'off', (v) => {
+  worldClockOn = v === 'on';
+  try { localStorage.setItem(WORLD_CLOCK_KEY, worldClockOn ? '1' : '0'); } catch { /* private mode */ }
+  markSeg($('seg-worldclock'), worldClockOn ? 'on' : 'off');
+});
+const devLookOverride = !!(query.get('theme') || query.get('tod') || query.get('timeOfDay'));
+function worldClock(m) {
+  if (devLookOverride) return;                          // ?theme= / ?tod= is someone looking at a look: left alone
+  const of = m && !m.aborted && m.phase !== 'done' ? (m.maxHoles || { bo9: 9, bo3: 3 }[(m.format && m.format.id) || m.format] || 1) : 1;
+  const st = m && ((m.phase === 'loading' && m.nextStage) || m.stage || m.nextStage);
+  const index = st && st.kind === 'tiebreak' ? of - 1 : m ? (m.holesPlayed || 0) : 0;
+  setLookThemeOverride(null, of >= 3 ? worldClockTime(index, of, worldClockOn) : null);
+}
 segmented($('seg-sky'), SKY_ORDER.map((k) => [k, k === 'golden' ? 'Golden' : k === 'fog' ? 'Fog' : SKY_PRESETS[k].label]), skySetting, (v) => {
   skySetting = parseSkySetting(v);
   try { localStorage.setItem(SKY_KEY, skySetting); } catch { /* private mode */ }
@@ -301,8 +334,10 @@ async function loadGeometry() {
     }));
   }
   const mode = hdAssets.length ? 'hd' : 'procedural';
+  worldClock(pendingMatch !== undefined ? pendingMatch : matchUI.match);   // v3:living the hour this hole is played at (an option, off by default)
   scene.loadCourse(geo, { hdAssets });
   aimMap.setCourse(geo);
+  matchUI.setStageGadgets?.(geo.arcade?.id || null, gadgetSummary(geo.gadgets));   // v3:gadgets the stage intro's GADGETS row
   if (visualCaptureEnabled) await scene.compileVisualCaptureShaders();
   lastHoleKey = '';
   if (state) applyState(state);
@@ -378,6 +413,19 @@ if (query.get('visualCapture') === '1') {
 const arcadeOn = query.get('arcade') !== '0' && !visualCaptureEnabled;
 // ?sound=0 plays the arcade silently (the banners and effects stay)
 const arcadeAudio = arcadeOn && query.get('sound') !== '0' ? new ArcadeAudio() : null;   // unlocks itself on the first click or key
+scene.worldEvents.audio = arcadeAudio;   // v3:living a beat's one cue, through the guarded cue() (the names: render/world-life.js LIVING_CUES)
+// v3:gadgets each gadget contact of a shot, as the ball reaches it (render/gadgets.js onHit): its
+// one-shot through the guarded cue API. The cue files are the sound stream's (gadget-ring, -pad,
+// -bumper, -break, -coin, -warp, -geyser, -strip, -fan, -zone, -thud); a name the engine does not
+// know is silent. Coins are let through at most once every 80 ms. Nothing loops.
+{
+  const gadgetCue = cueGate();
+  scene.gadgets.onHit = (ev) => {
+    if (!arcadeAudio) return;
+    const name = gadgetCue(ev, performance.now());
+    if (name) { try { arcadeAudio.cue?.(name, { intensity: cueIntensity(ev) }); } catch { /* a cue never breaks a shot */ } }
+  };
+}
 const arcade = arcadeOn ? new ArcadeUI({
   hud: $('hud'), audio: arcadeAudio,
   fetchJson: (url, opts) => fetch(url, opts).then((r) => (r.ok ? r.json() : null)).catch(() => null),
@@ -410,7 +458,7 @@ if (arcadeOn && query.get('seeover') !== '0') {
 // ---------- match mode ----------
 // The server owns the match (lib/match.js); this is its lobby, VS header, ticker and
 // result screen. ?match=1 opens the lobby on load.
-const matchUI = new MatchUI({
+const matchUI = new (PartyUI || MatchUI)({   // v3:modes
   hud: $('hud'),
   // error answers carry their reason in the body ({ok: false, error}), so no r.ok test
   fetchJson: (url, opts) => fetch(url, opts).then((r) => r.json()).catch(() => null),
@@ -439,9 +487,13 @@ function flushMatch() {
   const m = pendingMatch;
   pendingMatch = undefined;
   matchUI.onMatch(m);
-  arcade?.setMatch(m);   // v2:arcade-hud the ball dock becomes the loadout of whoever is up (null: back to solo)
+  arcade?.setMatch(matchUI.dockState ? matchUI.dockState(m) : m);   // v2:arcade-hud the ball dock becomes the loadout of whoever is up (null: back to solo) (v3:modes with who a trick goes to, in a party)
+  if (arcadeOn) crowdOnMatch(m);   // v3:stadium a wave on the sudden-death intro, the works on a win
+  if (arcadeOn) scene.worldEvents.matchUpdate(m);   // v3:living the match's beats: the leader's colours, SUDDEN DEATH, a knockout, the winner's sky
 }
 if (query.get('match') === '1') matchUI.openLobby();
+if (query.get('party') === '1') matchUI.openPartyLobby?.();   // v3:modes
+matchUI.onDockChange = () => arcade?.setMatch(matchUI.dockState(matchUI.match));   // v3:modes the player who is up picked another target for their trick
 // Sound on or off, remembered (key S). Off silences every arcade sound; the banners stay.
 const SOUND_KEY = 'open-birdie.arcade.sound';
 let arcadeSound = (() => { try { return localStorage.getItem(SOUND_KEY) !== '0'; } catch { return true; } })();
@@ -483,6 +535,71 @@ function scheduleSlowmoAudio(sim, shot) {
     slowmoTimers.push(setTimeout(() => { arcadeAudio.cue('slowmo-in'); arcadeAudio.duck?.(0.5, w.t1 - w.t0); }, w.t0 * 1000));
     slowmoTimers.push(setTimeout(() => arcadeAudio.cue('slowmo-out'), w.t1 * 1000));
   }
+}
+
+// v3:stadium The stands react in step with what the game already knows (scene.props.crowdReact:
+// the crowd, the big screens, and on a win the confetti, flame jets and fireworks). No sound of
+// its own: these are the moments the gallery's voice and the callouts land on.
+//   tense   through the slow-motion approach to the pin (feel.js windows 'holing', 'lip', 'close')
+//   cheer   as the ball drops, when it stops stone dead, on a good or an epic callout
+//   groan   on a lip-out, a ball in the water, a bad callout
+//   wave    on the sudden-death intro          win    when the match is decided
+let crowdTimers = [];
+function scheduleCrowd(shot) {
+  crowdTimers.forEach(clearTimeout);
+  crowdTimers = [];
+  const sim = shot && shot.sim;
+  if (!sim || !scene.props || !scene.props.crowdReact) return;
+  const react = (kind, opts) => scene.props.crowdReact(kind, opts);
+  const later = (sec, fn) => crowdTimers.push(setTimeout(fn, Math.max(0, sec * 1000)));
+  const pin = scene.pinSim ? { x: scene.pinSim.x, y: scene.pinSim.y } : null;
+  const pts = sim.points || [], endS = Number.isFinite(sim.playS) ? sim.playS : pts.length ? pts[pts.length - 1].t : 0;
+  for (const w of sim.slowmo || []) if (w.reason === 'holing' || w.reason === 'lip' || w.reason === 'close') later(w.t0, () => react('tense', { at: pin }));
+  let told = false;
+  for (const step of planAnticipation(sim, shot)) {
+    if (step.do !== 'resolve') continue;
+    told = true;
+    later(step.at, () => react(step.outcome === 'out' ? 'groan' : 'cheer', { at: pin, intensity: step.outcome === 'in' ? 2 : 1, label: step.outcome === 'in' ? 'IN THE HOLE!' : step.outcome === 'out' ? 'SO CLOSE' : 'STONE DEAD' }));
+  }
+  const wet = (sim.events || []).find((ev) => ev.type === 'water');
+  const c = shot.arcade && shot.arcade.callout;
+  if (wet && !told) later(Number.isFinite(wet.t) ? wet.t : endS, () => react('groan', { at: { x: wet.x, y: wet.y }, label: (c && c.text) || 'SPLASH!' }));
+  else if (c && !told) later(endS + 0.25, () => { if (c.tone === 'epic' || c.tone === 'good') react('cheer', { intensity: c.tone === 'epic' ? 1.6 : 1, label: c.text }); else if (c.tone === 'bad') react('groan', { label: c.text }); });
+  else if (!told) later(endS, () => react('calm'));
+}
+let crowdMatchKey = '';
+function crowdOnMatch(m) {
+  const key = m && !m.aborted ? `${m.id}|${m.phase}|${(m.holeResults || []).length}` : '';
+  if (key === crowdMatchKey) return;
+  crowdMatchKey = key;
+  if (!key || !scene.props || !scene.props.crowdReact) return;
+  const stage = m.stage || m.nextStage;
+  const wave = () => scene.props.crowdReact('wave', { intensity: 2, label: 'SUDDEN DEATH' });
+  if (m.phase === 'tiebreak') wave();
+  else if (m.phase === 'intro' && stage && stage.kind === 'tiebreak') setTimeout(wave, 2500);   // the arena's models are still arriving
+  else if (m.phase === 'done' && m.winnerId) {
+    const who = (m.players || []).find((p) => p.id === m.winnerId);
+    scene.props.crowdReact('win', { label: who && who.name ? `${String(who.name).toUpperCase().slice(0, 10)} WINS!` : 'WINNER!' });
+  } else if (m.phase === 'hole-result') scene.props.crowdReact('cheer', { intensity: 1.2, label: '' });
+}
+
+// v3:living THE WORLD ANSWERS (render/world-events.js, docs/living-world.md): a shot's beats go on the
+// world's reaction bus, each for the frame its cause is on screen (the bus plays ONE at a time):
+// a Rocket leaving, a splash, a snowman hit, and at the stop the hole's celebration, a great
+// shot's flare or a bad one's laugh. Seen, and at most one cue each; nothing here waits for it.
+function worldShot(shot) {
+  const m = matchUI.match && !matchUI.match.aborted ? matchUI.match : null;
+  const by = shot.match && m ? (m.players || []).findIndex((p) => p.id === shot.match.playerId) : -1;
+  const who = by >= 0 ? m.players[by] : null;
+  const slot = who ? (who.slot === 1 || who.slot === 2 ? who.slot : by + 1) : 0;
+  let screen = null;
+  if (shot.holed) {
+    // what the big screens say once the roar has had its moment: who, and what it was for
+    const diff = (shot.strokes || 0) - (state?.par ?? 4);
+    const names = { '-3': 'ALBATROSS', '-2': 'EAGLE', '-1': 'BIRDIE', 0: 'PAR', 1: 'BOGEY', 2: 'DOUBLE BOGEY' };
+    screen = { title: who && who.name ? String(who.name).toUpperCase().slice(0, 18) : 'IN THE HOLE', big: shot.strokes === 1 ? 'HOLE IN ONE' : (names[diff] ?? `${shot.strokes} STROKES`), sub: `HOLED IN ${shot.strokes}`, color: slot ? PLAYER_COLORS[slot] : '#ffd21f' };
+  }
+  scene.worldEvents.shotStart(shot, { playerSlot: slot, screen });
 }
 
 // ---------- SSE ----------
@@ -618,6 +735,7 @@ es.addEventListener('shot', (e) => {
   // Where the ball goes is the server's; only the clock is the arcade's.
   const shot = arcadeOn ? arcadeShot(raw, state, { powerup: raw.arcade?.powerup || null }) : raw;
   if (replay) endReplay();    // a live ball mid-replay: back to the round's hole first
+  cancelInstantReplay();      // v3:modes ... and an instant replay never delays a player who is ready: the live shot is played now
   const plan = lineup.pred;   // what this club was predicted to do, for the comparison
   lastShot = { shot, plan, savedId: null, mulled: false };
   showShotData(shot, plan);
@@ -627,7 +745,7 @@ es.addEventListener('shot', (e) => {
   clearTimeout(lineupBack);
   lineup.setFlying(true);
   flightView.startShot(shot);
-  if (arcadeOn) { arcade.onShot(shot, state); scheduleSlowmoAudio(shot.sim, shot); /* v2:voice the result too: holed, distance to the pin */ }
+  if (arcadeOn) { arcade.onShot(shot, state); scheduleSlowmoAudio(shot.sim, shot); /* v2:voice the result too: holed, distance to the pin */ scheduleCrowd(shot); /* v3:stadium the stands react too */ worldShot(shot); /* v3:living and the world */ }
   const treeCallout = treeCalloutFor(shot);
   const pts = shot.sim.points || [];
   let shown = 0;
@@ -642,7 +760,12 @@ es.addEventListener('shot', (e) => {
     updateMulligan();
     lineupBack = setTimeout(() => flightView.lineup(), 4200);
   };
-  scene.playShot(shot.sim.points, shot.sim.flightTime, () => {
+  scene.playShot(shot.sim.points, shot.sim.flightTime, function shotEnded() {
+    // v3:modes a notable shot of a match (the server marks it: shot.highlight) is played again, once, from
+    // another camera, before anything moves on: the game's state stays held back as it is while a ball is
+    // in the air, and this very function runs again when the replay is over, skipped or not. In solo play
+    // the replay is only offered (a chip, key P) and nothing waits.
+    if (!shot.replayed && instantReplay(shot, () => { shot.replayed = true; shotEnded(); })) return;
     // v2:qa In a match the next state belongs to the OTHER player: the camera would cut to
     // their ball the moment this one stops, with this shot's callout banner landing over
     // it. Hold the picture on the ball that was just hit while its banner plays; a swing
@@ -650,7 +773,7 @@ es.addEventListener('shot', (e) => {
     // (a match shot gets no toast: the header has the strokes and the distance, the last-shot
     // panel the numbers, the callout banner the story, and the toast's line is the banner's)
     const inMatch = !!(shot.match && shot.match.playerId);
-    const holdMs = matchResultHoldMs(shot, pendingMatch);
+    const holdMs = shot.replayed ? 0 /* v3:modes its replay was the hold */ : matchResultHoldMs(shot, pendingMatch);
     // the shot that decided the hole (or the sudden death): the match UI gets its state now
     // and runs its own banner and result screen; the picture stays on that shot behind them
     const decided = inMatch && arcadeOn && pendingMatch && !pendingMatch.aborted && (pendingMatch.phase === 'hole-result' || pendingMatch.phase === 'done');
@@ -660,6 +783,7 @@ es.addEventListener('shot', (e) => {
   }, {
     onProgress: (t) => {
       flightView.setTime(t);
+      scene.worldEvents.shotProgress(t);   // v3:living the world's beats ride the shot's own clock
       treeCallout(t);
       // the map traces the ball, a few times a second
       let i = shown;
@@ -669,11 +793,210 @@ es.addEventListener('shot', (e) => {
     isPutt: !!shot.sim.isPutt,
     spinRpm: shot.launch?.totalSpin, spinAxisDeg: shot.launch?.spinAxis,
     events: shot.sim.events,   // bounces, water, trees: what the landing throws up (render/impact-fx.js)
+    toPlayTime: shot.sim.toPlayTime || null,   // v3:gadgets shot time -> the picture's clock (a geyser fires on the shot's own time)
     ballSkin: arcadeOn ? shotBallSkin(raw) : null,   // v2:look the ball that was hit (the server's word), its look kept to the end of the shot
     // a good shot, or a power-up ball, flies with a burning trail in its own colour (arcade/feel.js shotTrail)
     ...(shot.trail ? { trail: true, trailColor: shot.trail.color, trailHeat: shot.trail.heat } : {}),
   });
 });
+
+// ---------- v3:modes instant replay and highlights (arcade/replay.js, replay-core.js; docs/modes.md) ----------
+// The director films a shot again from an alternate camera; this is WHEN it does, and how the
+// picture and the game's held state are put back. Three ways in:
+//   inline   after a notable shot of a match, by itself, once: a beat for the shot's own callout,
+//            then the replay, then the shot's usual ending (instantReplay, from the 'shot' handler)
+//   offered  in solo play: a chip (key P) for a few seconds; a press plays it (playReplayAlone)
+//   the reel a highlight asked for from the HIGHLIGHTS screen or the winner screen's SHOT OF THE
+//            MATCH: the server puts its stage in the bay and sends 'replay' (below)
+// A live ball ends any of them at once (cancelInstantReplay, first thing in the 'shot' handler);
+// any key, a click, or a swing the server dropped ('swing-ignored', 'shell-swing') skips one.
+// ?replay=0: no replay plays by itself (tools that drive a match over HTTP).
+const director = arcadeOn && !visualCaptureEnabled ? new ReplayDirector({ scene, audio: arcadeAudio }) : null;
+const replayAuto = query.get('replay') !== '0';
+let rp = null;          // the replay that has the picture, or is about to: { kind: 'inline' | 'alone', timer, then }
+let rpAutoId = null;    // the highlight that last played by itself (the winner screen does not play it twice)
+let reel = null;        // the reel as the server has it (the 'highlights' event)
+let chipJob = null;
+let chipTimer = null;
+const chipEl = director ? document.body.appendChild(Object.assign(document.createElement('button'), { type: 'button', className: 'rp-chip rp-hidden' })) : null;
+if (chipEl) chipEl.addEventListener('click', () => playOffered());
+function replayPlayerOf(shot) {
+  const id = shot.match ? shot.match.playerId : null;
+  const list = (pendingMatch && pendingMatch.players) || (matchUI.match && matchUI.match.players) || [];
+  const p = id != null ? list.find((x) => String(x.id) === String(id)) : null;
+  if (p) return { name: p.name, slot: p.slot };
+  return state && state.player ? { name: state.player.name, slot: null } : null;
+}
+function showReplayChip(job, offer) {
+  if (!chipEl) return;
+  chipJob = job;
+  chipEl.innerHTML = '<kbd>P</kbd>▶ REPLAY<span></span>';
+  chipEl.querySelector('span').textContent = offer.title || '';
+  chipEl.classList.remove('rp-hidden');
+  clearTimeout(chipTimer);
+  chipTimer = setTimeout(hideReplayChip, 9000);
+}
+function hideReplayChip() {
+  clearTimeout(chipTimer);
+  chipJob = null;
+  if (chipEl) chipEl.classList.add('rp-hidden');
+}
+function playOffered() {
+  const job = chipJob;
+  hideReplayChip();
+  if (job) playReplayAlone(job);
+}
+// The ball of a live shot has stopped. True: its replay is on its way (after a beat) and `then` runs when it is over.
+function instantReplay(shot, then) {
+  if (!director) return false;
+  hideReplayChip();
+  const offer = replayOffer(shot);
+  if (!offer) return false;
+  const job = jobOfShot(shot, { title: offer.title, player: replayPlayerOf(shot), pin: scene.pinSim ? { ...scene.pinSim } : null, ballSkin: shotBallSkin(shot) });
+  if (!job) return false;
+  if (!offer.auto) { showReplayChip(job, offer); return false; }   // solo play: offered, never forced
+  if (!replayAuto) return false;
+  const mine = { kind: 'inline', timer: null, then };
+  rp = mine;
+  mine.timer = setTimeout(() => {
+    mine.timer = null;
+    if (rp !== mine) return;
+    rpAutoId = offer.id;
+    const ok = director.play(job, { onEnd: (why) => {
+      if (rp !== mine) return;   // a live ball took over: its own handler runs the show
+      rp = null;
+      then();
+      requestAnimationFrame(() => { if (!scene.anim && scene.camMode === 'idle') scene._snapIdleCam?.(); });   // a cut back, not a swoop
+    } });
+    if (!ok) { rp = null; then(); }
+  }, replayBeatMs(shot));
+  return true;
+}
+// A replay that is not part of a live shot's ending: the offered one, and the reel's.
+function playReplayAlone(job) {
+  if (!director || !job || animating || replay || rp) return false;
+  hideReplayChip();
+  const mine = { kind: 'alone', timer: null };
+  rp = mine;
+  animating = true;
+  clearTimeout(lineupBack);
+  lineup.setFlying(true);
+  updateMulligan();
+  const ok = director.play(job, { onEnd: () => { if (rp !== mine) return; rp = null; endReplayAlone(); } });
+  if (!ok) { rp = null; endReplayAlone(); }
+  return ok;
+}
+// Back to the game as it stands: its hole, its ball, whatever state arrived meanwhile.
+function endReplayAlone() {
+  animating = false;
+  lineup.setFlying(false);
+  scene.clearShot();
+  lastHoleKey = '';
+  const s = pendingState || state;
+  pendingState = null;
+  if (s) applyState(s);
+  flushMatch();
+  updateMulligan();
+  if (!scene.anim && scene.camMode === 'idle') scene._snapIdleCam?.();
+}
+// A live ball is here: whatever replay there is lets go now, with nothing left waiting.
+function cancelInstantReplay() {
+  hideReplayChip();
+  const cur = rp;
+  if (!cur) return;
+  rp = null;
+  clearTimeout(cur.timer);
+  director.cancel();
+  scene.stopShot?.();   // the replay's picture goes; the camera is the address camera again
+  if (cur.kind === 'alone') endReplayAlone();   // (it may have taken the scene to another hole)
+  else {
+    // the shot that was being shown again is finished business: what its ending would have done is done now
+    // (the state that was held back for it: the next player's ball is where this live ball is hit from, and
+    // the match header says whose it is), so the live shot starts from the address camera like any other
+    animating = false;
+    if (pendingState) { applyState(pendingState); pendingState = null; }
+    flushMatch();
+  }
+  if (!scene.anim && scene.camMode === 'idle') scene._snapIdleCam?.();
+}
+// Somebody is ready to move on: a swing the server dropped (a result screen is up, the menus are).
+function skipReplay(by) {
+  const cur = rp;
+  if (!cur) return;
+  if (cur.timer) { clearTimeout(cur.timer); rp = null; cur.then?.(); return; }   // still in the beat before it: straight on
+  director.skip(by);
+}
+if (director) {
+  es.addEventListener('swing-ignored', () => skipReplay('swing'));
+  es.addEventListener('shell-swing', () => skipReplay('swing'));
+  es.addEventListener('course', () => hideReplayChip());
+  es.addEventListener('highlights', (e) => { try { reel = JSON.parse(e.data); } catch { /* keep the last one */ } });
+  window.addEventListener('keydown', (e) => {
+    if (!chipJob || e.repeat || e.ctrlKey || e.metaKey || e.altKey || String(e.key).toLowerCase() !== 'p') return;
+    if (e.target && e.target.closest && e.target.closest('input, textarea, select')) return;
+    e.preventDefault();
+    playOffered();
+  });
+  // The reel plays one: its stage is in the bay (the server saw to that), the scene goes to that hole
+  // and that spot, and the shot is filmed again. Waits for the stage's ground when it was only just loaded.
+  es.addEventListener('replay', (e) => {
+    let d = null;
+    try { d = JSON.parse(e.data); } catch { return; }
+    const h = d && d.highlight;
+    const sotm = !!(h && reel && reel.shotOfMatch && reel.shotOfMatch.id === h.id && matchUI.match && matchUI.match.phase === 'done');
+    const job = h ? jobOfHighlight(h, { camera: d.camera || null, kind: sotm ? 'sotm' : 'reel' }) : null;
+    if (!job) return;
+    const want = h.stage && h.stage.courseName;
+    const t0 = Date.now();
+    const go = () => {
+      if (Date.now() - t0 > 25000) return;
+      const there = scene.geo && state && state.loaded && (!want || (state.courseName === want && scene.geo.name === want));
+      if (!there || animating || replay || rp) { setTimeout(go, 200); return; }
+      if (h.hole && h.hole.pin) {
+        scene.setHole({ pin: h.hole.pin, tee: h.hole.tee || null, ref: h.hole.ref ?? null },
+          h.from || { x: job.raw.points[0].x, y: job.raw.points[0].y }, Number.isFinite(h.aimDeg) ? h.aimDeg : (state.aimDeg || 0));
+      }
+      if (sotm) rpAutoId = h.id;
+      playReplayAlone(job);
+    };
+    go();
+  });
+  // SHOT OF THE MATCH on the winner screen (match.js calls this when it is up; the party's winner screen too):
+  // its award row gets a REPLAY button, and it plays once by itself when the winner's own entrance is over,
+  // unless it was the deciding shot (just shown), its stage is not the one in the bay (a press loads it),
+  // or somebody has touched the screen meanwhile.
+  let sotmTimer = null;
+  matchUI.onWinnerScreen = (m, el) => {
+    clearTimeout(sotmTimer);
+    const row = el && el.querySelector ? el.querySelector('[data-award="shot-of-the-match"]') : null;
+    if (!m || !row || row.querySelector('.rp-sotm-btn')) return;
+    const idNow = () => (reel && reel.shotOfMatch && reel.shotOfMatch.matchId === m.id ? reel.shotOfMatch.id : null);
+    const btn = Object.assign(document.createElement('button'), { type: 'button', className: 'rp-sotm-btn', textContent: '▶ REPLAY', title: 'Watch the shot of the match again' });
+    let touched = false;
+    const play = async (byItself) => {
+      const id = idNow();
+      if (!id || animating || rp) return;
+      if (!byItself) touched = true;
+      let out = null;
+      try { out = await (await fetch('/api/highlights/play', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })).json(); } catch { /* offline */ }
+      if (!byItself && (!out || out.ok === false)) showToast('Replay', (out && out.error) || 'The game is not answering');
+    };
+    btn.addEventListener('click', (ev) => { ev.stopPropagation(); play(false); });
+    row.classList.add('rp-sotm-row');
+    (row.querySelector('.mt-award-p') || row.querySelector('.mt-award-l') || row).appendChild(btn);
+    const touch = () => { touched = true; };
+    el.addEventListener('pointerdown', touch, { once: true });
+    window.addEventListener('keydown', touch, { once: true });
+    sotmTimer = setTimeout(() => {
+      const id = idNow();
+      const still = matchUI.match && matchUI.match.id === m.id && matchUI.match.phase === 'done' && document.body.contains(row);
+      const h = id && reel ? [...reel.last.shots, ...reel.night.shots].find((x) => x.id === id) : null;
+      const here = !!(h && state && h.stage && h.stage.courseName === state.courseName);
+      if (!id || !still || touched || !replayAuto || id === rpAutoId || !here) return;
+      play(true);
+    }, 7000);
+  };
+}
 
 function setVal(id, num, unit) {
   $(id).innerHTML = unit ? `${num}<small>${unit}</small>` : `${num}`;

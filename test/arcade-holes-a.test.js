@@ -591,7 +591,11 @@ test('Frostbite Ridge: safe down the ridge for a wedge in, or the hero carry for
   assert.ok(r.distToPinYd < 35, `${r.distToPinYd} yd left: a chip, where the safe line leaves a wedge`);
   assert.ok(holeOut(g, 'hero line') <= 3, 'a birdie from there, at worst');
   // the average drive does not make the carry: ice, a stroke, and the lake still to cross
+  // v3:gadgets (on its own: the Lake Ring, a boost ring hung on this line where such a drive starts to
+  // fall, carries the one that goes through it to the far shore: test/gadgets.test.js. Here the stage's
+  // gadgets are taken off the ground)
   g = newGame(id);
+  g.gadgets = null;
   r = hit(g, AVERAGE_DRIVE, 'average drive at the flag');
   assert.equal(r.penalty, 1, 'a 135 mph drive at the flag finds the ice');
   assert.match(r.note, /Water/);

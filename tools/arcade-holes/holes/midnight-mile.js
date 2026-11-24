@@ -209,33 +209,53 @@ props.push(
   P('flag-banner', -58, 348, 7, 0), P('flag-banner', -44, 347, 7, 0), P('flag-banner', -34, 362, 7, 0), P('flag-banner', -75, 354, 7, 0),
   P('neon-sign', -46, 373, 9, L.facing(-46, 373, -80, 320)),
 );
-// the stadium: a crowd on every terrace, grandstands and lights on the rim, screens, a gate at the back
+// the stadium (v3:stadium): seven sections of the stadium kit on the foot of the terrace wall, an arc
+// from the east-north-east round the back of the green to the west. They stand ON the terraces
+// (which are still the ground a ball lands on), share their side lines and close without a gap
+// (L.standRing); the two ends are corners with a floodlight pylon. Screens and masts behind the roof.
 const inStand = (deg) => standAt(deg) >= 1;
-for (let k = 0; k < STAND.n; k++) {
-  const r = standR(k), step = 21.5 / r / RAD;
-  for (let deg = STAND.midDeg - STAND.halfDeg + 8 + (k % 2) * step / 2; deg <= STAND.midDeg + STAND.halfDeg - 6; deg += step) {
-    if (!inStand(deg)) continue;
-    const [x, y] = ringAt(r, deg);
-    props.push(P('crowd', x, y, 5, toGreen(x, y)));
-  }
-}
+const ARC = [STAND.midDeg - STAND.halfDeg + 4, STAND.midDeg + STAND.halfDeg - 4];
+const BOWL_Z = GREEN_H - 0.15;
+const MILE = ['', 'M', 'I', 'L', 'E', '', ''];              // west to east, as read from the green
+props.push(...L.standRing((deg) => ringAt(STAND.fromR, deg), {
+  from: ARC[0], to: ARC[1], n: 7, z: BOWL_Z, corners: [0, 6], text: (i) => MILE[6 - i] || null, team: ['#ff3df2', '#3df2ff'], id: 'bowl',
+}));
 const SCREENS = [60, 112, 164];
-for (let deg = 30; deg <= 196; deg += 16.6) {
-  if (SCREENS.some((s) => Math.abs(deg - s) < 8)) continue;
-  const [x, y] = ringAt(RIM_R + 7, deg);
-  props.push(P('grandstand', x, y, 13, toGreen(x, y)));
-}
-for (const deg of SCREENS) { const [x, y] = ringAt(RIM_R + 6, deg); props.push(P('jumbotron', x, y, deg === 112 ? 22 : 17, toGreen(x, y))); }
-for (const deg of [26, 58, 90, 134, 166, 198]) { const [x, y] = ringAt(RIM_R + 14, deg); props.push(P('floodlight', x, y, 40, toGreen(x, y))); }
-for (let deg = 28; deg <= 196; deg += 14) { const [x, y] = ringAt(RIM_R + 1.2, deg); props.push(P('flag-banner', x, y, 8, toGreen(x, y))); }
+for (const deg of SCREENS) { const [x, y] = ringAt(RIM_R + 20, deg); props.push(P('jumbotron', x, y, deg === 112 ? 52 : 44, toGreen(x, y))); }
+for (const deg of [26, 58, 90, 134, 166, 198]) { const [x, y] = ringAt(RIM_R + 21, deg); props.push(P('floodlight', x, y, 46, toGreen(x, y))); }
+for (let deg = 28; deg <= 196; deg += 7) { const [x, y] = ringAt(RIM_R + 19, deg); props.push(P('flag-banner', x, y, 8, toGreen(x, y))); }
+// a camera tower at each end of the arc
+for (const deg of [ARC[0] - 10, ARC[1] + 10]) { const [x, y] = ringAt(STAND.fromR + 3, deg); props.push(P('camera-tower', x, y, 11.4, toGreen(x, y))); }
 props.push(
-  P('gate', ...ringAt(RIM_R + 26, 112), 14, toGreen(...ringAt(RIM_R + 26, 112))),
+  P('gate', ...ringAt(RIM_R + 34, 112), 14, toGreen(...ringAt(RIM_R + 34, 112))),
   P('tower', ...ringAt(RIM_R + 20, 14), 18, 0), P('tower', ...ringAt(RIM_R + 20, 208), 18, 0),
   // overhead: fireworks over the stadium and the harbour, an airship, a blimp, balloons
   P('fireworks', -190, 520, 46), P('fireworks', -140, 548, 58), P('fireworks', -86, 556, 50), P('fireworks', -34, 536, 44), P('fireworks', -230, 470, 40),
   P('fireworks', 10, 486, 38), P('fireworks', -110, 600, 64), P('fireworks', -160, 190, 36), P('fireworks', -100, 250, 30),
   P('airship', -60, 470, 32, 60), P('blimp', 60, 200, 28, 150), P('balloon', 120, 330, 20), P('balloon', -250, 240, 20), P('balloon', -20, 80, 18),
 );
+
+// ---- gadgets (docs/gadgets.md): what a swing can hit
+//   SAFE    the Neon Mile, a speed strip up the Boulevard, runs a drive on toward the Skyway.
+//   RISKY   the Harbour Ring hangs over the basin where a 115 to 128 mph drive at the flag
+//           is starting to fall short of the quay: through it and the ball makes the Docks
+//           (a longer drive passes over the top). The Docks' landing is a x3 ring.
+//   the stadium green is a pinball table: the Kick-Off, a funnel in the middle of the
+//           green, draws a ball that lands near it in toward the flag, and three bumpers
+//           behind the green kick a ball that went long back at it.
+//   ROCKET  coins over the harbour to the Helipad, along the Rocket's flight.
+const harbourDrive = L.flight(height, TEE, PIN, { speedMph: 122, vla: 14, spin: 3000 });
+const helipadRocket = L.flight(height, TEE, [-172, 330], { speedMph: 125, vla: 12, spin: 2600, ball: 'rocket' });
+const gadgets = [
+  L.gadget('strip', 'neon-mile', 33, 250, { size: [24, 50], heading: 354, strength: 7, maxMps: 16 }),
+  harbourDrive.ring('harbour-ring', 150, { radius: 7, strength: 1.25 }),
+  L.gadget('zone', 'docks-x3', -70, 268, { radius: 12, mult: 3 }),
+  L.gadget('funnel', 'kick-off', -110, 432.5, { radius: 9, strength: 1 }),
+  L.gadget('bumper', 'bumper-left', -124, 453.5, { radius: 1.6, height: 3.5, strength: 5 }),
+  L.gadget('bumper', 'bumper-mid', -110, 457, { radius: 1.6, height: 3.5, strength: 5 }),
+  L.gadget('bumper', 'bumper-right', -96, 453.5, { radius: 1.6, height: 3.5, strength: 5 }),
+  helipadRocket.coins('harbour-coins', 80, 330, 7),
+];
 
 module.exports = {
   id: 'midnight-mile',
@@ -275,6 +295,7 @@ module.exports = {
   trees,
   woods: [],
   props,
+  gadgets,
   // behind the skyline on every side
   obLine: L.rect(-290, -100, 190, 610),
   height,

@@ -7,11 +7,12 @@ import { loadHDRIEnvironment, makeSun, makeGroundedSkybox, makeFallbackEnv } fro
 import { makeAerialFog } from './atmosphere.js';
 import { buildGroundApron, buildHorizonHaze } from './horizon.js';
 import { buildCardTrees } from './tree-cards.js';
-import { TreeField } from './trees.js';
+import { makeTreeField } from './trees.js';   // v3:vegetation (was TreeField: the arcade worlds draw modelled trees, tree-models.js)
 import { placeCourseTrees, speciesAt, par3LineBlock } from './tree-placement.js';
 import { buildGrounding } from './grounding.js';
 import { buildPineStraw, buildFlowers, vegetationTexturePixelChecksums } from './vegetation.js';
 import { buildRakes, PropsLayer } from './props.js';
+import { GadgetLayer } from './gadgets.js';   // v3:gadgets the stage's gadgets: rings, pads, walls, coins ... (docs/gadgets.md)
 import { buildGrass } from './grass.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { GrassField } from './grass-field.js';
@@ -52,8 +53,10 @@ import {
 import { HoleFlyover, treeCeiling } from './flyover.js';
 import { GoogleTiles } from './google-tiles.js';
 // the switchable look ('real' | 'arcade'): every helper is a no-op in the real look
-import { parseLook, applyLook, lookSkySetting, lookSkyPreset, lookSkyPaint, lookFogColor, lookShadowRadius, lookFlagColors, lookCourse, lookTurf, lookSand, lookWater, lookTrees, lookTreeSpots, lookProps, lookTracer, lookBallHalo, shotTrail, shotRocket } from './arcade-look.js';
+import { parseLook, applyLook, lookSkySetting, lookSkyPreset, lookSkyPaint, lookSkyPano, lookPanoPreset, lookGround, lookGrade, lookFogColor, lookShadowRadius, lookFlagColors, lookCourse, lookTurf, lookSand, lookWater, lookTrees, lookTreeSpots, lookProps, lookTracer, lookBallHalo, shotTrail, shotRocket } from './arcade-look.js';
 import { paintedSkyEnvironment } from './arcade-sky.js';   // a theme's painted sky (night, dusk, volcano)
+import { FarWorld } from './far-world.js';   // v3:environment a themed stage's panorama sky and the far world in front of it
+import { WorldEvents } from './world-events.js';   // v3:living ambient life and the world's reactions to play (docs/living-world.md)
 import { BallSkins, ballSkinColor } from './ball-skins.js';   // v2:look the ball takes the look of the armed power-up ball
 
 const V = (x, y, z) => new THREE.Vector3(x, z, -y); // sim -> three
@@ -221,6 +224,10 @@ export class GolfScene {
     this.landRing = makeLandingRing();
     this.headGlow.visible = this.apexGlow.visible = this.dropLine.visible = this.landRing.visible = false;
     this.scene.add(this.ballShadow, this.headGlow, this.apexGlow, this.dropLine, this.landRing);
+    // v3:environment a soft contact shadow at the flagstick's foot (arcade stages), so the pin stands on the green
+    this.pinShadow = makeBallShadow();
+    this.pinShadow.visible = false;
+    this.scene.add(this.pinShadow);
     // what the ball throws up where it lands (impact-fx.js): splash, sand, turf, leaves
     this.impactFx = RENDER_CONFIG.impactFx === false ? null : new ImpactFx();
     if (this.impactFx) this.scene.add(this.impactFx.group);
@@ -288,7 +295,14 @@ export class GolfScene {
     this.seeOver = new SeeOverRig(this);
     this.googleTiles = new GoogleTiles(this); // optional Google 3D tiles around the course (google-tiles.js; inert without a key)
     // GLB set pieces from course.props (props.js); also scene.props.add(...) / clear()
-    this.props = new PropsLayer({ scene: this.scene, hAt: (x, y) => this.hAt(x, y), groundAt: (x, y) => this.drawnGroundAt(x, y), waterAt: (x, y) => this.waterLevelAt(x, y), V, onChange: () => { this._shadowsDirty = true; }, style: () => lookProps(this) });
+    this.props = new PropsLayer({ scene: this.scene, hAt: (x, y) => this.hAt(x, y), groundAt: (x, y) => this.drawnGroundAt(x, y), waterAt: (x, y) => this.waterLevelAt(x, y), V, onChange: () => { this._shadowsDirty = true; }, style: () => lookProps(this),
+      env: () => ({ quality: this.quality?.level || 'high', night: this.look === 'arcade' && this._arcadeLook?.timeOfDay === 'night' }) });   // v3:stadium the crowd's detail and the night lights follow the graphics level and the stage's time of day
+    // v3:gadgets what a swing can hit on a stage (geo.gadgets; gadgets.js): drawn here, played by the server
+    this.gadgets = new GadgetLayer({ scene: this.scene, hAt: (x, y) => this.hAt(x, y), groundAt: (x, y) => this.drawnGroundAt(x, y), V, onChange: () => { this._shadowsDirty = true; },
+      env: () => ({ quality: this.quality?.level || 'high', night: this.look === 'arcade' && this._arcadeLook?.timeOfDay === 'night' }) });
+    // v3:living what moves through a stage by itself and answers the game (geo.life; world-events.js): scenery only
+    this.worldEvents = new WorldEvents({ scene: this.scene, V, hAt: (x, y) => this.hAt(x, y), waterAt: (x, y) => this.waterLevelAt(x, y), renderer: this.renderer, props: () => this.props, style: () => lookProps(this),
+      env: () => ({ arcade: this.look === 'arcade' && !!this._arcadeLook, quality: this.quality?.level || 'high', theme: this._arcadeLook?.theme || null, timeOfDay: this._arcadeLook?.timeOfDay || 'day', night: this._arcadeLook?.timeOfDay === 'night', reduced: !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches }) });
     if (this.look !== 'real') applyLook(this, this.look);   // the look's live settings (grade, bloom, pin)
     this._animationLoopLive = true;
     this._captureFixedTime = null;
@@ -334,6 +348,7 @@ export class GolfScene {
       this._shadowsDirty = true;
     }
     this.postfx?.setQuality({ gtao: p.gtao, bloom: p.bloom, aoScale: p.aoScale ?? 1, aa: p.aa || 'smaa' });
+    this._applyEnvAir();   // v3:environment the air pass follows the graphics setting
     if (this.container) this.resize();
     this._frameIntervals.length = 0;
     this._qualityHoldUntil = performance.now() + 5000;
@@ -445,20 +460,36 @@ export class GolfScene {
   }
 
   _applySky(name) {
-    const preset = lookSkyPreset(SKY_PRESETS[name], this);
+    const preset = lookPanoPreset(lookSkyPreset(SKY_PRESETS[name], this), this);   // v3:environment (a panorama's own light numbers)
     const paint = lookSkyPaint(this);   // an arcade theme's painted sky in place of the photo (null otherwise)
     const midday = !preset.hdri;
     this.environmentStatus = { state: 'loading', sky: name };
     const opts = midday ? {} : { url: preset.hdri, sunAzimuthDeg: null, sunAltitudeDeg: preset.sunAltitudeDeg };
     if (this.look !== 'real' && preset.sunAltitudeDeg != null) opts.sunAltitudeDeg = preset.sunAltitudeDeg;   // a look's sun height, on the bundled sky too
     const token = (this._skyToken = (this._skyToken || 0) + 1);
-    const load = paint ? Promise.resolve().then(() => paintedSkyEnvironment(this.renderer, paint)) : loadHDRIEnvironment(this.renderer, opts);
-    return load.then(({ envTexture, equirect, sunDir, horizonColor, horizonLinear }) => {
-      if (token !== this._skyToken) { envTexture.dispose(); equirect.dispose(); return; } // a newer pick won
+    const classic = () => (paint ? Promise.resolve().then(() => paintedSkyEnvironment(this.renderer, paint)) : loadHDRIEnvironment(this.renderer, opts));
+    // v3:environment a themed stage's panorama (far-world.js) in place of the photo or the painted
+    // sky: the light, the reflections, the sun's place and the haze all come from the picture.
+    // If it cannot be had the stage is lit as it was before there were panoramas.
+    const panoSky = lookSkyPano(this);
+    if (panoSky && !this.farWorld) this.farWorld = new FarWorld({ renderer: this.renderer, scene: this.scene });
+    const load = panoSky
+      ? this.farWorld.load(panoSky.pano.id, { envLuma: panoSky.pano.envLuma, envSun: panoSky.pano.envSun, envSat: panoSky.pano.envSat, envTint: panoSky.pano.envTint /* v3:env-polish */, maxWidth: this.quality?.preset?.env?.skyWidth, sun: { minAltDeg: panoSky.pano.minSunAltDeg, maxAltDeg: panoSky.pano.maxSunAltDeg } })
+        .catch((e) => { console.warn(`[env] panorama ${panoSky.pano.id} unavailable (${e?.message || e}); using the stage's older sky`); return classic(); })
+      : classic();
+    return load.then((sky) => {
+      const { envTexture, equirect, sunDir, horizonColor, horizonLinear } = sky;
+      if (token !== this._skyToken) { envTexture.dispose(); equirect.dispose(); sky.dispose?.(); return; } // a newer pick won
+      if (sky.show) {
+        const b = this.bounds;
+        this._waterSky = sky.show({ ...panoSky.pano, far: panoSky.far || [], center: b ? new THREE.Vector3((b.minX + b.maxX) / 2, this._farBase(), -(b.minY + b.maxY) / 2) : null }) || null;   // v3:env-polish (the sky as the water mirrors it: the far layers are in it)
+        horizonLinear.multiplyScalar(panoSky.pano.gain ?? 1);
+      } else { this.farWorld?.hide(); this._waterSky = null; }   // v3:env-polish
+      this._panoSky = sky.show ? panoSky : null;
       const oldEnv = this.scene.environment, oldSky = this._equirect;
       this.scene.environment = envTexture;
       this.scene.environmentIntensity = preset.environmentIntensity;
-      this.scene.background = equirect;
+      this.scene.background = sky.show ? null : equirect;   // v3:environment the dome is the sky when a panorama is up
       this._equirect = equirect;
       if (oldEnv && oldEnv !== envTexture) oldEnv.dispose();
       if (oldSky && oldSky !== equirect) oldSky.dispose();
@@ -481,9 +512,12 @@ export class GolfScene {
           this._haze = buildHorizonHaze({ color: fogCol, baseHeight: this._apronBase ?? 0 });
           this.scene.add(this._haze.mesh);
         }
+        this._haze.mesh.visible = !sky.show;   // v3:environment a panorama has its own horizon: no fog-coloured band over it
       }
+      this._envFogColor = fogCol.clone();
+      this._applyEnvAir();   // v3:environment
       this._waterSetSun?.(this.sunDir);
-      this._waterSetSky?.(equirect);
+      this._waterSetSky?.(this._waterSky || equirect);   // v3:env-polish
       // glitter needs a sun: full in clear weather (at any hour), a ghost of it under cloud
       this._sunGlint = preset.overcast ? preset.sunIntensity / SKY_PRESETS.midday.sunIntensity : 1;
       this._waterSetSunGlint?.(this._sunGlint);
@@ -502,6 +536,75 @@ export class GolfScene {
       this.scene.environmentIntensity = RENDER_CONFIG.environmentIntensity;
       this.environmentStatus = { state: 'fallback', error: e?.message || String(e) };
     });
+  }
+
+  // v3:environment the look's water as this stage draws it: an island stage's sea runs past the grid all
+  // round, and the extras follow the graphics setting (quality.js env.waterFx). The look's
+  // own object when there is nothing to add; null in the real look.
+  _lookWaterEnv() {
+    const w = lookWater(this);
+    if (!w || !this._arcadeLook) return w;
+    return { ...w, island: !!lookGround(this)?.island, fx: this.quality?.preset?.env?.waterFx ?? 0, envTex: this._envTex?.array || null };
+  }
+
+  // v3:environment THE LENS (postfx.js ENV_DOF, ENV_BLUR), arcade stages on High and Ultra only.
+  // Depth of field in two places and nowhere else: the pin close-up (the pin cam taking a
+  // ball in to the flag, and its hold on the cup), focused on the ball, and the stage
+  // behind the menus (scene.backdrop, set by the shell), focused on the green. Motion blur
+  // in one: the ball cam in flight, by how fast the camera is travelling; the ball itself
+  // and a hand's width round it stay sharp. Everything eases in and out.
+  _lensStep(dt, flying) {
+    const G = lookGrade(this), tier = this.quality?.preset?.env;
+    if (!this.postfx || !G || !this._arcadeLook || !tier?.lens) {
+      if (this._lens) { this.postfx?.setEnv({ dof: null, blur: null }); this._lens = null; }
+      return;
+    }
+    const L = this._lens || (this._lens = { dof: 0, blur: 0, prev: this.camera.position.clone(), focus: 20 });
+    const cam = this.camera.position;
+    const speed = dt > 0 ? cam.distanceTo(L.prev) / dt : 0;
+    L.prev.copy(cam);
+    const pinCam = !!((flying && this.anim.plan?.pinCam && cam.distanceTo(this.pin.position) < 26) || (this.camMode === 'static' && this._flightHold));
+    const backdrop = !!(this.backdrop && this.camMode === 'free' && !this.anim);
+    const wantDof = G.dof && (pinCam || backdrop) ? 1 : 0;
+    const wantBlur = flying && this.shotCam === 'ball' && !this.anim.isPutt && !pinCam && G.motionBlur ? THREE.MathUtils.smoothstep(speed, 16, 70) : 0;
+    const k = dt > 0 ? 1 - Math.exp(-4 * dt) : 1;
+    // v3:env-polish letting go is quick, and the focus keeps following its subject while it does: the
+    // camera goes back to address with the blur still fading, and a focus left 2.6 m off
+    // (the cup, from the close-up) put the whole hole out of focus for half a second
+    L.dof += (wantDof - L.dof) * (wantDof ? k : Math.min(1, k * 3)); L.blur += (wantBlur - L.blur) * k;
+    if (L.dof > 0.02) L.focus += ((backdrop ? cam.distanceTo(this.pin.position) : Math.max(cam.distanceTo(this.ball.position), wantDof ? 0 : cam.distanceTo(this.pin.position))) - L.focus) * Math.min(1, k * (wantDof ? 2 : 6));
+    if (L.dof > 0.02) {
+      const wide = backdrop ? 3.2 : 1;   // the backdrop holds the whole green and its surrounds in focus
+      this.postfx.setEnv({ dof: { focusM: L.focus, rangeM: G.dof.rangeM * wide, maxPx: G.dof.maxPx * L.dof * (backdrop ? 0.75 : 1), near: G.dof.near } });
+    } else if (this.postfx._envState.dof) this.postfx.setEnv({ dof: null });
+    if (L.blur > 0.02) {
+      const p = this._lensV || (this._lensV = new THREE.Vector3());
+      p.copy(this.ball.position).project(this.camera);
+      this.postfx.setEnv({ blur: { strength: G.motionBlur * L.blur, ball: [p.x * 0.5 + 0.5, p.y * 0.5 + 0.5], keep: 0.09 } });
+    } else if (this.postfx._envState.blur) this.postfx.setEnv({ blur: null });
+  }
+
+  // v3:environment the height the far world stands on: the sea, or the country round the course
+  _farBase() { return (this._sea ? this._sea.level : this._apronBase) ?? 0; }
+
+  // v3:environment The air of an arcade stage under its panorama (postfx.js setEnv): height fog in the
+  // sky's own horizon colours, glowing toward the sun. Off in the real look, on a stage
+  // without a panorama, and on Low graphics (quality.js env.atmosphere): the scene's plain
+  // fog does the job there, as it always did.
+  _applyEnvAir() {
+    if (!this.postfx) return;
+    const sky = this._panoSky, tier = this.quality?.preset?.env;
+    const on = !!(sky && this.farWorld?.active && this.look === 'arcade' && tier?.atmosphere && RENDER_CONFIG.aerialFog);
+    this.postfx.setEnv({ allowed: !!(tier && (tier.lens || on)), lens: !!(tier?.lens && this.look === 'arcade' && this._arcadeLook) });
+    if (!on) { this.postfx.setEnv({ fog: null }); this._envAir = null; return; }
+    const air = sky.air || {};
+    this._envAir = air;
+    const sunCol = new THREE.Color(sky.pano.glare?.color ?? this.farWorld.entry?.sun?.color ?? '#ffffff');
+    this.postfx.setEnv({ fog: {
+      density: this._fogDensity || 0.0004, falloffM: air.falloffM ?? 160, baseM: (this._sea ? this._sea.level : this._apronBase) ?? 0, max: air.max ?? 1,
+      haze: this.farWorld._haze, gain: (sky.pano.gain ?? 1) * (air.gain ?? 0.96), color: this._envFogColor, colorMix: air.colorMix ?? 0,
+      sunGlow: this.farWorld.entry?.sun ? (air.sunGlow ?? 0.22) : 0, sunTight: air.sunTight ?? 9, sunDir: this.farWorld.uniforms.uSunDir.value, sunColor: sunCol,
+    } });
   }
 
   // GroundedSkybox needs course bounds, so it's (re)placed on course load and on
@@ -713,6 +816,7 @@ export class GolfScene {
     const b = this._bounds(geo);
     this.bounds = b;
     this._placeSkybox();
+
     // ponds at their real (hydro-flattened) water line; the terrain mesh carves a bed
     // under each (water-shore.js)
     // (plus the lakes around the course: non-fingerprinted scenery, geo.sceneryWater)
@@ -746,15 +850,20 @@ export class GolfScene {
     // countryside past the course edge (no more floating slab); purely visual
     if (RENDER_CONFIG.groundApron) {
       try {
-        const base = new THREE.Color(this._pal.base).multiplyScalar(0.92); // sits a touch under the lit turf
+        const ground = lookGround(this);   // v3:environment what a themed stage stands in (null: rolling country, as ever)
+        const base = ground?.color ? new THREE.Color(ground.color) : new THREE.Color(this._pal.base).multiplyScalar(0.92); // sits a touch under the lit turf
         const sea = this._sea ? { level: this._sea.level, isSea: (x, y) => seaAt(this._sea, x, y) } : null;
-        const apron = buildGroundApron({ bounds: b, hAt: (x, y) => this.hAt(x, y), baseColor: base, sea });
+        const tEnv = lookTurf(this)?.env;
+        const apron = buildGroundApron({ bounds: b, hAt: (x, y) => this.hAt(x, y), baseColor: base, sea, look: ground && tEnv ? { ...ground, set: tEnv.rough, setTileM: tEnv.roughTileM, setDetail: tEnv.roughDetail, lift: lookTurf(this)?.glow?.baseLift ?? 0, sand: lookTurf(this)?.sand } : ground });
         group.add(apron.mesh);
         this._apronBase = apron.baseHeight;
         this._haze?.setBase(apron.baseHeight);
+        // v3:environment the far layers stand round this course, on its low ground
+        if (this.farWorld?.active && this._panoSky) this.farWorld.setFar(this._panoSky.far || [], new THREE.Vector3((b.minX + b.maxX) / 2, this._farBase(), -(b.minY + b.maxY) / 2));
       } catch (e) { console.warn('[render] ground apron skipped:', e && e.message); }
     }
     this._terrain = terrain; // referenced by the water-foam depth pre-pass
+    this._applyEnvAir();   // v3:environment the air lies on this course's low ground
     this._addWater(geo, group);
     this._addTrees(geo, group);
     try { this._addBuildings(geo, group); }
@@ -780,7 +889,7 @@ export class GolfScene {
     }
     // Crisp bunker meshes (sharp sand edges). Same guard — purely visual.
     if (RENDER_CONFIG.crispBunkers) {
-      try { this._addSurfacePatches(group, ['bunker'], (bb, an) => lookSand(makeSandMaterial(bb, an, this._turfInputs?.bunkerMask, this.sunDir, this._courseDry || 0), this)); }
+      try { this._addSurfacePatches(group, ['bunker'], (bb, an) => lookSand(makeSandMaterial(bb, an, this._turfInputs?.bunkerMask, this.sunDir, this._courseDry || 0, lookTurf(this)?.env || null), this)); }
       catch (e) { console.warn('[render] bunker patches skipped:', e && e.message); }
     }
     // Bunker rakes — iconic human-scale prop. Purely visual, so same load guard.
@@ -797,6 +906,8 @@ export class GolfScene {
     this._warmShaders();
     this.googleTiles.setCourse(geo); // re-fit (or drop) Google's surroundings for this course
     this.props.setCourse(geo);       // the course's GLB set pieces (geo.props; nothing without them)
+    this.gadgets.setCourse(geo);     // v3:gadgets the stage's gadgets (geo.gadgets; nothing without them)
+    this.worldEvents.setCourse(geo); // v3:living the stage's life (geo.life; nothing without it)
   }
 
   // Compile every program the course can need before play starts, in parallel where the
@@ -1242,10 +1353,12 @@ export class GolfScene {
         ? { depthTexture: this.waterDepth.depthTexture, resolution: this.waterDepth.resolution, near: this.camera.near, far: this.camera.far }
         : null;
       const b = this.bounds;
-      const { meshes, waterMeshes, sea, waterUpdate, setSun, setSky, setSunGlint, updateMirrors, setMirrorSkip, setWind } = buildWater(
-        this._ponds || [], this.sunDir, depth, this._sea, b ? { x: (b.minX + b.maxX) / 2, y: (b.minY + b.maxY) / 2 } : null, lookWater(this));
+      const { meshes, waterMeshes, sea, waterUpdate, setSun, setSky, setSunGlint, updateMirrors, setMirrorSkip, setWind, extras, splash } = buildWater(
+        this._ponds || [], this.sunDir, depth, this._sea, b ? { x: (b.minX + b.maxX) / 2, y: (b.minY + b.maxY) / 2 } : null, this._lookWaterEnv());   // v3:environment (the look's water, with what the stage adds)
       this._waterSetMirrorSkip = setMirrorSkip;
-      setSky(this._equirect || null);
+      for (const o of extras || []) group.add(o);   // v3:environment (embers off a lava lake)
+      this._waterSplash = splash;                   // v3:environment (rings where a ball goes in)
+      setSky(this._waterSky || this._equirect || null);   // v3:env-polish
       this._waterSetSky = setSky;
       this._waterMirrors = updateMirrors;
       this._foamOn = foamEnabled && !!(waterMeshes && waterMeshes.length);
@@ -1355,7 +1468,15 @@ export class GolfScene {
     const hAt = (x, y) => this.hAt(x, y);
     if (RENDER_CONFIG.trees3d !== false) {
       // instanced 3D trees with near/mid/far LODs (trees.js)
-      this._treeField = new TreeField(spots, hAt, V, { nearM: RENDER_CONFIG.treeNearM ?? 150, midM: RENDER_CONFIG.treeMidM, sunDir: this.sunDir, look: lookTrees(this) });
+      // v3:vegetation makeTreeField: TreeField in the real look; in the arcade look the theme's modelled
+      // species and the plants at their feet (kept off play by the trees' own blocked test)
+      this._treeField = makeTreeField(spots, hAt, V, {
+        nearM: RENDER_CONFIG.treeNearM ?? 150, midM: RENDER_CONFIG.treeMidM, sunDir: this.sunDir, look: lookTrees(this),
+        arcade: this.look === 'arcade' ? { theme: this._arcadeLook?.theme || 'tropical', timeOfDay: this._arcadeLook?.timeOfDay || 'day' } : null,
+        quality: this.quality?.level, blocked: this._treeBlocked, waterAt: (x, y) => this.waterLevelAt(x, y), wind: this._wind,
+        onReady: () => { this._shadowsDirty = true; },
+        focus: (geo.holes || []).flatMap((h) => [h.tee, h.pin]).filter(Boolean),   // v3:tree-realism the trees nearest a tee or a green stand as hero models
+      });
       group.add(this._treeField.group);
     } else {
       const { meshes, windUpdate } = buildCardTrees(spots, hAt, V);
@@ -1365,7 +1486,7 @@ export class GolfScene {
     // contact blobs + litter only under the trees a golfer walks past (explicit
     // trees and woods edges), not thousands of interior woods trees
     const near = coreSpots.filter((p) => p.edge !== false);
-    if (RENDER_CONFIG.grounding) {
+    if (RENDER_CONFIG.grounding && !this._treeField?.ownsGrounding) {   // v3:vegetation the arcade field shades the ground under its own trees
       buildGrounding(near, hAt, V).meshes.forEach((m) => group.add(m));
     }
     if (RENDER_CONFIG.pineStraw) {
@@ -1484,15 +1605,18 @@ export class GolfScene {
   // the weak-GPU setting (Auto drops a laptop GPU like the sim PC's UHD 630 to it).
   _addGrassField(group) {
     const fescue = this._fescue || 0;
-    const fescueOnly = !RENDER_CONFIG.grassField;
+    // v3:environment the arcade stages grow blades round the camera (arcade-look.js turf.blades), as thick as the graphics setting allows
+    const blades = lookTurf(this)?.blades || null, bladeTier = this.quality?.preset?.env?.blades ?? 0;
+    const arcadeBlades = blades && bladeTier > 0 ? { ...blades, density: bladeTier } : null;
+    const fescueOnly = !RENDER_CONFIG.grassField && !arcadeBlades;
     const linksFescue = RENDER_CONFIG.linksFescue && fescue > 0 && this.quality?.level !== 'low';
     if ((fescueOnly && !linksFescue) || !this.elev || !this._turfInputs) return;
     try {
       const hdBounds = this._hdPatches.map((p) => ({ minX: p.minX, minY: p.minY, maxX: p.minX + (p.nx - 1) * p.cellM, maxY: p.minY + (p.ny - 1) * p.cellM }));
       this._grassField = new GrassField({
         turf: this._turfInputs, elev: this.elev, hAt: (x, y) => this.hAt(x, y), hdBounds, sunDir: this.sunDir,
-        fescue, fescueOnly,
-        scale: Math.min(1, (this.quality?.preset?.grassScale ?? 0.5) * 2),
+        fescue, fescueOnly, arcade: arcadeBlades,
+        scale: arcadeBlades ? arcadeBlades.density : Math.min(1, (this.quality?.preset?.grassScale ?? 0.5) * 2),
       });
       // the course teardown disposes materials' userData textures
       for (const m of this._grassField.group.children) m.material.userData.disposeTextures = [this._grassField.height];
@@ -1902,6 +2026,8 @@ export class GolfScene {
     for (const f of this._practiceFlags || []) f.setWindSpeed?.(mph);
     const k = Math.min(1, mph / 25);
     if (this._treeField?.shared?.uWindAmp) this._treeField.shared.uWindAmp.value = 0.008 + k * 0.05;
+    this._treeField?.setWind?.({ mph, toDeg: to });   // v3:vegetation the modelled trees lean and gust the way the wind blows
+    this.worldEvents?.setWind({ mph, toDeg: to });    // v3:living the windmill, the windsock, the flags, the snow
     this._wind = { mph, toDeg: to };
     this._waterSetWind?.(this._wind);
   }
@@ -1961,7 +2087,14 @@ export class GolfScene {
 
   _fitShadows(hole) {
     this._shadowsDirty = true;
-    const tee = hole.tee || hole.pin;   // the putting and chipping games have no tee
+    let tee = hole.tee || hole.pin;   // the putting and chipping games have no tee
+    // v3:environment an arcade stage fits its shadow map to the play that is LEFT (the ball to the
+    // pin), so the texels gather round the player as the hole is played: at the green of
+    // a 640 m hole the map covers 150 m instead of 930, six times finer
+    if (this.look === 'arcade' && this._arcadeLook && this.ballSim && hole.tee && !this.anim) {
+      const dTee = Math.hypot(this.ballSim.x - hole.tee[0], this.ballSim.y - hole.tee[1]), len = Math.hypot(hole.pin[0] - hole.tee[0], hole.pin[1] - hole.tee[1]);
+      if (dTee > 12 && dTee < len * 1.3) tee = [this.ballSim.x, this.ballSim.y];
+    }
     const cx = (tee[0] + hole.pin[0]) / 2, cy = (tee[1] + hole.pin[1]) / 2;
     const cz = this.hAt(cx, cy);
     const center = V(cx, cy, cz);
@@ -2041,6 +2174,9 @@ export class GolfScene {
       impacts: this.impactFx ? impactSchedule(points, opts.events, ft, { isPutt }) : [],
       impactI: 0,
     };
+    // v3:gadgets the shot's gadget contacts (events of type 'gadget', in playback time) and its clock
+    this.gadgets.onShot(opts.events, { toPlayTime: opts.toPlayTime || null, playDur: dur });
+    const gadTop = this.gadgets.ceiling(), gadObst = this.gadgets.obstacles();   // v3:gadgets the ball cam stays clear of what stands
     // Camera: a smooth follow (flight-camera.js) that starts exactly at the address
     // camera and glides to a landing-area vantage during the descent.
     const c = this.camera.position;
@@ -2049,6 +2185,7 @@ export class GolfScene {
     // a landing vantage is clear when no tree crown (~6 m + margin) sits on it or
     // across the first 70% of its sight line to the landing spot
     const isClear = (x, y) => {
+      for (const o of gadObst) if (!o.hoop && Math.hypot(o.x - x, o.y - y) < o.r + 4) return false;   // v3:gadgets (a ring is flown through)
       const dx = landAt.x - x, dy = landAt.y - y, L2 = dx * dx + dy * dy || 1;
       for (const t of trees) {
         const r = 9 * (t.s || 1);
@@ -2075,9 +2212,14 @@ export class GolfScene {
       startCam: { x: c.x, y: -c.z, z: c.y }, startLook: { x: l.x, y: -l.z, z: l.y },
       startVel: seeOverVel,   // v2:seeover struck mid-glide: the ball cam takes the camera over moving
       flightTime: ft, isPutt, fovDeg: this._baseFov, mode: this.shotCam,
-      groundAt: (x, y) => this.hAt(x, y), treeTopAt: this._treeTop, isClear,
+      groundAt: (x, y) => this.hAt(x, y), treeTopAt: gadTop ? (this._treeTop ? (x, y) => Math.max(this._treeTop(x, y), gadTop(x, y)) : gadTop) : this._treeTop /* v3:gadgets (and over the gadgets) */, isClear,
       pin: this.pinSim || null, holed: !!cup || evs.some((e) => e && e.type === 'holed'), cup,   // v2:camera
     });
+    // v3:modes a replay films the shot with a camera of its own (arcade/replay-core.js replayCameraPlan: the same plan shape); null: the usual one above
+    if (typeof opts.cameraPlan === 'function') {
+      const own = opts.cameraPlan(points, { flightTime: ft, isPutt, fovDeg: this._baseFov, groundAt: (x, y) => this.hAt(x, y), treeTopAt: this._treeTop, pin: this.pinSim || null, holed: !!cup || evs.some((e) => e && e.type === 'holed'), cup });
+      if (own && own.path) this.anim.plan = own;
+    }
     this.camMode = 'static';
     // Tracer ribbon over the AIR phase (to first contact), plus apex/landing markers.
     if (!isPutt) {
@@ -2113,6 +2255,19 @@ export class GolfScene {
     }
   }
 
+  // v3:modes End the shot that is playing, now (a replay that was skipped: arcade/replay.js): its onDone is
+  // not called, its tracer goes, and the camera is the address camera again. False when nothing was playing.
+  stopShot() {
+    if (!this.anim) return false;
+    this.anim = null;
+    this._flightRoll = 0; this._flightBallScale = 1; this._flightHold = 0;
+    this._clearTrail();
+    this.ball.visible = true;
+    this.camMode = 'idle';
+    if (this.aimLine) this.aimLine.visible = true;
+    return true;
+  }
+
   _animStep(dt) {
     const a = this.anim;
     a.t += dt * a.speed;
@@ -2124,6 +2279,7 @@ export class GolfScene {
       this.impactFx.spawn(im, this._frameNow ?? 0, im.kind === 'water' ? this.waterLevelAt(im.x, im.y) : this.hAt(im.x, im.y));
       // a ball in the water is gone under it (it sat on the surface till the drop was taken)
       // (a Skipper ball's skip throws a splash too, and carries on: im.skip)
+      if (im.kind === 'water') { const wp = V(im.x, im.y, 0); this._waterSplash?.(wp.x, wp.z, im.skip ? 0.6 : 1); }   // v3:environment
       if (im.kind === 'water' && !im.skip) this.ball.visible = false;
     }
     // a smooth curve through the samples in the air, straight lines over the bounces
@@ -2145,6 +2301,9 @@ export class GolfScene {
     this.ball.position.copy(V(p.x, p.y, this._ballBase));
     this._seatBall();
     this._ballZ = p.z;
+    // v3:gadgets each contact plays as the ball reaches it; inside a warp the ball is out of sight
+    this.gadgets.step(a.t, p);
+    { const hid = this.gadgets.ballHidden(a.t); if (hid !== !!a.gadHid) { a.gadHid = hid; this.ball.visible = !hid; } }
     // and it turns: backspin in the air, a roll on the ground (ball.js)
     const turn = ballTurn(a.lastP, p, dt * a.speed, {
       air: !a.isPutt && a.t < a.flightTime, spinRps: a.spinRps, spinAxisDeg: a.spinAxisDeg,
@@ -2170,6 +2329,7 @@ export class GolfScene {
     a.onProgress?.(Math.min(a.t, a.dur));
 
     if (a.t >= end) {
+      this.gadgets.endShot();   // v3:gadgets what broke stands again for the next swing
       const done = a.onDone;
       this.anim = null;
       this._flightRoll = 0; this._flightBallScale = 1;   // v2:camera
@@ -2473,6 +2633,11 @@ export class GolfScene {
     this._seatBall();
     this.ballSkins.update(frameTime, dt, this);   // v2:look the skin's aura, motes and idle motion (one test while the ball is plain)
     this._pinStep(dt, frameTime);   // v2:camera the flagstick out of / back into the cup, and the cup's sparkle
+    if (this.pinShadow) {   // v3:environment
+      const on = this.look === 'arcade' && !!this._arcadeLook && this.pin.visible;
+      this.pinShadow.visible = on;
+      if (on) { const s = 1.5 * Math.max(1, this.pin.scale.x * 0.6); this.pinShadow.position.copy(this.pin.position); this.pinShadow.position.y += 0.03; this.pinShadow.scale.set(s, 1, s); this.pinShadow.material.opacity = 0.55; }
+    }
     const pd = this.camera.position.distanceTo(this.pin.position);
     this.pin.scale.setScalar(pinReadScale(pd, this.camMode, this.anim));
     for (const f of this._practiceFlags || []) {
@@ -2487,16 +2652,20 @@ export class GolfScene {
     this._updateMarkers();
     this._updateShotFx(frameTime);
     this._haze?.update(this.camera);
+    this.farWorld?.update(this.camera, frameTime, this._wind, this.renderer.domElement.height);   // v3:environment
+    this._lensStep(dt, flying);   // v3:environment depth of field on the pin close-up and the menus' backdrop, motion blur in the ball cam
     if (this._treeWind) this._treeWind(frameTime);
     const treesMoved = this._treeField ? this._treeField.update(this.camera, frameTime) : false;
     updateTerrainLod(this._terrain, this.camera, this.quality?.preset?.terrainLodScale ?? 1);   // terrain detail for this camera
-    if (this._grassField) this._grassField.update(this.camera, frameTime);
+    if (this._grassField) this._grassField.update(this.camera, frameTime, this._wind);   // v3:environment (the blades lean with the hole's wind)
     if (this.scene.fog && this._fogDensity) {
       // haze lies in the low air: looking down from a flyover or overview the light
       // crosses far less of it than along the ground, so thin it as the camera climbs
       const cp = this.camera.position;
       const above = cp.y - (this.geo ? this.hAt(cp.x, -cp.z) : 0);
       this.scene.fog.density = this._fogDensity * (1 - 0.6 * THREE.MathUtils.smoothstep(above, 40, 700));
+      // v3:environment the air pass lays the haze instead (postfx.js ENV_FOG): same curve, the sky's colours
+      if (this.postfx.envFog) { this.postfx.env.uniforms.uFogA.value.x = this._fogDensity * (this._envAir?.densityMul ?? 1); this.scene.fog.density = 0; }
     }
     if (this._grassWind) this._grassWind(frameTime);
     // the rough's fescue tufts: cells past the draw distance are skipped (a blade is a
@@ -2509,10 +2678,13 @@ export class GolfScene {
     if (this._fairwayGrassWind) this._fairwayGrassWind(frameTime);
     if (this._flagU) this._flagU.value = frameTime;
     if (this._waterUpdate) this._waterUpdate(frameTime);
-    this.props.update(frameTime);   // the procedural props' cheap motion (a uniform; nothing without them)
+    this.props.update(frameTime, this.camera);   // the procedural props' cheap motion (a uniform; nothing without them); v3:stadium the camera: the crowd's level of detail
+    this.gadgets.update(frameTime, this.camera);   // v3:gadgets their idle motion and the reactions (nothing without them)
     // v2:seeover (was v2:qa's setViewer) one pass-through: a prop on the arcade's line of sight to the ball, a big
     // prop the camera is inside, or one the ball at rest lies inside, is drawn as a ghost (props.js setSeeThrough)
     { const cp = this.camera.position; this.props.setSeeThrough(this.seeOver.passLine(), { x: cp.x, y: -cp.z, z: cp.y }, this.anim || !this.ballSim ? null : this.ballSim); }
+    { const cp = this.camera.position; this.gadgets.setSeeThrough(this.seeOver.passLine(), { x: cp.x, y: -cp.z, z: cp.y }, this.anim || !this.ballSim ? null : this.ballSim); }   // v3:gadgets the same pass-through
+    this.worldEvents.update(frameTime, dt, this.camera, { line: this.seeOver.passLine(), ball: this.ball.visible ? this.ball.position : null, flying: !!this.anim });   // v3:living the stage's life and its beats (nothing on a stage without `life`); the same pass line keeps its movers off the ball
     // the terrain depth pre-pass (pond shallows) only runs with a pond near enough to show them
     const pondsNear = this._waterMirrors ? this._waterMirrors(this.camera) : 1;
     if (this.waterDepth && this._foamOn && this._terrain && pondsNear) this.waterDepth.prepass(this._terrain, this.camera);

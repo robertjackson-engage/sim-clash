@@ -12,7 +12,11 @@ const DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'pu
 const manifestFile = path.join(DIR, 'manifest.json');
 const manifest = fs.existsSync(manifestFile) ? JSON.parse(fs.readFileSync(manifestFile, 'utf8')) : { kinds: {} };
 // placed many times on a stage: small and light
-const REPEATED = ['crowd', 'floodlight', 'flag-banner', 'tiki', 'torii', 'hut', 'boat', 'rock-spire', 'torch', 'pine', 'cactus', 'stone-lantern', 'sakura-tree', 'crystal', 'snowman', 'lava-rock', 'ice-spire'];
+// v3:stadium the stadium kit: a stand's FRONT EDGE is its origin (stadium-kit.js), and a kit model may carry the
+// named material slots the renderer feeds (bake.mjs SLOTS) beside base and glow
+const FRONT = Object.entries(manifest.kinds).filter(([, e]) => e.anchor === 'front').map(([k]) => k);
+const SLOT_NAMES = ['base', 'glow', 'glass', 'screen', 'led', 'ad'];
+const REPEATED = ['led-board', 'ad-board', 'barrier', 'crowd', 'floodlight', 'flag-banner', 'tiki', 'torii', 'hut', 'boat', 'rock-spire', 'torch', 'pine', 'cactus', 'stone-lantern', 'sakura-tree', 'crystal', 'snowman', 'lava-rock', 'ice-spire'];
 
 test('the prop manifest lists files that exist, under safe names', () => {
   const kinds = Object.entries(manifest.kinds);
@@ -32,7 +36,9 @@ for (const [kind, e] of Object.entries(manifest.kinds)) {
     assert.equal(s.tris, e.tris, 'triangle count as the manifest says');
     assert.ok(s.tris <= (light ? 3100 : 20000), `${s.tris} triangles`);
     assert.ok(s.bytes < (light ? 300 : 1500) * 1024, `${Math.round(s.bytes / 1024)} KB`);
-    assert.ok(s.materials <= 2 && s.primitives <= 2, `${s.materials} materials, ${s.primitives} primitives`);
+    const names = readGlb(path.join(DIR, e.file)).json.materials.map((m) => m.name);
+    if (e.slots) assert.ok(names.every((n) => SLOT_NAMES.includes(n)) && new Set(names).size === names.length && s.primitives === names.length, `materials ${names.join(', ')}`);
+    else assert.ok(s.materials <= 2 && s.primitives <= 2, `${s.materials} materials, ${s.primitives} primitives`);
     assert.ok(s.textures <= 1, 'one texture at most');
     assert.deepEqual(s.extensions, [], 'no glTF extensions needed');
     // the ground plane is y = 0: a skirt below it, never the whole model above or far below
@@ -40,7 +46,8 @@ for (const [kind, e] of Object.entries(manifest.kinds)) {
     assert.ok(Math.abs(s.box.max[1] - e.heightM) < 0.02, 'heightM is the height above the ground');
     // roughly centred on its origin in plan
     assert.ok(Math.abs(s.box.min[0] + s.box.max[0]) / 2 < 0.2 * s.size[0], 'centred in x');
-    assert.ok(Math.abs(s.box.min[2] + s.box.max[2]) / 2 < 0.2 * s.size[2], 'centred in z');
+    if (FRONT.includes(kind)) assert.ok(s.box.max[2] < 2.5 && s.box.min[2] < -3, 'its front edge on the origin, running back from it');
+    else assert.ok(Math.abs(s.box.min[2] + s.box.max[2]) / 2 < Math.max(0.2 * s.size[2], 0.6), 'centred in z');
     // faces wind the way their normals point: a mirrored model reads near 0
     assert.ok(s.windingOk > 0.97, `winding agrees with normals on ${(s.windingOk * 100).toFixed(1)} %`);
   });

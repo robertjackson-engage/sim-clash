@@ -30,3 +30,16 @@ test('the renderer draws faded trees as a blended ghost that keeps its shadow', 
   // no dithering left in the shaders
   assert.doesNotMatch(src, /gl_FragCoord/);
 });
+
+// v3:vegetation the arcade worlds' modelled trees (tree-models.js) fade by the same rule
+test('the modelled trees ghost the same trees, the same way', () => {
+  const src = fs.readFileSync(new URL('../public/render/tree-models.js', import.meta.url), 'utf8');
+  assert.match(src, /import \{ treeFade, FADE_NEAR_M, FADE_HUG_M, FADE_SHOWN, FADE_AT \} from '\.\/tree-fade\.js';/);
+  assert.match(src, /\} else if \(lod === 0 && fadeOn && d < FADE_NEAR_M \+ 30\) \{/);
+  assert.match(src, /if \(treeFade\(vx, vz, treeH\) > FADE_AT\) lod = 3;/);
+  assert.match(src, /alphaTest: 0\.5 \* FADE_SHOWN, transparent: true, opacity: FADE_SHOWN, depthWrite: false/);
+  // the ghost bucket draws the near model and keeps its shadow
+  assert.match(src, /im\.castShadow = this\.detail\.shadows && \(b === 0 \|\| b === 3\)/);
+  assert.match(src, /new THREE\.InstancedMesh\(g, b === 3 \? ghostMat : mat, 0\)/);
+  assert.doesNotMatch(src, /gl_FragCoord/);
+});

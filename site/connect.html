@@ -3,42 +3,56 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Connect your launch monitor · Sim Clash</title>
-<meta name="description" content="Which launch monitors can feed Sim Clash, and how: a connector that sends GSPro Open Connect to TCP port 921, an open-source launch monitor, a community connector, or a Foresight GC unit through the bridge built into the game.">
-<meta name="theme-color" content="#07090d">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; base-uri 'self'; form-action 'none'">
+<title>Connect your launch monitor to Sim Clash: Open Connect, port 921, step by step</title>
+<meta name="description" content="A plain-language guide to getting a launch monitor talking to a third-party golf game: what GSPro Open Connect is, port 921, closing GSPro first, and the steps for 30 launch monitors in four honest tiers. Foresight GC units use a bridge built into the game.">
+<meta name="theme-color" content="#06080c">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; media-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; base-uri 'self'; form-action 'none'">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Connect your launch monitor · Sim Clash">
-<meta property="og:description" content="Which launch monitors can feed Sim Clash, and how: a connector that sends GSPro Open Connect to TCP port 921, an open-source launch monitor, a community connector, or a Foresight GC unit through the bridge built into the game.">
+<meta property="og:title" content="Connect your launch monitor to Sim Clash">
+<meta property="og:description" content="What Open Connect is, port 921, closing GSPro first, and the steps for 30 launch monitors in four honest tiers. One has been tested; the page says which.">
+<!-- gen:meta -->
+<link rel="canonical" href="https://robertjackson-engage.github.io/sim-clash/connect.html">
+<meta property="og:site_name" content="Sim Clash">
+<meta property="og:url" content="https://robertjackson-engage.github.io/sim-clash/connect.html">
 <meta property="og:image" content="https://robertjackson-engage.github.io/sim-clash/assets/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Sim Clash: a floodlit stadium full of spectators round a target green, seen from the tee.">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://robertjackson-engage.github.io/sim-clash/assets/og.jpg">
+<!-- /gen:meta -->
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
 <link rel="stylesheet" href="assets/site.css">
+<script src="assets/boot.js"></script>
 </head>
 <body>
+<!-- gen:header -->
 <a class="skip" href="#main">Skip to content</a>
 <header class="top">
   <div class="wrap top-in">
     <a class="brand" href="index.html"><img src="assets/icon.svg" alt="" width="36" height="36"><b><span class="p1">Sim</span> <span class="p2">Clash</span></b></a>
     <nav class="nav" aria-label="Site">
       <a href="index.html">Home</a>
+      <a href="whats-new.html" class="new">What's new</a>
       <a href="install.html">Install</a>
       <a href="connect.html" aria-current="page">Connect</a>
       <a href="play.html">How to play</a>
+      <a href="make-it-yours.html">Make it yours</a>
       <a href="faq.html">FAQ</a>
       <a href="contribute.html">Contribute</a>
     </nav>
     <a class="btn btn-go btn-sm" data-gh="download" href="install.html"><span>Download</span></a>
   </div>
 </header>
+<!-- /gen:header -->
 
 <main id="main">
 <section class="page-head">
   <div class="wrap">
     <p class="kicker">Connect</p>
-    <h1>Plug in your launch monitor</h1>
-    <p class="lead">Sim Clash listens where GSPro's Open API listens: GSPro Open Connect, TCP port 921. That is not the same as "works with anything GSPro works with": most launch monitors reach GSPro another way. This page says which ones can feed the game, how, and how sure we are. No monitor yet? <a href="#no-monitor">Test swings</a> work without one.</p>
+    <h1>Get your launch monitor talking to the game</h1>
+    <p class="lead">Your launch monitor does not talk to a game directly. A small program, its <b>connector</b>, takes each shot and hands it to whichever simulator is listening. This page explains how to make that simulator Sim Clash: what to close, what to open, what to type, and how sure we are that it works with your unit. No launch monitor? <a href="#no-monitor">Test swings</a> need none.</p>
   </div>
 </section>
 
@@ -46,11 +60,14 @@
   <nav class="toc" aria-label="On this page">
     <b>On this page</b>
     <ol>
-      <li><a href="#open-connect">What Open Connect is</a></li>
+      <li><a href="#short">The short version</a></li>
+      <li><a href="#open-connect">How a shot gets to a game</a></li>
       <li><a href="#first">Before anything else</a></li>
+      <li><a href="#address">The address and the port</a></li>
       <li><a href="#monitors">Which launch monitors</a></li>
-      <li><a href="#steps">Connecting one</a></li>
-      <li><a href="#foresight">Foresight GC monitors</a></li>
+      <li><a href="#steps">Steps for yours</a></li>
+      <li><a href="#other">Not on the list</a></li>
+      <li><a href="#foresight">Foresight GC units</a></li>
       <li><a href="#check">Is it connected?</a></li>
       <li><a href="#network">Two PCs, odd units</a></li>
       <li><a href="#no-monitor">No launch monitor</a></li>
@@ -58,75 +75,115 @@
   </nav>
 
   <div class="prose">
-    <section id="open-connect">
-      <h2>What Open Connect is</h2>
-      <p>GSPro Open Connect is a small, publicly documented way for launch-monitor software to hand shots to a simulator. The monitor's connector opens a network connection to the simulator on <strong>TCP port 921</strong> and sends each shot as a short JSON message: ball speed, launch angle, direction, spin and spin axis.</p>
-      <p>Sim Clash listens on port 921 and answers the way GSPro's Open API does. A connector that sends its shots to GSPro's Open API, and has no other tie to GSPro, can send them to Sim Clash instead when GSPro is closed. The game only needs <strong>ball data</strong>; club data is optional.</p>
+    <section id="short">
+      <h2>The short version</h2>
+      <p>The game walks you through this itself. The first time it starts, and again from <strong>SETTINGS &gt; LAUNCH MONITOR &gt; SET UP MY LAUNCH MONITOR</strong>, a wizard asks which launch monitor you have and shows the steps for that one, with this PC's real address filled in and a live status light. If you would rather read first:</p>
+      <ol class="steps">
+        <li><p><b>Close GSPro</b> (or any other simulator). Only one program can listen for the launch monitor at a time.</p></li>
+        <li><p><b>Start Sim Clash.</b></p></li>
+        <li><p><b>Start your launch monitor's connector</b> the way you would for GSPro.</p>
+          <ul>
+            <li><b>Foresight GC unit:</b> open GSPconnect from your own GSPro folder and connect the unit in it. Everything else is built into the game. <a href="#foresight">More</a>.</li>
+            <li><b>A connector with an address box:</b> give it <code>127.0.0.1</code> and port <code><!-- gen:lm-port -->921<!-- /gen:lm-port --></code>. <a href="#address">More</a>.</li>
+          </ul>
+        </li>
+        <li><p><b>Hit a ball.</b> The chip in the corner of the game turns green and the shot flies.</p></li>
+      </ol>
       <div class="note warn">
-        <p><b>The catch.</b> GSPro reaches most launch monitors through connections built into its own connector program: Uneekor, FlightScope, Garmin, Rapsodo, Full Swing, Square, ProTee and others each have their own mode there. Those do <strong>not</strong> use the Open API and cannot be pointed at another program. Choosing "GSPro" in your launch monitor's software is therefore usually not enough. Only four kinds of setup can feed this game: a maker's own Open API client, an open-source launch monitor, a community connector, and a Foresight GC unit through the <a href="#foresight">bridge built into the game</a>.</p>
+        <p><b>Honest status.</b> One launch monitor has been tested on a real rig: a Foresight GCQuad, the developer's own. Everything else on this page comes from the makers' and the connectors' own documentation and source code, and is labelled by how sure that makes us. If you try yours, <a data-gh="new-issue" href="contribute.html">please tell us how it went</a>.</p>
       </div>
+    </section>
+
+    <section id="open-connect">
+      <h2>How a shot gets to a game</h2>
+      <p>When you hit a ball, the launch monitor measures it: ball speed, launch angle, direction, spin. Those numbers have to travel to the program that draws the flight. The most widely used way to do that between products from different makers is <strong>GSPro Open Connect</strong>: a small, publicly documented convention in which the launch monitor's connector opens a network connection to the simulator on <strong>TCP port <!-- gen:lm-port -->921<!-- /gen:lm-port --></strong> and sends each shot as a short piece of text.</p>
+      <p>"A network connection" sounds bigger than it is. Both programs are usually on the same PC, and the connection never leaves it. The port number is just the door the simulator waits behind: GSPro's "Open API" waits behind door 921, so that is where connectors knock.</p>
+      <p><strong>Sim Clash waits behind the same door and answers the same way.</strong> A connector that sends its shots to GSPro's Open API, and has no other tie to GSPro, can send them to Sim Clash instead, as long as GSPro is closed. The game only needs <strong>ball data</strong>; club data is optional.</p>
       <ul class="chain" aria-label="How a shot reaches the game">
         <li><b>Launch monitor</b>measures the ball</li>
-        <li><b>Its connector</b>an Open API client, or a helper program</li>
-        <li><b>TCP 921</b>Open Connect JSON</li>
+        <li><b>Its connector</b>a program on your PC</li>
+        <li><b>Port <!-- gen:lm-port -->921<!-- /gen:lm-port --></b>Open Connect</li>
         <li><b>Sim Clash</b>plays the shot</li>
       </ul>
+      <div class="note warn">
+        <p><b>The catch.</b> "Works with GSPro" does not mean "works with anything that listens on port 921". GSPro reaches most launch monitors through connections built into its own connector program: Uneekor, FlightScope, Garmin, Rapsodo, Full Swing, Square, ProTee and others each have their own mode there. Those do <strong>not</strong> use the Open API and cannot be pointed at another program. Only four kinds of setup can feed this game: a maker's own Open API connector, an open-source launch monitor, a community connector, and a Foresight GC unit through the <a href="#foresight">bridge built into the game</a>.</p>
+      </div>
     </section>
 
     <section id="first">
       <h2>Before anything else</h2>
       <div class="note hot">
-        <p><b>Close GSPro.</b> Only one program at a time can listen on port 921. If GSPro, or any other simulator that listens for Open Connect, is running, Sim Clash cannot open the port and no shots will arrive. Close the other simulator, then start Sim Clash.</p>
+        <p><b>Close GSPro.</b> Only one program at a time can listen on port 921. If GSPro, or any other simulator that listens for Open Connect, is running, Sim Clash cannot have the port and no shots will arrive. The game says so on screen (CLOSE GSPRO / ANOTHER PROGRAM IS USING PORT 921) and takes the port by itself a few seconds after you close the other program: no restart needed.</p>
       </div>
-      <p>Start Sim Clash <strong>first</strong>, then your monitor's connector, so the connector finds something listening when it looks for the simulator. Everything runs on the one PC, and no firewall change is needed for that.</p>
+      <p>Then start your connector, so that it finds something listening when it looks for the simulator.</p>
+      <p><strong>Windows Firewall</strong> asks about the game the first time it runs, because it listens for launch monitors. If your connector runs on this same PC you can refuse: local connections still work. If the connector runs on another device (a second PC, a Raspberry Pi), allow <strong>private networks</strong> only.</p>
+    </section>
+
+    <section id="address">
+      <h2>The address and the port</h2>
+      <p>Most connectors that can be pointed anywhere have two boxes: an <strong>IP address</strong> (which computer) and a <strong>port</strong> (which door). For Sim Clash:</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Where the connector runs</th><th>IP address</th><th>Port</th></tr></thead>
+        <tbody>
+          <tr><td class="wrapok">On the same PC as the game (the usual case)</td><td><code>127.0.0.1</code></td><td><code><!-- gen:lm-port -->921<!-- /gen:lm-port --></code></td></tr>
+          <tr><td class="wrapok">On another device on your network</td><td class="wrapok">the game PC's network address, such as <code>192.168.1.20</code></td><td><code><!-- gen:lm-port -->921<!-- /gen:lm-port --></code></td></tr>
+        </tbody>
+      </table></div>
+      <p><code>127.0.0.1</code> always means "this computer". It is also what most connectors already have filled in, because it is where GSPro lives: with GSPro closed and Sim Clash open, such a connector needs no change at all.</p>
+      <h3>A connector that only sends to this PC</h3>
+      <p>Some connectors have no address box: their target is fixed at <code>127.0.0.1</code>, port <code>921</code>. That is fine. Run the connector on the same PC as the game, leave the game on its default port, and they meet.</p>
+      <h3 id="finds-gspro">A connector that insists on finding GSPro</h3>
+      <p>A few connectors check that GSPro itself is running before they will connect, but only when their address is the local one. The MLM2PRO-GSPro-Connector does this: with <code>127.0.0.1</code> it looks for GSPro's own window and stops with "GSPRO API Window Not Found". The way round it is to <strong>enter this PC's network address instead of <code>127.0.0.1</code></strong>. It is the same computer, reached by its other name, and the connector skips the check.</p>
+      <p>To find that address, use the one the game's wizard shows, or open a Windows terminal, run <code>ipconfig</code> and read the line <strong>IPv4 Address</strong> (it usually starts <code>192.168.</code> or <code>10.</code>). If Windows asks about the firewall, allow the game on private networks.</p>
+      <p>A connector with no address setting at all that looks for GSPro by itself is one of GSPro's own built-in connections. It cannot be pointed at the game.</p>
     </section>
 
     <section id="monitors">
       <h2>Which launch monitors</h2>
-      <p>This list is generated from the catalogue the game's own connection wizard uses, so the site, the game and the documentation say the same thing. It holds <!-- gen:lm-n-total -->30<!-- /gen:lm-n-total --> launch monitors, was last checked on <!-- gen:lm-updated -->2026-11-23<!-- /gen:lm-updated -->, and is careful on purpose: nothing is called tested unless a ball has been hit with it on a real rig. Today that is <!-- gen:lm-n-tested -->1<!-- /gen:lm-n-tested --> unit. Every claim, with its source, is in <a data-gh="blob:docs/launch-monitors.md" href="contribute.html">docs/launch-monitors.md</a> in the repository.</p>
+      <p>This list is generated from the catalogue the game's own connection wizard uses, so the site, the game and the documentation say the same thing. It holds <!-- gen:lm-n-total -->30<!-- /gen:lm-n-total --> launch monitors, was last checked on <!-- gen:lm-updated -->2026-11-23<!-- /gen:lm-updated -->, and is careful on purpose: nothing is called tested unless a ball has been hit with it on a real rig. Today that is <!-- gen:lm-n-tested -->1<!-- /gen:lm-n-tested --> unit.</p>
       <!-- gen:lm-tiers -->
       <h3 id="tier-tested">Tested <span class="tier-n">(1)</span></h3>
       <p>Works on a real rig.</p>
       <div class="tbl"><table>
-        <thead><tr><th>Launch monitor</th><th>Models</th><th>Comes in through</th><th>Licence of that connector</th></tr></thead>
+        <thead><tr><th>Launch monitor</th><th>Models</th><th>Comes in through</th><th>Its steps</th></tr></thead>
         <tbody>
-          <tr><td>Foresight GCQuad</td><td class="wrapok">GCQuad</td><td class="wrapok">the <a href="#foresight">built-in Foresight bridge</a> and GSPconnect (the connector inside your own GSPro installation)</td><td class="wrapok">GSPro's own: not included with the game</td></tr>
+          <tr><td>Foresight GCQuad</td><td class="wrapok">GCQuad</td><td class="wrapok">the <a href="#foresight">built-in Foresight bridge</a> and GSPconnect (the connector inside your own GSPro installation)</td><td><a href="#lm-foresight-gcquad">Steps</a></td></tr>
         </tbody>
       </table></div>
 
       <h3 id="tier-expected">Expected to work <span class="tier-n">(8)</span></h3>
       <p>Its own connector is documented to send Open Connect, or it is the same connector as a tested unit. Nobody has tried it with this game yet.</p>
       <div class="tbl"><table>
-        <thead><tr><th>Launch monitor</th><th>Models</th><th>Comes in through</th><th>Licence of that connector</th></tr></thead>
+        <thead><tr><th>Launch monitor</th><th>Models</th><th>Comes in through</th><th>Its steps</th></tr></thead>
         <tbody>
-          <tr><td>Foresight GC3 / GCHawk / QuadMAX / Falcon</td><td class="wrapok">GC3, GCHawk, GCQuad MAX (QuadMAX), Falcon</td><td class="wrapok">the <a href="#foresight">built-in Foresight bridge</a> and GSPconnect (the connector inside your own GSPro installation)</td><td class="wrapok">GSPro's own: not included with the game</td></tr>
-          <tr><td>Bushnell Launch Pro</td><td class="wrapok">Launch Pro</td><td class="wrapok">the <a href="#foresight">built-in Foresight bridge</a> and GSPconnect (the connector inside your own GSPro installation)</td><td class="wrapok">GSPro's own: not included with the game</td></tr>
-          <tr><td>Square Golf (Home)</td><td class="wrapok">Square Golf launch monitor (Home)</td><td class="wrapok"><a href="https://squaregolf.com/pages/software-3ps-gspro" rel="noopener">SQG GSPro Connect (Square's own)</a></td><td class="wrapok">Square's own</td></tr>
-          <tr><td>NVisage N1</td><td class="wrapok">NVisage N1</td><td class="wrapok"><a href="https://nvisagetech.com/n1-launch-monitor-guide/" rel="noopener">N-Connect (NVisage's own)</a></td><td class="wrapok">NVisage's own</td></tr>
-          <tr><td>Bullseye LM</td><td class="wrapok">Bullseye LM</td><td class="wrapok"><a href="https://bullseyegolfsims.com/us/product/bullseye-lm/" rel="noopener">Bullseye's own software (its GSPro / Open API connection)</a></td><td class="wrapok">Bullseye's own</td></tr>
-          <tr><td>GolfIn Idra</td><td class="wrapok">GolfIn Idra</td><td class="wrapok"><a href="https://gsprogolf.com/" rel="noopener">GolfIn's own software (its GSPro / Open API connection)</a></td><td class="wrapok">GolfIn's own</td></tr>
-          <tr><td>PiTrac</td><td class="wrapok">PiTrac (open-source, build it yourself)</td><td class="wrapok"><a href="https://docs.pitrac.org/software/simulator-integration/" rel="noopener">PiTrac's own GSPro interface</a></td><td class="wrapok">GPL-2.0</td></tr>
-          <tr><td>OpenFlight</td><td class="wrapok">OpenFlight (open-source, build it yourself)</td><td class="wrapok"><a href="https://github.com/open-flight/openflight/blob/main/docs/using/simulator/gspro.md" rel="noopener">OpenFlight's own GSPro (OpenConnectV1) connector</a></td><td class="wrapok">AGPL-3.0-or-later</td></tr>
+          <tr><td>Foresight GC3 / GCHawk / QuadMAX / Falcon</td><td class="wrapok">GC3, GCHawk, GCQuad MAX (QuadMAX), Falcon</td><td class="wrapok">the <a href="#foresight">built-in Foresight bridge</a> and GSPconnect (the connector inside your own GSPro installation)</td><td><a href="#lm-foresight-gc3-gchawk">Steps</a></td></tr>
+          <tr><td>Bushnell Launch Pro</td><td class="wrapok">Launch Pro</td><td class="wrapok">the <a href="#foresight">built-in Foresight bridge</a> and GSPconnect (the connector inside your own GSPro installation)</td><td><a href="#lm-bushnell-launch-pro">Steps</a></td></tr>
+          <tr><td>Square Golf (Home)</td><td class="wrapok">Square Golf launch monitor (Home)</td><td class="wrapok"><a href="https://squaregolf.com/pages/software-3ps-gspro" rel="noopener">SQG GSPro Connect (Square's own)</a></td><td><a href="#lm-square-home">Steps</a></td></tr>
+          <tr><td>NVisage N1</td><td class="wrapok">NVisage N1</td><td class="wrapok"><a href="https://nvisagetech.com/n1-launch-monitor-guide/" rel="noopener">N-Connect (NVisage's own)</a></td><td><a href="#lm-nvisage-n1">Steps</a></td></tr>
+          <tr><td>Bullseye LM</td><td class="wrapok">Bullseye LM</td><td class="wrapok"><a href="https://bullseyegolfsims.com/us/product/bullseye-lm/" rel="noopener">Bullseye's own software (its GSPro / Open API connection)</a></td><td><a href="#lm-bullseye-lm">Steps</a></td></tr>
+          <tr><td>GolfIn Idra</td><td class="wrapok">GolfIn Idra</td><td class="wrapok"><a href="https://gsprogolf.com/" rel="noopener">GolfIn's own software (its GSPro / Open API connection)</a></td><td><a href="#lm-golfin-idra">Steps</a></td></tr>
+          <tr><td>PiTrac</td><td class="wrapok">PiTrac (open-source, build it yourself)</td><td class="wrapok"><a href="https://docs.pitrac.org/software/simulator-integration/" rel="noopener">PiTrac's own GSPro interface</a></td><td><a href="#lm-pitrac">Steps</a></td></tr>
+          <tr><td>OpenFlight</td><td class="wrapok">OpenFlight (open-source, build it yourself)</td><td class="wrapok"><a href="https://github.com/open-flight/openflight/blob/main/docs/using/simulator/gspro.md" rel="noopener">OpenFlight's own GSPro (OpenConnectV1) connector</a></td><td><a href="#lm-openflight">Steps</a></td></tr>
         </tbody>
       </table></div>
 
       <h3 id="tier-community">Community / unofficial <span class="tier-n">(12)</span></h3>
       <p>Needs an unofficial helper program between the launch monitor and the game. Untested here.</p>
       <div class="tbl"><table>
-        <thead><tr><th>Launch monitor</th><th>Models</th><th>Comes in through</th><th>Licence of that connector</th></tr></thead>
+        <thead><tr><th>Launch monitor</th><th>Models</th><th>Comes in through</th><th>Its steps</th></tr></thead>
         <tbody>
-          <tr><td>Foresight GC2</td><td class="wrapok">GC2, GC2 + HMT</td><td class="wrapok"><a href="https://github.com/matthew-johnston/gspro-gc2-connector" rel="noopener">gspro-gc2-connector</a></td><td class="wrapok">no licence file</td></tr>
-          <tr><td>Uneekor EYE XO / XO2 / EYE MINI / QED</td><td class="wrapok">EYE XO, EYE XO2, EYE MINI, EYE MINI LITE, QED</td><td class="wrapok"><a href="https://github.com/jordan-shilts/Open-Birdie/blob/main/tools/uneekor-watch.js" rel="noopener">Uneekor VIEW watcher (tools/uneekor-watch.js, part of this project)</a></td><td class="wrapok">MIT</td></tr>
-          <tr><td>Garmin Approach R10</td><td class="wrapok">Approach R10</td><td class="wrapok"><a href="https://github.com/mholow/gsp-r10-adapter" rel="noopener">gsp-r10-adapter</a></td><td class="wrapok">MIT</td></tr>
-          <tr><td>Garmin Approach R50</td><td class="wrapok">Approach R50</td><td class="wrapok"><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" rel="noopener">MLM2PRO-GSPro-Connector (device: Garmin R50)</a></td><td class="wrapok">GPL-3.0</td></tr>
-          <tr><td>FlightScope Mevo+ / Mevo Gen2 / Xi</td><td class="wrapok">Mevo+, Mevo Gen2, Xi</td><td class="wrapok"><a href="https://github.com/divotmaker/flighthook" rel="noopener">flighthook</a></td><td class="wrapok">MIT / Apache-2.0</td></tr>
-          <tr><td>SkyTrak / SkyTrak+</td><td class="wrapok">SkyTrak+, SkyTrak (original)</td><td class="wrapok"><a href="https://openskyplus2.github.io/OpenSkyPlus2/README-OpenSkyPlus2.html" rel="noopener">OpenSkyPlus2 (with its GSPro plugin)</a></td><td class="wrapok">closed source, free to use</td></tr>
-          <tr><td>Rapsodo MLM2PRO</td><td class="wrapok">MLM2PRO</td><td class="wrapok"><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" rel="noopener">MLM2PRO-GSPro-Connector</a></td><td class="wrapok">GPL-3.0</td></tr>
-          <tr><td>Square Golf Omni</td><td class="wrapok">Square Omni</td><td class="wrapok"><a href="https://github.com/divotmaker/flighthook" rel="noopener">flighthook</a></td><td class="wrapok">MIT / Apache-2.0</td></tr>
-          <tr><td>Full Swing KIT</td><td class="wrapok">Full Swing KIT</td><td class="wrapok"><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" rel="noopener">MLM2PRO-GSPro-Connector (device: Fullswing Kit)</a></td><td class="wrapok">GPL-3.0</td></tr>
-          <tr><td>TrackMan</td><td class="wrapok">TrackMan 4, TrackMan iO</td><td class="wrapok"><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" rel="noopener">MLM2PRO-GSPro-Connector (device: Trackman)</a></td><td class="wrapok">GPL-3.0</td></tr>
-          <tr><td>Voice Caddie Swing Caddie SC4 / SC4 Pro</td><td class="wrapok">Swing Caddie SC4, Swing Caddie SC4 Pro</td><td class="wrapok"><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" rel="noopener">MLM2PRO-GSPro-Connector (device: Voice Caddie SC4)</a></td><td class="wrapok">GPL-3.0</td></tr>
-          <tr><td>TruGolf Apogee</td><td class="wrapok">TruGolf Apogee</td><td class="wrapok"><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" rel="noopener">MLM2PRO-GSPro-Connector (device: TruGolf Apogee Apex)</a></td><td class="wrapok">GPL-3.0</td></tr>
+          <tr><td>Foresight GC2</td><td class="wrapok">GC2, GC2 + HMT</td><td class="wrapok"><a href="https://github.com/matthew-johnston/gspro-gc2-connector" rel="noopener">gspro-gc2-connector</a></td><td><a href="#lm-foresight-gc2">Steps</a></td></tr>
+          <tr><td>Uneekor EYE XO / XO2 / EYE MINI / QED</td><td class="wrapok">EYE XO, EYE XO2, EYE MINI, EYE MINI LITE, QED</td><td class="wrapok"><a href="https://github.com/jordan-shilts/Open-Birdie/blob/main/tools/uneekor-watch.js" rel="noopener">Uneekor VIEW watcher (tools/uneekor-watch.js, part of this project)</a></td><td><a href="#lm-uneekor-view">Steps</a></td></tr>
+          <tr><td>Garmin Approach R10</td><td class="wrapok">Approach R10</td><td class="wrapok"><a href="https://github.com/mholow/gsp-r10-adapter" rel="noopener">gsp-r10-adapter</a></td><td><a href="#lm-garmin-r10">Steps</a></td></tr>
+          <tr><td>Garmin Approach R50</td><td class="wrapok">Approach R50</td><td class="wrapok"><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" rel="noopener">MLM2PRO-GSPro-Connector (device: Garmin R50)</a></td><td><a href="#lm-garmin-r50">Steps</a></td></tr>
+          <tr><td>FlightScope Mevo+ / Mevo Gen2 / Xi</td><td class="wrapok">Mevo+, Mevo Gen2, Xi</td><td class="wrapok"><a href="https://github.com/divotmaker/flighthook" rel="noopener">flighthook</a></td><td><a href="#lm-flightscope-mevo-plus">Steps</a></td></tr>
+          <tr><td>SkyTrak / SkyTrak+</td><td class="wrapok">SkyTrak+, SkyTrak (original)</td><td class="wrapok"><a href="https://openskyplus2.github.io/OpenSkyPlus2/README-OpenSkyPlus2.html" rel="noopener">OpenSkyPlus2 (with its GSPro plugin)</a></td><td><a href="#lm-skytrak">Steps</a></td></tr>
+          <tr><td>Rapsodo MLM2PRO</td><td class="wrapok">MLM2PRO</td><td class="wrapok"><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" rel="noopener">MLM2PRO-GSPro-Connector</a></td><td><a href="#lm-rapsodo-mlm2pro">Steps</a></td></tr>
+          <tr><td>Square Golf Omni</td><td class="wrapok">Square Omni</td><td class="wrapok"><a href="https://github.com/divotmaker/flighthook" rel="noopener">flighthook</a></td><td><a href="#lm-square-omni">Steps</a></td></tr>
+          <tr><td>Full Swing KIT</td><td class="wrapok">Full Swing KIT</td><td class="wrapok"><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" rel="noopener">MLM2PRO-GSPro-Connector (device: Fullswing Kit)</a></td><td><a href="#lm-fullswing-kit">Steps</a></td></tr>
+          <tr><td>TrackMan</td><td class="wrapok">TrackMan 4, TrackMan iO</td><td class="wrapok"><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" rel="noopener">MLM2PRO-GSPro-Connector (device: Trackman)</a></td><td><a href="#lm-trackman">Steps</a></td></tr>
+          <tr><td>Voice Caddie Swing Caddie SC4 / SC4 Pro</td><td class="wrapok">Swing Caddie SC4, Swing Caddie SC4 Pro</td><td class="wrapok"><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" rel="noopener">MLM2PRO-GSPro-Connector (device: Voice Caddie SC4)</a></td><td><a href="#lm-voicecaddie-sc4">Steps</a></td></tr>
+          <tr><td>TruGolf Apogee</td><td class="wrapok">TruGolf Apogee</td><td class="wrapok"><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" rel="noopener">MLM2PRO-GSPro-Connector (device: TruGolf Apogee Apex)</a></td><td><a href="#lm-trugolf-apogee">Steps</a></td></tr>
         </tbody>
       </table></div>
 
@@ -151,82 +208,414 @@
     </section>
 
     <section id="steps">
-      <h2>Connecting one</h2>
-      <p>The game walks you through it. The first time it starts, and again from <strong>SETTINGS &gt; LAUNCH MONITOR &gt; SET UP MY LAUNCH MONITOR</strong>, the connection wizard asks which launch monitor you have and shows the steps for that one, with this PC's address filled in and a live status light. The same steps for every launch monitor are in <a data-gh="blob:docs/launch-monitors.md" href="contribute.html">docs/launch-monitors.md</a>.</p>
-      <h3 id="other">A connector that is not on the list</h3>
+      <h2>Steps for yours</h2>
+      <p>Open your launch monitor below for what you need, the steps, what to type into the connector and what is not known yet. These are the same steps the wizard in the game shows. Every claim has its source at the foot of the entry; the connectors are other people's projects with their own licences, and none of them is part of Sim Clash unless the entry says so.</p>
+      <div class="lm-filter" hidden>
+        <label for="lm-q">Find your launch monitor</label>
+        <input id="lm-q" type="search" data-lm-filter placeholder="Type a name: GCQuad, R10, Mevo, SkyTrak..." autocomplete="off">
+      </div>
+      <p class="lm-none" hidden>Nothing on the list matches. See <a href="#other">not on the list</a> below.</p>
+      <!-- gen:lm-devices -->
+      <details class="lm" id="lm-foresight-gcquad" data-k="foresight gcquad gcquad foresight gspconnect (the connector inside your own gspro installation) tested">
+        <summary>Foresight GCQuad <span class="badge t-tested">Tested</span><small>GCQuad</small></summary>
+        <div>
+          <dl><dt>Comes in through</dt><dd>the <a href="#foresight">Foresight bridge built into the game</a> and GSPconnect (the connector inside your own GSPro installation)</dd><dt>That connector's licence</dt><dd>GSPro's own: not included with the game</dd></dl>
+          <h4>You need</h4><ul><li>Your own GSPro installation and licence (Foresight type)</li><li>FSX 2020 or FSX Play, as GSPro asks of every GC unit</li></ul>
+          <h4>Steps</h4><ol class="steps slim"><li><p>Close GSPro if it is open.</p></li><li><p>Open GSPconnect from your GSPro folder.</p></li><li><p>Connect the GCQuad in it, as you do for GSPro.</p></li><li><p>Leave GSPconnect open and hit a ball.</p></li></ol>
+          <h4>Good to know</h4><ul><li>Experimental. Tested on one GCQuad rig, the developer's own.</li><li>The game's built-in Foresight bridge holds the connector's local port (9050) and reads its shot log: docs/foresight-bridge.md.</li><li>Ball data only: the connector's log has no club data.</li><li>GSPconnect is normally in C:\GSProV1\Core\GSPC. Elsewhere: set the folder in SETTINGS &gt; LAUNCH MONITOR.</li></ul>
+          <h4>Where this comes from</h4><ul><li><code>docs/foresight-bridge.md</code>: How the bridge works and what is known about the connector</li><li><a href="https://gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/foresight-sports-and-bushnell-launch-pro-guide.md" rel="noopener">gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/foresight-sports-and-bushnell-launch-pro-guide.md</a>: GSPro's guide: the Foresight option of GSPro Connect, connection types</li><li><a href="https://gsprogolf.com/foresight-bushnell.html" rel="noopener">gsprogolf.com/foresight-bushnell.html</a>: All GC users must have FSX 2020 or FSX Play</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-foresight-gc3-gchawk" data-k="foresight gc3 / gchawk / quadmax / falcon gc3 gchawk gcquad max (quadmax) falcon foresight gspconnect (the connector inside your own gspro installation) expected to work">
+        <summary>Foresight GC3 / GCHawk / QuadMAX / Falcon <span class="badge t-expected">Expected to work</span><small>GC3, GCHawk, GCQuad MAX (QuadMAX), Falcon</small></summary>
+        <div>
+          <dl><dt>Comes in through</dt><dd>the <a href="#foresight">Foresight bridge built into the game</a> and GSPconnect (the connector inside your own GSPro installation)</dd><dt>That connector's licence</dt><dd>GSPro's own: not included with the game</dd></dl>
+          <h4>You need</h4><ul><li>Your own GSPro installation and licence (Foresight type)</li><li>FSX 2020 or FSX Play, as GSPro asks of every GC unit</li></ul>
+          <h4>Steps</h4><ol class="steps slim"><li><p>Close GSPro if it is open.</p></li><li><p>Open GSPconnect from your GSPro folder.</p></li><li><p>Connect your launch monitor in it, as for GSPro.</p></li><li><p>Leave GSPconnect open and hit a ball.</p></li></ol>
+          <h4>Good to know</h4><ul><li>Not tested on these units. They use the same GSPro connector as the GCQuad, which is the tested one.</li><li>The bridge reads the connector's shot log. Whether every model writes it in the same format is not known.</li><li>Ball data only.</li></ul>
+          <h4>Where this comes from</h4><ul><li><a href="https://gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/foresight-sports-and-bushnell-launch-pro-guide.md" rel="noopener">gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/foresight-sports-and-bushnell-launch-pro-guide.md</a>: One connection app for GC3, GCQuad, GCHawk, Falcon and the Launch Pro</li><li><code>docs/foresight-bridge.md</code>: Known and not known about the connector's log</li><li><a href="https://gsprogolf.com/" rel="noopener">gsprogolf.com</a>: GSPro's list of supported Foresight units</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-bushnell-launch-pro" data-k="bushnell launch pro launch pro bushnell gspconnect (the connector inside your own gspro installation) expected to work">
+        <summary>Bushnell Launch Pro <span class="badge t-expected">Expected to work</span><small>Launch Pro</small></summary>
+        <div>
+          <dl><dt>Comes in through</dt><dd>the <a href="#foresight">Foresight bridge built into the game</a> and GSPconnect (the connector inside your own GSPro installation)</dd><dt>That connector's licence</dt><dd>GSPro's own: not included with the game</dd></dl>
+          <h4>You need</h4><ul><li>Your own GSPro installation and licence (Foresight type)</li><li>A paid Bushnell Gold subscription (a Gold trial is not accepted by GSPro)</li></ul>
+          <h4>Steps</h4><ol class="steps slim"><li><p>Close GSPro if it is open.</p></li><li><p>Open GSPconnect from your GSPro folder.</p></li><li><p>Connect the Launch Pro in it, as you do for GSPro.</p></li><li><p>Leave GSPconnect open and hit a ball.</p></li></ol>
+          <h4>Good to know</h4><ul><li>Not tested on a Launch Pro. It uses the same GSPro connector as the GCQuad, which is the tested one.</li><li>Ball data only.</li></ul>
+          <h4>Where this comes from</h4><ul><li><a href="https://gsprogolf.com/foresight-bushnell.html" rel="noopener">gsprogolf.com/foresight-bushnell.html</a>: Launch Pro needs paid Gold; trials are not valid</li><li><a href="https://gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/foresight-sports-and-bushnell-launch-pro-guide.md" rel="noopener">gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/foresight-sports-and-bushnell-launch-pro-guide.md</a>: Same connection app as the GC units</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-foresight-gc2" data-k="foresight gc2 gc2 gc2 + hmt foresight gspro-gc2-connector community / unofficial">
+        <summary>Foresight GC2 <span class="badge t-community">Community / unofficial</span><small>GC2, GC2 + HMT</small></summary>
+        <div>
+          <dl><dt>Comes in through</dt><dd><a href="https://github.com/matthew-johnston/gspro-gc2-connector" rel="noopener">gspro-gc2-connector</a></dd><dt>That connector's licence</dt><dd>no licence file</dd></dl>
+          <h4>You need</h4><ul><li>A GC2 paired to this PC over Bluetooth (a COM port)</li></ul>
+          <h4>Steps</h4><ol class="steps slim"><li><p>Pair the GC2 with this PC over Bluetooth.</p></li><li><p>Download gspro-gc2-connector and open a terminal there.</p></li><li><p>Start it with the address and port shown here.</p></li><li><p>Hit a ball.</p></li></ol>
+          <h4>What to type into it</h4><dl><dt><code>--gs-pro-ip</code></dt><dd>127.0.0.1</dd><dt><code>--gs-pro-port</code></dt><dd>921</dd></dl>
+          <h4>Good to know</h4><ul><li>Untested here. GSPro's own Foresight integration does not support the GC2, so this is the only way in.</li><li>A command-line tool: its options are --gs-pro-ip and --gs-pro-port.</li></ul>
+          <h4>Other connectors</h4><ul><li><a href="https://github.com/ParnoldAlmer/GSPro-gc2-API-Interface" rel="noopener">GSPro-gc2-API-Interface</a> (no licence file). Python, GC2 over USB or Bluetooth. The address comes from its Config.txt (default localhost); the port is fixed at 921.</li></ul>
+          <h4>Where this comes from</h4><ul><li><a href="https://github.com/matthew-johnston/gspro-gc2-connector" rel="noopener">github.com/matthew-johnston/gspro-gc2-connector</a>: Source (main.rs, gs_pro.rs): Open Connect client with --gs-pro-ip and --gs-pro-port</li><li><a href="https://github.com/ParnoldAlmer/GSPro-gc2-API-Interface" rel="noopener">github.com/ParnoldAlmer/GSPro-gc2-API-Interface</a>: Source (OpenAPI.py, gc2USB.py): IP from Config.txt, port 921</li><li><a href="https://support.foresightsports.com/support/software/gspro-integration" rel="noopener">support.foresightsports.com/support/software/gspro-integration</a>: The official integration does not support the GC2</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-uneekor-view" data-k="uneekor eye xo / xo2 / eye mini / qed eye xo eye xo2 eye mini eye mini lite qed uneekor uneekor view watcher (tools/uneekor-watch.js, part of this project) community / unofficial">
+        <summary>Uneekor EYE XO / XO2 / EYE MINI / QED <span class="badge t-community">Community / unofficial</span><small>EYE XO, EYE XO2, EYE MINI, EYE MINI LITE, QED</small></summary>
+        <div>
+          <dl><dt>Comes in through</dt><dd><a href="https://github.com/jordan-shilts/Open-Birdie/blob/main/tools/uneekor-watch.js" rel="noopener">Uneekor VIEW watcher (tools/uneekor-watch.js, part of this project)</a></dd><dt>That connector's licence</dt><dd>MIT</dd></dl>
+          <h4>You need</h4><ul><li>Uneekor VIEW running on this PC</li></ul>
+          <h4>Steps</h4><ol class="steps slim"><li><p>Open Uneekor VIEW and get your unit ready in it.</p></li><li><p>Start the game: it starts its VIEW watcher by itself.</p></li><li><p>Hit a ball in VIEW: the watcher sends it to the game.</p></li></ol>
+          <h4>What to type into it</h4><dl><dt><code>BIRDIE_OC_HOST</code></dt><dd>127.0.0.1</dd><dt><code>BIRDIE_OC_PORT</code></dt><dd>921</dd></dl>
+          <h4>Good to know</h4><ul><li>Not tested by this project. The watcher comes from Open-Birdie, which this game is built on; it reads the shot files VIEW writes.</li><li>The desktop game (installed, or npm start) starts the watcher by itself when it finds VIEW's ShotData folder on this PC; BIRDIE_NO_WATCH=1 switches that off. Only the game server without its window (npm run start:server) needs the watcher started by hand: npm run watch, with Node.js.</li><li>VIEW reports ball speed in metres per second: the watcher converts it (--speed-scale 2.23694).</li><li>GSPro's own Uneekor connection is private to GSPro and cannot be pointed at this game.</li><li>There is no status line for the watcher in the game yet: the launch monitor light turns on when it has connected.</li></ul>
+          <h4>Other connectors</h4><ul><li><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector/wiki/Uneekor" rel="noopener">MLM2PRO-GSPro-Connector (reads the VIEW window off the screen)</a> (GPL-3.0). EYE MINI and EYE MINI LITE. Enter this PC's network address, not 127.0.0.1 (see the Rapsodo entry for why).</li></ul>
+          <h4>Where this comes from</h4><ul><li><a href="https://github.com/jordan-shilts/Open-Birdie/blob/main/tools/uneekor-watch.js" rel="noopener">github.com/jordan-shilts/Open-Birdie/blob/main/tools/uneekor-watch.js</a>: The watcher's source: reads VIEW's ShotData folder, sends Open Connect to BIRDIE_OC_HOST:BIRDIE_OC_PORT</li><li><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector/wiki/Uneekor" rel="noopener">github.com/springbok/MLM2PRO-GSPro-Connector/wiki/Uneekor</a>: The screen-reading route for the EYE MINI family</li><li><a href="https://gspro.gitbook.io/gspro-knowledge-base/troubleshooting-and-support/how-to-clear-gspro-connect-settings.md" rel="noopener">gspro.gitbook.io/gspro-knowledge-base/troubleshooting-and-support/how-to-clear-gspro-connect-settings.md</a>: Uneekor is its own interface inside GSPro Connect, not Open API</li><li><a href="https://uneekor.com/golf-simulator-software/third-party" rel="noopener">uneekor.com/golf-simulator-software/third-party</a>: Uneekor's third-party software terms and memberships</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-garmin-r10" data-k="garmin approach r10 approach r10 garmin gsp-r10-adapter community / unofficial">
+        <summary>Garmin Approach R10 <span class="badge t-community">Community / unofficial</span><small>Approach R10</small></summary>
+        <div>
+          <dl><dt>Comes in through</dt><dd><a href="https://github.com/mholow/gsp-r10-adapter" rel="noopener">gsp-r10-adapter</a></dd><dt>That connector's licence</dt><dd>MIT</dd></dl>
+          <h4>You need</h4><ul><li>Bluetooth on this PC (or the Garmin Golf app for the E6 Connect route)</li></ul>
+          <h4>Steps</h4><ol class="steps slim"><li><p>Download gsp-r10-adapter and unzip it.</p></li><li><p>Open its settings.json: check the address and port.</p></li><li><p>Turn the R10 on and start the adapter.</p></li><li><p>Wait for it to say it is connected, then hit a ball.</p></li></ol>
+          <h4>What to type into it</h4><dl><dt><code>openConnect ip</code></dt><dd>127.0.0.1</dd><dt><code>openConnect port</code></dt><dd>921</dd></dl>
+          <h4>Good to know</h4><ul><li>Untested here. The adapter's defaults are already 127.0.0.1 and 921, so on this PC it should need no change.</li><li>The R10 does not read putts. The adapter can take putts from a webcam (cam-putting-py).</li></ul>
+          <h4>Other connectors</h4><ul><li><a href="https://github.com/divotmaker/flighthook" rel="noopener">flighthook</a> (MIT / Apache-2.0). R10 over Bluetooth. Set address = &quot;127.0.0.1:921&quot; under [openconnect_client.0] in %APPDATA%\flighthook\config.toml.</li><li><a href="https://github.com/travislang/gspro-garmin-connect-v2" rel="noopener">gspro-garmin-connect-v2</a> (MIT (per its package.json)). Uses the Garmin Golf app's E6 Connect setting. Its target is fixed at 127.0.0.1:921: this PC only, default port only.</li></ul>
+          <h4>Where this comes from</h4><ul><li><a href="https://github.com/mholow/gsp-r10-adapter" rel="noopener">github.com/mholow/gsp-r10-adapter</a>: Source and settings.json: openConnect ip 127.0.0.1, port 921; MIT licence file</li><li><a href="https://github.com/divotmaker/flighthook" rel="noopener">github.com/divotmaker/flighthook</a>: README: R10 over BLE, Open Connect client address in config.toml</li><li><a href="https://github.com/travislang/gspro-garmin-connect-v2" rel="noopener">github.com/travislang/gspro-garmin-connect-v2</a>: Source (src/env.js): fixed 127.0.0.1:921</li><li><a href="https://gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/garmin-approach-r10-connection-guide.md" rel="noopener">gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/garmin-approach-r10-connection-guide.md</a>: GSPro's own R10 connection is Bluetooth inside GSPro Connect, not Open API</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-garmin-r50" data-k="garmin approach r50 approach r50 garmin mlm2pro-gspro-connector (device: garmin r50) community / unofficial">
+        <summary>Garmin Approach R50 <span class="badge t-community">Community / unofficial</span><small>Approach R50</small></summary>
+        <div>
+          <dl><dt>Comes in through</dt><dd><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" rel="noopener">MLM2PRO-GSPro-Connector (device: Garmin R50)</a></dd><dt>That connector's licence</dt><dd>GPL-3.0</dd></dl>
+          <h4>Steps</h4><ol class="steps slim"><li><p>Download MLM2PRO-GSPro-Connector and start it.</p></li><li><p>In Settings choose the device: Garmin R50.</p></li><li><p>Type the IP address and port shown here.</p></li><li><p>Press Connect, then hit a ball.</p></li></ol>
+          <h4>What to type into it</h4><dl><dt><code>IP Address</code></dt><dd>this PC's network address (for example 192.168.1.20)</dd><dt><code>Port</code></dt><dd>921</dd></dl>
+          <h4>Good to know</h4><ul><li>Untested, and the weakest entry in this tier: the connector lists a Garmin R50 device, but how it reads the R50 was not checked.</li><li>Use this PC's network address, not 127.0.0.1: with a local address the connector first looks for GSPro's own window and stops without it.</li><li>The R50's own GSPro connection is encrypted and private to GSPro Connect.</li></ul>
+          <h4>Where this comes from</h4><ul><li><a href="https://raw.githubusercontent.com/springbok/MLM2PRO-GSPro-Connector/main/src/settings.py" rel="noopener">raw.githubusercontent.com/springbok/MLM2PRO-GSPro-Connector/main/src/settings.py</a>: Source: the device list includes Garmin R50; ip_address and port settings</li><li><a href="https://raw.githubusercontent.com/springbok/MLM2PRO-GSPro-Connector/main/src/gspro_connection.py" rel="noopener">raw.githubusercontent.com/springbok/MLM2PRO-GSPro-Connector/main/src/gspro_connection.py</a>: Source: the GSPro window check applies to 127.0.0.1 / localhost only</li><li><a href="https://gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/garmin-approach-r50-connection-guide.md" rel="noopener">gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/garmin-approach-r50-connection-guide.md</a>: GSPro's own R50 connection: found automatically by GSPro Connect</li><li><a href="https://forums.garmin.com/outdoor-recreation/golf/f/approach-r50/401156/approach-r50-and-gspro-on-mac-crossover/2020877" rel="noopener">forums.garmin.com/outdoor-recreation/golf/f/approach-r50/401156/approach-r50-and-gspro-on-mac-crossover/2020877</a>: Forum report: the R50 link is encrypted, with partner credentials (a report, not confirmed)</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-flightscope-mevo-plus" data-k="flightscope mevo+ / mevo gen2 / xi mevo+ mevo gen2 xi flightscope flighthook community / unofficial">
+        <summary>FlightScope Mevo+ / Mevo Gen2 / Xi <span class="badge t-community">Community / unofficial</span><small>Mevo+, Mevo Gen2, Xi</small></summary>
+        <div>
+          <dl><dt>Comes in through</dt><dd><a href="https://github.com/divotmaker/flighthook" rel="noopener">flighthook</a></dd><dt>That connector's licence</dt><dd>MIT / Apache-2.0</dd></dl>
+          <h4>You need</h4><ul><li>This PC joined to the Mevo's own Wi-Fi network</li></ul>
+          <h4>Steps</h4><ol class="steps slim"><li><p>Join this PC to the Mevo's Wi-Fi (the network named FS ...).</p></li><li><p>Download flighthook and start it once.</p></li><li><p>In its config.toml set the Open Connect address.</p></li><li><p>Start flighthook again and hit a ball.</p></li></ol>
+          <h4>What to type into it</h4><dl><dt><code>[openconnect_client.0] address</code></dt><dd>127.0.0.1:921</dd></dl>
+          <h4>Good to know</h4><ul><li>Untested here. flighthook is a beta; it talks to the Mevo directly and forwards shots as an Open Connect client.</li><li>Its config file is %APPDATA%\flighthook\config.toml; the default address is already 127.0.0.1:921.</li><li>GSPro's own FlightScope connection is private to GSPro Connect.</li></ul>
+          <h4>Other connectors</h4><ul><li><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector/wiki/Mevo+" rel="noopener">MLM2PRO-GSPro-Connector (reads the FS Golf PC window off the screen)</a> (GPL-3.0). Needs FS Golf PC 2.0 (FlightScope's Pro Package). Enter this PC's network address, not 127.0.0.1.</li></ul>
+          <h4>Where this comes from</h4><ul><li><a href="https://github.com/divotmaker/flighthook" rel="noopener">github.com/divotmaker/flighthook</a>: README: Mevo+, Mevo Gen2 and Xi over TCP 5100; Open Connect client address in config.toml</li><li><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector/wiki/Mevo+" rel="noopener">github.com/springbok/MLM2PRO-GSPro-Connector/wiki/Mevo+</a>: The screen-reading route</li><li><a href="https://gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/flightscope-guide" rel="noopener">gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/flightscope-guide</a>: GSPro's own FlightScope connection (device 192.168.2.1, port 5100)</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-flightscope-x3" data-k="flightscope x3 / x2 / mevo (original) x3 x3c x2 mevo (original) flightscope  not supported yet">
+        <summary>FlightScope X3 / X2 / Mevo (original) <span class="badge t-unsupported">Not supported yet</span><small>X3, X3C, X2, Mevo (original)</small></summary>
+        <div>
+          <p>No connector was found that sends these units' shots as Open Connect. GSPro reaches the X2 and X3 through its own private FlightScope connection; FlightScope says the original Mevo does not support simulator courses, and opens the X3C to approved integrators only.</p>
+          <p>You can still play: <a href="#no-monitor">test swings</a> need no launch monitor.</p>
+          <h4>Where this comes from</h4><ul><li><a href="https://flightscope.com/faqs/main" rel="noopener">flightscope.com/faqs/main</a>: FlightScope FAQ: original Mevo and simulation; X3C and third-party software</li><li><a href="https://gsprogolf.com/" rel="noopener">gsprogolf.com</a>: GSPro's supported list (X2, X3 through its own integration)</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-skytrak" data-k="skytrak / skytrak+ skytrak+ skytrak (original) skytrak openskyplus2 (with its gspro plugin) community / unofficial">
+        <summary>SkyTrak / SkyTrak+ <span class="badge t-community">Community / unofficial</span><small>SkyTrak+, SkyTrak (original)</small></summary>
+        <div>
+          <dl><dt>Comes in through</dt><dd><a href="https://openskyplus2.github.io/OpenSkyPlus2/README-OpenSkyPlus2.html" rel="noopener">OpenSkyPlus2 (with its GSPro plugin)</a></dd><dt>That connector's licence</dt><dd>closed source, free to use</dd></dl>
+          <h4>You need</h4><ul><li>The SkyTrak PC app (versions 5.4 to 5.8 are the ones OpenSkyPlus2 names)</li><li>A SkyTrak plan that allows the PC app</li></ul>
+          <h4>Steps</h4><ol class="steps slim"><li><p>Install OpenSkyPlus2 into the SkyTrak PC app (its guide).</p></li><li><p>Leave its GSPro address at 127.0.0.1 and port at 921.</p></li><li><p>Start the SkyTrak app and connect your SkyTrak.</p></li><li><p>Hit a ball.</p></li></ol>
+          <h4>What to type into it</h4><dl><dt><code>Hostname</code></dt><dd>127.0.0.1</dd><dt><code>Port</code></dt><dd>921</dd></dl>
+          <h4>Good to know</h4><ul><li>Untested here. SkyTrak does not support GSPro officially, so this is a community plug-in that loads inside the SkyTrak app; a SkyTrak update can break it.</li><li>The port is set in BepInEx\config\GsPro4Osp.cfg.</li><li>SkyTrak+ is the unit it targets; the original SkyTrak is reported to work.</li></ul>
+          <h4>Other connectors</h4><ul><li><a href="https://github.com/OpenSkyPlus/GSPro4OSP" rel="noopener">OpenSkyPlus + GSPro4OSP (the older version)</a> (custom licence: personal use only, not open source). Host and port in pluginsettings.json (default 127.0.0.1 and 921).</li></ul>
+          <h4>Where this comes from</h4><ul><li><a href="https://openskyplus2.github.io/OpenSkyPlus2/README-OpenSkyPlus2.html" rel="noopener">openskyplus2.github.io/OpenSkyPlus2/README-OpenSkyPlus2.html</a>: Project documentation: Open API at 127.0.0.1:921, port configurable</li><li><a href="https://openskyplus2.github.io/OpenSkyPlus2/FAQs-OpenSkyPlus2.html" rel="noopener">openskyplus2.github.io/OpenSkyPlus2/FAQs-OpenSkyPlus2.html</a>: Not open source yet</li><li><a href="https://github.com/OpenSkyPlus/GSPro4OSP" rel="noopener">github.com/OpenSkyPlus/GSPro4OSP</a>: pluginsettings.json: Hostname 127.0.0.1, Port 921; its licence</li><li><a href="https://golfsimulatorforum.com/forum/skytrak/417077-skytrak-plus-gspro-connector" rel="noopener">golfsimulatorforum.com/forum/skytrak/417077-skytrak-plus-gspro-connector</a>: Forum: GSPro is not officially supported by SkyTrak (a report, not confirmed)</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-rapsodo-mlm2pro" data-k="rapsodo mlm2pro mlm2pro rapsodo mlm2pro-gspro-connector community / unofficial">
+        <summary>Rapsodo MLM2PRO <span class="badge t-community">Community / unofficial</span><small>MLM2PRO</small></summary>
+        <div>
+          <dl><dt>Comes in through</dt><dd><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" rel="noopener">MLM2PRO-GSPro-Connector</a></dd><dt>That connector's licence</dt><dd>GPL-3.0</dd></dl>
+          <h4>You need</h4><ul><li>A Rapsodo membership that allows third-party apps</li><li>Third-party access authorised in the Rapsodo app (it expires, so repeat it when asked)</li></ul>
+          <h4>Steps</h4><ol class="steps slim"><li><p>Download MLM2PRO-GSPro-Connector and start it.</p></li><li><p>In Settings type the IP address and port shown here.</p></li><li><p>In the Rapsodo app authorise third-party apps.</p></li><li><p>Press Connect, then hit a ball.</p></li></ol>
+          <h4>What to type into it</h4><dl><dt><code>IP Address</code></dt><dd>this PC's network address (for example 192.168.1.20)</dd><dt><code>Port</code></dt><dd>921</dd></dl>
+          <h4>Good to know</h4><ul><li>Untested here.</li><li>Use this PC's network address, not 127.0.0.1: with a local address the connector first looks for GSPro's own window (&quot;APIv1 Connect&quot;) and stops without it.</li><li>Its Bluetooth mode needs Rapsodo's online authorisation; its other mode reads the Rapsodo app off a mirrored phone screen.</li><li>Rapsodo's official GSPro connection is private to GSPro Connect.</li></ul>
+          <h4>Other connectors</h4><ul><li><a href="https://github.com/Duwaynef/MLM2PRO-BT-APP" rel="noopener">MLM2PRO-BT-APP</a> (MIT). A beta. Direct Bluetooth; GSPro address and port in its settings (default 127.0.0.1 and 921).</li></ul>
+          <h4>Where this comes from</h4><ul><li><a href="https://raw.githubusercontent.com/springbok/MLM2PRO-GSPro-Connector/main/src/settings.py" rel="noopener">raw.githubusercontent.com/springbok/MLM2PRO-GSPro-Connector/main/src/settings.py</a>: Source: ip_address 127.0.0.1, port 921, gspro_api_window_name</li><li><a href="https://raw.githubusercontent.com/springbok/MLM2PRO-GSPro-Connector/main/src/gspro_connection.py" rel="noopener">raw.githubusercontent.com/springbok/MLM2PRO-GSPro-Connector/main/src/gspro_connection.py</a>: Source: the GSPro window check for a local address</li><li><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector/wiki/Settings" rel="noopener">github.com/springbok/MLM2PRO-GSPro-Connector/wiki/Settings</a>: The IP Address and Port fields</li><li><a href="https://raw.githubusercontent.com/springbok/MLM2PRO-GSPro-Connector/main/src/bluetooth/mlm2pro_device.py" rel="noopener">raw.githubusercontent.com/springbok/MLM2PRO-GSPro-Connector/main/src/bluetooth/mlm2pro_device.py</a>: Source: the Rapsodo web API token in Bluetooth mode</li><li><a href="https://github.com/Duwaynef/MLM2PRO-BT-APP" rel="noopener">github.com/Duwaynef/MLM2PRO-BT-APP</a>: The alternative connector</li><li><a href="https://gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/rapsodo-mlm2pro-connection-guide.md" rel="noopener">gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/rapsodo-mlm2pro-connection-guide.md</a>: The official path: Bluetooth inside GSPro Connect</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-square-home" data-k="square golf (home) square golf launch monitor (home) square golf sqg gspro connect (square's own) expected to work">
+        <summary>Square Golf (Home) <span class="badge t-expected">Expected to work</span><small>Square Golf launch monitor (Home)</small></summary>
+        <div>
+          <dl><dt>Comes in through</dt><dd><a href="https://squaregolf.com/pages/software-3ps-gspro" rel="noopener">SQG GSPro Connect (Square's own)</a></dd><dt>That connector's licence</dt><dd>Square's own</dd></dl>
+          <h4>Steps</h4><ol class="steps slim"><li><p>Close GSPro if it is open.</p></li><li><p>Turn the launch monitor on.</p></li><li><p>Start SQG GSPro Connect.</p></li><li><p>Press Connect for the device, then Connect for GSPro.</p></li><li><p>Hit a ball.</p></li></ol>
+          <h4>Good to know</h4><ul><li>Untested here. Square documents SQG GSPro Connect as an Open API client, which is what this game listens for on this PC.</li><li>Not known: whether it lets you change the address or port, and whether it looks for GSPro itself before connecting.</li><li>GSPro has since added Square as a built-in connection; the Open API connector may no longer be the one Square recommends.</li></ul>
+          <h4>Where this comes from</h4><ul><li><a href="https://squaregolf.com/pages/software-3ps-gspro" rel="noopener">squaregolf.com/pages/software-3ps-gspro</a>: Square's steps: select Open API in GSPro, then SQG GSPro Connect</li><li><a href="https://gsprogolf.com/GSProConnectV1.html" rel="noopener">gsprogolf.com/GSProConnectV1.html</a>: The Open API address: 127.0.0.1, port 921</li><li><a href="https://www.playbetter.com/blogs/golf-simulator-software/what-golf-simulators-work-with-gspro" rel="noopener">www.playbetter.com/blogs/golf-simulator-software/what-golf-simulators-work-with-gspro</a>: Retailer: Square now connects natively (a report, not confirmed)</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-square-omni" data-k="square golf omni square omni square golf flighthook community / unofficial">
+        <summary>Square Golf Omni <span class="badge t-community">Community / unofficial</span><small>Square Omni</small></summary>
+        <div>
+          <dl><dt>Comes in through</dt><dd><a href="https://github.com/divotmaker/flighthook" rel="noopener">flighthook</a></dd><dt>That connector's licence</dt><dd>MIT / Apache-2.0</dd></dl>
+          <h4>You need</h4><ul><li>Bluetooth on this PC</li></ul>
+          <h4>Steps</h4><ol class="steps slim"><li><p>Download flighthook and start it once.</p></li><li><p>In its config.toml set the Open Connect address.</p></li><li><p>Turn the Omni on and start flighthook again.</p></li><li><p>Hit a ball.</p></li></ol>
+          <h4>What to type into it</h4><dl><dt><code>[openconnect_client.0] address</code></dt><dd>127.0.0.1:921</dd></dl>
+          <h4>Good to know</h4><ul><li>Untested here. flighthook is a beta; it talks to the Omni over Bluetooth and forwards shots as an Open Connect client.</li><li>Its config file is %APPDATA%\flighthook\config.toml; the default address is already 127.0.0.1:921.</li></ul>
+          <h4>Where this comes from</h4><ul><li><a href="https://github.com/divotmaker/flighthook" rel="noopener">github.com/divotmaker/flighthook</a>: README: Square Omni over BLE; Open Connect client address</li><li><a href="https://github.com/divotmaker/allsquare" rel="noopener">github.com/divotmaker/allsquare</a>: The Omni protocol library flighthook uses</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-fullswing-kit" data-k="full swing kit full swing kit full swing mlm2pro-gspro-connector (device: fullswing kit) community / unofficial">
+        <summary>Full Swing KIT <span class="badge t-community">Community / unofficial</span><small>Full Swing KIT</small></summary>
+        <div>
+          <dl><dt>Comes in through</dt><dd><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" rel="noopener">MLM2PRO-GSPro-Connector (device: Fullswing Kit)</a></dd><dt>That connector's licence</dt><dd>GPL-3.0</dd></dl>
+          <h4>You need</h4><ul><li>The Full Swing app showing its numbers on this PC's screen (a mirrored phone or tablet)</li></ul>
+          <h4>Steps</h4><ol class="steps slim"><li><p>Mirror the Full Swing app onto this PC's screen.</p></li><li><p>Start MLM2PRO-GSPro-Connector: device Fullswing Kit.</p></li><li><p>In Settings type the IP address and port shown here.</p></li><li><p>Mark the numbers on screen as its guide shows.</p></li><li><p>Press Connect, then hit a ball.</p></li></ol>
+          <h4>What to type into it</h4><dl><dt><code>IP Address</code></dt><dd>this PC's network address (for example 192.168.1.20)</dd><dt><code>Port</code></dt><dd>921</dd></dl>
+          <h4>Good to know</h4><ul><li>Untested here. The connector reads the numbers off the screen, so it is only as good as that picture.</li><li>Use this PC's network address, not 127.0.0.1 (see the Rapsodo entry for why).</li><li>The KIT's own GSPro connection is private to GSPro Connect.</li></ul>
+          <h4>Where this comes from</h4><ul><li><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector/releases" rel="noopener">github.com/springbok/MLM2PRO-GSPro-Connector/releases</a>: Release notes: the Fullswing Kit device</li><li><a href="https://raw.githubusercontent.com/springbok/MLM2PRO-GSPro-Connector/main/src/settings.py" rel="noopener">raw.githubusercontent.com/springbok/MLM2PRO-GSPro-Connector/main/src/settings.py</a>: Source: device list, ip_address and port</li><li><a href="https://gspro.gitbook.io/gspro-knowledge-base/troubleshooting-and-support/how-to-clear-gspro-connect-settings.md" rel="noopener">gspro.gitbook.io/gspro-knowledge-base/troubleshooting-and-support/how-to-clear-gspro-connect-settings.md</a>: Full Swing KIT is its own interface inside GSPro Connect</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-trackman" data-k="trackman trackman 4 trackman io trackman mlm2pro-gspro-connector (device: trackman) community / unofficial">
+        <summary>TrackMan <span class="badge t-community">Community / unofficial</span><small>TrackMan 4, TrackMan iO</small></summary>
+        <div>
+          <dl><dt>Comes in through</dt><dd><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" rel="noopener">MLM2PRO-GSPro-Connector (device: Trackman)</a></dd><dt>That connector's licence</dt><dd>GPL-3.0</dd></dl>
+          <h4>You need</h4><ul><li>TrackMan's own software showing its numbers on this PC's screen</li></ul>
+          <h4>Steps</h4><ol class="steps slim"><li><p>Open TrackMan's software with its numbers on screen.</p></li><li><p>Start MLM2PRO-GSPro-Connector: device Trackman.</p></li><li><p>In Settings type the IP address and port shown here.</p></li><li><p>Mark the numbers on screen as its guide shows.</p></li><li><p>Press Connect, then hit a ball.</p></li></ol>
+          <h4>What to type into it</h4><dl><dt><code>IP Address</code></dt><dd>this PC's network address (for example 192.168.1.20)</dd><dt><code>Port</code></dt><dd>921</dd></dl>
+          <h4>Good to know</h4><ul><li>Untested here. The connector reads the numbers off the screen; which TrackMan screen it reads, and whether it works with the iO, was not checked.</li><li>Use this PC's network address, not 127.0.0.1 (see the Rapsodo entry for why).</li><li>TrackMan has no connection to GSPro of its own.</li></ul>
+          <h4>Where this comes from</h4><ul><li><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector/releases" rel="noopener">github.com/springbok/MLM2PRO-GSPro-Connector/releases</a>: Release notes: the Trackman device</li><li><a href="https://gsprogolf.com/" rel="noopener">gsprogolf.com</a>: TrackMan is not on GSPro's supported list</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-voicecaddie-sc4" data-k="voice caddie swing caddie sc4 / sc4 pro swing caddie sc4 swing caddie sc4 pro voice caddie mlm2pro-gspro-connector (device: voice caddie sc4) community / unofficial">
+        <summary>Voice Caddie Swing Caddie SC4 / SC4 Pro <span class="badge t-community">Community / unofficial</span><small>Swing Caddie SC4, Swing Caddie SC4 Pro</small></summary>
+        <div>
+          <dl><dt>Comes in through</dt><dd><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" rel="noopener">MLM2PRO-GSPro-Connector (device: Voice Caddie SC4)</a></dd><dt>That connector's licence</dt><dd>GPL-3.0</dd></dl>
+          <h4>You need</h4><ul><li>The Voice Caddie app showing its numbers on this PC's screen (a mirrored phone or tablet)</li></ul>
+          <h4>Steps</h4><ol class="steps slim"><li><p>Mirror the Voice Caddie app onto this PC's screen.</p></li><li><p>Start MLM2PRO-GSPro-Connector: device Voice Caddie SC4.</p></li><li><p>In Settings type the IP address and port shown here.</p></li><li><p>Mark the numbers on screen as its guide shows.</p></li><li><p>Press Connect, then hit a ball.</p></li></ol>
+          <h4>What to type into it</h4><dl><dt><code>IP Address</code></dt><dd>this PC's network address (for example 192.168.1.20)</dd><dt><code>Port</code></dt><dd>921</dd></dl>
+          <h4>Good to know</h4><ul><li>Untested here. The connector names the SC4; whether it reads the SC4 Pro's app as well is not known.</li><li>Use this PC's network address, not 127.0.0.1 (see the Rapsodo entry for why).</li><li>Voice Caddie has no connection to GSPro of its own.</li></ul>
+          <h4>Where this comes from</h4><ul><li><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector/releases" rel="noopener">github.com/springbok/MLM2PRO-GSPro-Connector/releases</a>: Release notes: the Voice Caddie SC4 device</li><li><a href="https://gsprogolf.com/" rel="noopener">gsprogolf.com</a>: Voice Caddie is not on GSPro's supported list</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-trugolf-apogee" data-k="trugolf apogee trugolf apogee trugolf mlm2pro-gspro-connector (device: trugolf apogee apex) community / unofficial">
+        <summary>TruGolf Apogee <span class="badge t-community">Community / unofficial</span><small>TruGolf Apogee</small></summary>
+        <div>
+          <dl><dt>Comes in through</dt><dd><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" rel="noopener">MLM2PRO-GSPro-Connector (device: TruGolf Apogee Apex)</a></dd><dt>That connector's licence</dt><dd>GPL-3.0</dd></dl>
+          <h4>You need</h4><ul><li>TruGolf's own software showing its numbers on this PC's screen</li></ul>
+          <h4>Steps</h4><ol class="steps slim"><li><p>Open TruGolf's software with its numbers on screen.</p></li><li><p>Start MLM2PRO-GSPro-Connector: device TruGolf Apogee.</p></li><li><p>In Settings type the IP address and port shown here.</p></li><li><p>Mark the numbers on screen as its guide shows.</p></li><li><p>Press Connect, then hit a ball.</p></li></ol>
+          <h4>What to type into it</h4><dl><dt><code>IP Address</code></dt><dd>this PC's network address (for example 192.168.1.20)</dd><dt><code>Port</code></dt><dd>921</dd></dl>
+          <h4>Good to know</h4><ul><li>Untested here. The connector reads the numbers off the screen.</li><li>Use this PC's network address, not 127.0.0.1 (see the Rapsodo entry for why).</li></ul>
+          <h4>Where this comes from</h4><ul><li><a href="https://raw.githubusercontent.com/springbok/MLM2PRO-GSPro-Connector/main/src/settings.py" rel="noopener">raw.githubusercontent.com/springbok/MLM2PRO-GSPro-Connector/main/src/settings.py</a>: Source: the TruGolf Apogee device entries</li><li><a href="https://gsprogolf.com/" rel="noopener">gsprogolf.com</a>: TruGolf Apogee is not on GSPro's supported list</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-nvisage-n1" data-k="nvisage n1 nvisage n1 nvisage n-connect (nvisage's own) expected to work">
+        <summary>NVisage N1 <span class="badge t-expected">Expected to work</span><small>NVisage N1</small></summary>
+        <div>
+          <dl><dt>Comes in through</dt><dd><a href="https://nvisagetech.com/n1-launch-monitor-guide/" rel="noopener">N-Connect (NVisage's own)</a></dd><dt>That connector's licence</dt><dd>NVisage's own</dd></dl>
+          <h4>Steps</h4><ol class="steps slim"><li><p>Close GSPro if it is open.</p></li><li><p>Open N-Connect.</p></li><li><p>Press SELECT GAME, then START.</p></li><li><p>Select the N1 and press CONNECT.</p></li><li><p>Hit a ball.</p></li></ol>
+          <h4>Good to know</h4><ul><li>Untested here. GSPro lists NVisage as an Open API integration, which is what this game listens for on this PC.</li><li>Not known: whether N-Connect lets you change the address or port, and whether it looks for GSPro itself before connecting.</li><li>N-Connect is normally at C:\Program Files\NVISAGE\Pio\Tools\N-CONNECT.exe (from NVisage's guide, as reported).</li></ul>
+          <h4>Where this comes from</h4><ul><li><a href="https://gsprogolf.com/" rel="noopener">gsprogolf.com</a>: GSPro lists NVisage (OpenAPI)</li><li><a href="https://gsprogolf.com/GSProConnectV1.html" rel="noopener">gsprogolf.com/GSProConnectV1.html</a>: The Open API address: 127.0.0.1, port 921</li><li><a href="https://nvisagetech.com/n1-launch-monitor-guide/" rel="noopener">nvisagetech.com/n1-launch-monitor-guide</a>: NVisage's guide: the N-Connect steps (read through a search extract) (a report, not confirmed)</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-bullseye-lm" data-k="bullseye lm bullseye lm bullseye bullseye's own software (its gspro / open api connection) expected to work">
+        <summary>Bullseye LM <span class="badge t-expected">Expected to work</span><small>Bullseye LM</small></summary>
+        <div>
+          <dl><dt>Comes in through</dt><dd><a href="https://bullseyegolfsims.com/us/product/bullseye-lm/" rel="noopener">Bullseye's own software (its GSPro / Open API connection)</a></dd><dt>That connector's licence</dt><dd>Bullseye's own</dd></dl>
+          <h4>Steps</h4><ol class="steps slim"><li><p>Close GSPro if it is open.</p></li><li><p>Start the Bullseye software.</p></li><li><p>Choose its GSPro (Open API) connection.</p></li><li><p>Hit a ball.</p></li></ol>
+          <h4>Good to know</h4><ul><li>Untested here. GSPro lists Bullseye as an Open API integration, which is what this game listens for on this PC.</li><li>Not known: the exact steps in Bullseye's software, whether the address or port can be changed, and whether it looks for GSPro itself.</li></ul>
+          <h4>Where this comes from</h4><ul><li><a href="https://gsprogolf.com/" rel="noopener">gsprogolf.com</a>: GSPro lists Bullseye (OpenAPI)</li><li><a href="https://gsprogolf.com/GSProConnectV1.html" rel="noopener">gsprogolf.com/GSProConnectV1.html</a>: The Open API address: 127.0.0.1, port 921</li><li><a href="https://bullseyegolfsims.com/us/product/bullseye-lm/" rel="noopener">bullseyegolfsims.com/us/product/bullseye-lm</a>: Bullseye: official integrator with PurePlay and GSPro</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-golfin-idra" data-k="golfin idra golfin idra golfin golfin's own software (its gspro / open api connection) expected to work">
+        <summary>GolfIn Idra <span class="badge t-expected">Expected to work</span><small>GolfIn Idra</small></summary>
+        <div>
+          <dl><dt>Comes in through</dt><dd><a href="https://gsprogolf.com/" rel="noopener">GolfIn's own software (its GSPro / Open API connection)</a></dd><dt>That connector's licence</dt><dd>GolfIn's own</dd></dl>
+          <h4>Steps</h4><ol class="steps slim"><li><p>Close GSPro if it is open.</p></li><li><p>Start the GolfIn software.</p></li><li><p>Choose its GSPro (Open API) connection.</p></li><li><p>Hit a ball.</p></li></ol>
+          <h4>Good to know</h4><ul><li>Untested here. GSPro lists the GolfIn Idra as an Open API integration, which is what this game listens for on this PC.</li><li>Not known: the exact steps in GolfIn's software, whether the address or port can be changed, and whether it looks for GSPro itself.</li></ul>
+          <h4>Where this comes from</h4><ul><li><a href="https://gsprogolf.com/" rel="noopener">gsprogolf.com</a>: GSPro lists GolfIn Idra (OpenAPI)</li><li><a href="https://gsprogolf.com/GSProConnectV1.html" rel="noopener">gsprogolf.com/GSProConnectV1.html</a>: The Open API address: 127.0.0.1, port 921</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-pitrac" data-k="pitrac pitrac (open-source, build it yourself) pitrac pitrac's own gspro interface expected to work">
+        <summary>PiTrac <span class="badge t-expected">Expected to work</span><small>PiTrac (open-source, build it yourself)</small></summary>
+        <div>
+          <dl><dt>Comes in through</dt><dd><a href="https://docs.pitrac.org/software/simulator-integration/" rel="noopener">PiTrac's own GSPro interface</a></dd><dt>That connector's licence</dt><dd>GPL-2.0</dd></dl>
+          <h4>You need</h4><ul><li>PiTrac and this PC on the same network</li></ul>
+          <h4>Steps</h4><ol class="steps slim"><li><p>Open PiTrac's web page: http://(the Pi's address):8080</p></li><li><p>Go to Configuration, Simulators, GSPro.</p></li><li><p>Type the host address and port shown here.</p></li><li><p>Start this game first, then the PiTrac launch monitor.</p></li><li><p>Hit a ball.</p></li></ol>
+          <h4>What to type into it</h4><dl><dt><code>kGSProHostAddress</code></dt><dd>this PC's network address (for example 192.168.1.20)</dd><dt><code>kGSProPort</code></dt><dd>921</dd></dl>
+          <h4>Good to know</h4><ul><li>Untested here. PiTrac sends Open Connect to whatever address you type, so nothing about it is tied to GSPro.</li><li>It connects from the Raspberry Pi, across your network: Windows Firewall must let this game accept connections on the port.</li></ul>
+          <h4>Where this comes from</h4><ul><li><a href="https://docs.pitrac.org/software/simulator-integration/" rel="noopener">docs.pitrac.org/software/simulator-integration</a>: PiTrac documentation: kGSProHostAddress, kGSProPort 921, allow inbound 921, start the simulator first</li><li><a href="https://github.com/PiTracLM/PiTrac" rel="noopener">github.com/PiTracLM/PiTrac</a>: Source (Software/web-server/sims/gspro_sim.py) and GPL-2.0 licence</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-openflight" data-k="openflight openflight (open-source, build it yourself) openflight openflight's own gspro (openconnectv1) connector expected to work">
+        <summary>OpenFlight <span class="badge t-expected">Expected to work</span><small>OpenFlight (open-source, build it yourself)</small></summary>
+        <div>
+          <dl><dt>Comes in through</dt><dd><a href="https://github.com/open-flight/openflight/blob/main/docs/using/simulator/gspro.md" rel="noopener">OpenFlight's own GSPro (OpenConnectV1) connector</a></dd><dt>That connector's licence</dt><dd>AGPL-3.0-or-later</dd></dl>
+          <h4>You need</h4><ul><li>OpenFlight and this PC on the same network</li></ul>
+          <h4>Steps</h4><ol class="steps slim"><li><p>On OpenFlight copy config/sim.example.json to sim.json.</p></li><li><p>Add a gspro connector with the host and port shown here.</p></li><li><p>Start OpenFlight with: scripts/start-kiosk.sh --sim</p></li><li><p>Hit a ball.</p></li></ol>
+          <h4>What to type into it</h4><dl><dt><code>host</code></dt><dd>this PC's network address (for example 192.168.1.20)</dd><dt><code>port</code></dt><dd>921</dd></dl>
+          <h4>Good to know</h4><ul><li>Not tested by this project. Open-Birdie, which this game is built on, was written with OpenFlight in mind: replies name the simulator, and a shot OpenFlight sends twice is played once.</li><li>OpenFlight sends no putts.</li><li>It connects across your network: Windows Firewall must let this game accept connections on the port.</li></ul>
+          <h4>Where this comes from</h4><ul><li><a href="https://github.com/open-flight/openflight/blob/main/docs/using/simulator/gspro.md" rel="noopener">github.com/open-flight/openflight/blob/main/docs/using/simulator/gspro.md</a>: OpenFlight documentation: the gspro connector's host, port, device_id, heartbeat</li><li><a href="https://raw.githubusercontent.com/open-flight/openflight/main/src/openflight/sim/config.py" rel="noopener">raw.githubusercontent.com/open-flight/openflight/main/src/openflight/sim/config.py</a>: Source: defaults host 127.0.0.1, port 921</li><li><a href="https://raw.githubusercontent.com/open-flight/openflight/main/LICENSE" rel="noopener">raw.githubusercontent.com/open-flight/openflight/main/LICENSE</a>: AGPL-3.0-or-later</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-protee-vx" data-k="protee vx protee vx protee  not supported yet">
+        <summary>ProTee VX <span class="badge t-unsupported">Not supported yet</span><small>ProTee VX</small></summary>
+        <div>
+          <p>ProTee Labs used to connect to GSPro through the Open API, which would have reached this game. Since ProTee Labs 1.8.14 it uses GSPro's own built-in connection, and a user has reported the Open API route as no longer supported. If your ProTee Labs still has a GSPro CONNECT button under Game Options, it may be worth a try with GSPro closed: nobody has confirmed either way.</p>
+          <p>You can still play: <a href="#no-monitor">test swings</a> need no launch monitor.</p>
+          <h4>Where this comes from</h4><ul><li><a href="https://golfsimulatorforum.com/forum/protee-golf-simulator/protee-launch-monitors/399370-protee-vx-and-gspro?p=419004" rel="noopener">golfsimulatorforum.com/forum/protee-golf-simulator/protee-launch-monitors/399370-protee-vx-and-gspro?p=419004</a>: Forum: ProTee's own post on the Open API route, and a later report that it is no longer supported (a report, not confirmed)</li><li><a href="https://gspro.gitbook.io/gspro-knowledge-base/troubleshooting-and-support/how-to-clear-gspro-connect-settings.md" rel="noopener">gspro.gitbook.io/gspro-knowledge-base/troubleshooting-and-support/how-to-clear-gspro-connect-settings.md</a>: ProTee VX is its own interface inside GSPro Connect</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-openlaunch-nova" data-k="openlaunch nova openlaunch nova openlaunch  not supported yet">
+        <summary>OpenLaunch NOVA <span class="badge t-unsupported">Not supported yet</span><small>OpenLaunch NOVA</small></summary>
+        <div>
+          <p>The NOVA reaches GSPro through GSPro's own built-in connection, which cannot be pointed at this game. It is the best candidate for a direct connection, though: OpenLaunch publishes a local API (JSON over TCP and WebSocket, found on the network automatically) with an Apache-2.0 developer guide. See the roadmap.</p>
+          <p>You can still play: <a href="#no-monitor">test swings</a> need no launch monitor.</p>
+          <h4>Where this comes from</h4><ul><li><a href="https://github.com/OpenLaunchLabs/nova-developer-guide" rel="noopener">github.com/OpenLaunchLabs/nova-developer-guide</a>: OpenLaunch's developer guide: the local API</li><li><a href="https://gspro.gitbook.io/gspro-knowledge-base/troubleshooting-and-support/how-to-clear-gspro-connect-settings.md" rel="noopener">gspro.gitbook.io/gspro-knowledge-base/troubleshooting-and-support/how-to-clear-gspro-connect-settings.md</a>: Nova Open Launch is its own interface inside GSPro Connect</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-optishot" data-k="optishot nova / ballflight / orbit optishot nova optishot ballflight optishot orbit optishot  not supported yet">
+        <summary>OptiShot Nova / BallFlight / Orbit <span class="badge t-unsupported">Not supported yet</span><small>OptiShot Nova, OptiShot BallFlight, OptiShot Orbit</small></summary>
+        <div>
+          <p>OptiShot's units run OptiShot's own Orion software. No connector was found that sends their shots to GSPro or as Open Connect, and they are not on GSPro's supported list. (The Nova on GSPro's list is OpenLaunch's, a different product.)</p>
+          <p>You can still play: <a href="#no-monitor">test swings</a> need no launch monitor.</p>
+          <h4>Where this comes from</h4><ul><li><a href="https://prnewswire.com/news-releases/optishot-golf-unveils-nova-the-ultimate-made-in-america-golf-simulator-302124765.html" rel="noopener">prnewswire.com/news-releases/optishot-golf-unveils-nova-the-ultimate-made-in-america-golf-simulator-302124765.html</a>: OptiShot's announcement: Nova runs Orion; no third-party software named</li><li><a href="https://gsprogolf.com/" rel="noopener">gsprogolf.com</a>: No OptiShot product on GSPro's supported list</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-golfzon-wave" data-k="golfzon wave golfzon wave golfzon  not supported yet">
+        <summary>Golfzon WAVE <span class="badge t-unsupported">Not supported yet</span><small>Golfzon WAVE</small></summary>
+        <div>
+          <p>No connector was found that sends the WAVE's shots to GSPro or as Open Connect, and it is not on GSPro's supported list.</p>
+          <p>You can still play: <a href="#no-monitor">test swings</a> need no launch monitor.</p>
+          <h4>Where this comes from</h4><ul><li><a href="https://gsprogolf.com/" rel="noopener">gsprogolf.com</a>: Golfzon is not on GSPro's supported list</li><li><a href="https://thegolfwire.com/trugolf-golfzon" rel="noopener">thegolfwire.com/trugolf-golfzon</a>: The WAVE works with E6 Connect (not Open Connect) (a report, not confirmed)</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-golfjoy" data-k="golfjoy gds / gr / spica golfjoy gds pro (gds plus) golfjoy gr2 golfjoy gr3 golfjoy gr3 pro golfjoy spica 3 golfjoy  not supported yet">
+        <summary>GolfJoy GDS / GR / Spica <span class="badge t-unsupported">Not supported yet</span><small>GolfJoy GDS Pro (GDS Plus), GolfJoy GR2, GolfJoy GR3, GolfJoy GR3 Pro, GolfJoy Spica 3</small></summary>
+        <div>
+          <p>GolfJoy units reach GSPro through GSPro's own built-in connection over a fixed private network link, which cannot be pointed at this game. GolfJoy had an Open API route before that; whether it still works is not known.</p>
+          <p>You can still play: <a href="#no-monitor">test swings</a> need no launch monitor.</p>
+          <h4>Where this comes from</h4><ul><li><a href="https://www.golfjoy.com/pages/gspro-native-support-for-golfjoy-launch-monitors" rel="noopener">www.golfjoy.com/pages/gspro-native-support-for-golfjoy-launch-monitors</a>: GolfJoy's guide to the native GSPro connection</li><li><a href="https://gspro.gitbook.io/gspro-knowledge-base/troubleshooting-and-support/how-to-clear-gspro-connect-settings.md" rel="noopener">gspro.gitbook.io/gspro-knowledge-base/troubleshooting-and-support/how-to-clear-gspro-connect-settings.md</a>: GolfJoy is its own interface inside GSPro Connect</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-vtrack" data-k="vtrack vtrack vtrack  not supported yet">
+        <summary>VTrack <span class="badge t-unsupported">Not supported yet</span><small>VTrack</small></summary>
+        <div>
+          <p>VTrack reaches GSPro through GSPro's own built-in connection, started from VTrack's toolkit. How its shots travel is not documented, and no connector was found that sends them as Open Connect.</p>
+          <p>You can still play: <a href="#no-monitor">test swings</a> need no launch monitor.</p>
+          <h4>Where this comes from</h4><ul><li><a href="https://swingcraft.golf/vtrack-setup/" rel="noopener">swingcraft.golf/vtrack-setup</a>: The VTrack setup guide: launches GSPro from VTrackToolkit</li><li><a href="https://gspro.gitbook.io/gspro-knowledge-base/troubleshooting-and-support/how-to-clear-gspro-connect-settings.md" rel="noopener">gspro.gitbook.io/gspro-knowledge-base/troubleshooting-and-support/how-to-clear-gspro-connect-settings.md</a>: VTrack is its own interface inside GSPro Connect</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-bluetees-rainmaker" data-k="bluetees rainmaker bluetees rainmaker bluetees  not supported yet">
+        <summary>Bluetees RAINMAKER <span class="badge t-unsupported">Not supported yet</span><small>Bluetees RAINMAKER</small></summary>
+        <div>
+          <p>The RAINMAKER reaches GSPro through GSPro's own built-in connection (paired with a PIN), which cannot be pointed at this game.</p>
+          <p>You can still play: <a href="#no-monitor">test swings</a> need no launch monitor.</p>
+          <h4>Where this comes from</h4><ul><li><a href="https://gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/bluetees-rainmaker-connection-guide.md" rel="noopener">gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/bluetees-rainmaker-connection-guide.md</a>: GSPro's Rainmaker connection guide</li></ul>
+        </div>
+      </details>
+      <details class="lm" id="lm-ernest-sports" data-k="ernest sports es16 / es tour plus ernest sports es16 ernest sports es tour plus ernest sports  not supported yet">
+        <summary>Ernest Sports ES16 / ES Tour Plus <span class="badge t-unsupported">Not supported yet</span><small>Ernest Sports ES16, Ernest Sports ES Tour Plus</small></summary>
+        <div>
+          <p>No connector was found that sends these units' shots to GSPro or as Open Connect, and they are not on GSPro's supported list.</p>
+          <p>You can still play: <a href="#no-monitor">test swings</a> need no launch monitor.</p>
+          <h4>Where this comes from</h4><ul><li><a href="https://gsprogolf.com/" rel="noopener">gsprogolf.com</a>: Ernest Sports is not on GSPro's supported list</li></ul>
+        </div>
+      </details>
+      <!-- /gen:lm-devices -->
+    </section>
+
+    <section id="other">
+      <h2>Not on the list</h2>
+      <p>Any connector that sends shots to GSPro's Open API, and has no other tie to GSPro, is worth a try:</p>
+      <div class="lm">
+      <!-- gen:lm-generic -->
       <ol class="steps">
         <li><p>Close GSPro if it is open: both use the same port.</p></li>
-        <li><p>Start Sim Clash, then your launch monitor's GSPro connector.</p></li>
-        <li><p>Look for its GSPro or Open API address setting, and enter <code>127.0.0.1</code> (the connector runs on this PC) or this PC's network address, port <code>921</code>.</p></li>
-        <li><p>Connect, then hit a ball. The status chip in the game turns green when the connector is attached.</p></li>
+        <li><p>Start your launch monitor's GSPro connector.</p></li>
+        <li><p>Look for its GSPro or Open API address setting.</p></li>
+        <li><p>Type the address and port shown here.</p></li>
+        <li><p>Connect, then hit a ball.</p></li>
       </ol>
-      <p>If the connector has no address setting and looks for GSPro itself, it is one of GSPro's own connections and cannot be pointed at the game.</p>
-      <h3 id="uneekor">A note for Uneekor owners</h3>
-      <p>Uneekor is in the community tier. GSPro's own Uneekor connection is private to GSPro, so picking GSPro in Uneekor VIEW does not reach the game. What the game carries instead is a small watcher from Open-Birdie that reads the shot files VIEW writes: the desktop game starts it by itself when it finds VIEW's <code>ShotData</code> folder on the PC (set the environment variable <code>BIRDIE_NO_WATCH=1</code> to switch that off). Nobody on this project has tested it, so a report from a Uneekor owner would be very welcome.</p>
+      <dl class="lm-set"><dt>IP address</dt><dd><code>127.0.0.1</code></dd><dt>Port</dt><dd><code>921</code></dd></dl>
+      <ul>
+        <li>This game answers on the port GSPro's Open API uses. A connector that sends shots to GSPro's Open API, and has no other tie to GSPro, can send them here.</li>
+        <li>Connector on this PC: the address is 127.0.0.1. Connector on another device: use this PC's network address, and let the game through Windows Firewall.</li>
+        <li>Connections that live inside GSPro itself (its built-in Uneekor, FlightScope, Garmin, Rapsodo, Full Swing and similar modes) do not use the Open API and cannot be pointed here.</li>
+      </ul>
+      <!-- /gen:lm-generic -->
+      </div>
     </section>
 
     <section id="foresight">
-      <h2>Foresight GC monitors</h2>
-      <div class="note warn">
-        <p><b>Experimental.</b> This path has been tested on one GCQuad rig, the developer's own. The GC3, GCHawk, QuadMAX, Falcon and the Bushnell Launch Pro use the same connector and are expected to work, but nobody on the project has tried them; the GC2 does not use it (see the community tier). Ball data only: the connector's log has no club data. Please tell us how it goes.</p>
+      <h2>Foresight GC units</h2>
+      <div class="note ok">
+        <p><b>In one line.</b> If you have GSPro with a Foresight unit, open the GSPro connector (GSPconnect) and everything else is built in.</p>
       </div>
-      <p>Foresight GC monitors reach GSPro through a connector program that comes inside a GSPro installation (GSPconnect). That connector does not speak Open Connect, so pointing it at port 921 does nothing. Sim Clash therefore has a small <strong>bridge built in</strong>: the game stands in for GSPro so that the connector attaches to it, and reads each shot from the connector's own log file. It only reads that log; it writes nothing into your GSPro folder.</p>
+      <div class="note warn">
+        <p><b>Experimental.</b> This path has been tested on one GCQuad rig, the developer's own. The GC3, GCHawk, QuadMAX, Falcon and the Bushnell Launch Pro use the same connector and are expected to work, but nobody on the project has tried them; the GC2 does not use it (see its own entry above). Ball data only: the connector's log has no club data.</p>
+      </div>
+      <p>Foresight GC launch monitors do not speak Open Connect. They reach GSPro through a connector program that ships inside a GSPro installation: <code>GSPconnect.exe</code>, by default in <code>C:\GSProV1\Core\GSPC</code>. Sim Clash has a small <strong>bridge built in</strong> that lets that connector feed the game instead, with no other program in between: the game holds the local connection the connector expects, and reads each shot from the connector's own log file. It only reads that log. It does not include the connector, does not change it, and writes nothing into your GSPro folder.</p>
       <ul class="chain" aria-label="The Foresight chain">
-        <li><b>GC monitor</b>measures the ball</li>
-        <li><b>GSPconnect</b>the connector from your GSPro installation</li>
+        <li><b>GC unit</b>measures the ball</li>
+        <li><b>GSPconnect</b>from your own GSPro installation</li>
         <li><b>Built-in bridge</b>inside Sim Clash</li>
         <li><b>Sim Clash</b>plays the shot</li>
       </ul>
+      <h3>What you need</h3>
+      <ul>
+        <li>A Foresight GC unit and <strong>your own GSPro installation and licence</strong>. The connector is part of GSPro and signs in with your GSPro licence.</li>
+        <li>GSPro itself <strong>closed</strong> while you play Sim Clash: both want the same local port.</li>
+        <li>Nothing else. There is no extra program to install or start.</li>
+      </ul>
+      <h3>To play</h3>
       <ol class="steps">
-        <li><p><b>Have your own GSPro installed on the same PC.</b> You do not run GSPro itself, but the Foresight connector is part of it and signs in with your GSPro licence. Sim Clash does not include the connector and does not change it. Please check that your GSPro terms allow this use before you rely on it.</p></li>
-        <li><p><b>Close GSPro</b>, and any other bridge program you use with that connector. They want the same connection the game's bridge needs, and only one program can hold it.</p></li>
-        <li><p><b>Start Sim Clash.</b> When it finds the connector on the PC, the bridge comes up by itself. There is nothing else to install or start.</p></li>
-        <li><p><b>Start the Foresight connector</b> the way you would for GSPro, and check that it finds your monitor. If it says no Foresight devices were found, the monitor is switched off, asleep or not reachable from the PC; nothing in Sim Clash can fix that.</p></li>
-        <li><p><b>Hit a ball.</b> The status chip in the game turns green and the shot flies.</p></li>
+        <li><p><b>Close GSPro</b> if it is open.</p></li>
+        <li><p><b>Start Sim Clash.</b> When it finds the connector's folder on the PC, the bridge comes up by itself.</p></li>
+        <li><p><b>Open GSPconnect</b> from your GSPro folder and connect the launch monitor in it, as you would for GSPro. If it says no Foresight devices were found, the unit is off, asleep or not reachable from the PC; nothing in Sim Clash can fix that.</p></li>
+        <li><p><b>Leave GSPconnect open and hit a ball.</b></p></li>
       </ol>
       <div class="note">
         <p><b>Good to know.</b></p>
         <ul>
-          <li>The bridge has a switch under SETTINGS &gt; LAUNCH MONITOR: <b>Auto</b> (the default: on whenever the connector is found on the PC), <b>On</b> or <b>Off</b>. The same screen shows what the bridge is doing.</li>
-          <li>It looks for the connector in GSPro's default folder, <code>C:\GSProV1\Core\GSPC</code>. If your GSPro lives somewhere else, set the folder on that screen.</li>
-          <li>Shots already in the connector's log when the game starts are never replayed.</li>
+          <li>The bridge has a switch under SETTINGS &gt; LAUNCH MONITOR: <b>Auto</b> (the default: on whenever the connector's folder is found on the PC), <b>On</b> or <b>Off</b>. The same screen says what the bridge is doing in plain words.</li>
+          <li>If your GSPro is not in <code>C:\GSProV1</code>, set the connector's folder on that screen.</li>
+          <li>Shots already in the connector's log when the game starts are never replayed, and the same swing is never played twice.</li>
           <li>Going back to GSPro? Close Sim Clash first, or switch the bridge off. While the game holds the connector, GSPro cannot have it.</li>
-          <li>Already using a separate bridge program for this connector, such as <a data-ext="bridge">Open Connect Bridge</a>? You can keep it: switch the built-in bridge <b>Off</b> so the two do not compete, and let yours send to port 921 as before.</li>
+          <li>If the screen says something else is using port 9050, GSPro or another bridge program is still open. Close it: the game tries again every few seconds by itself.</li>
         </ul>
       </div>
     </section>
 
     <section id="check">
       <h2>Is it connected?</h2>
-      <ul>
-        <li>The status chip in the corner reads <strong>WAITING FOR A LAUNCH MONITOR</strong> until a connector is attached. Then it turns green and reads <strong>LAUNCH MONITOR CONNECTED</strong>.</li>
-        <li>Main menu &gt; SETTINGS &gt; LAUNCH MONITOR shows the same status, and what the game is listening for.</li>
-        <li>Still waiting? Check that the other simulator really is closed, that Sim Clash was started before the connector, and that the connector is aiming at port 921 on this PC.</li>
-        <li>Connected but the shots look wrong? See <a href="#network">odd units</a> below and the <a href="faq.html#trouble">troubleshooting list</a>.</li>
-      </ul>
+      <p>The chip in the corner reads <strong>WAITING FOR A LAUNCH MONITOR</strong> until a connector is attached, then turns green and reads <strong>LAUNCH MONITOR CONNECTED</strong> with the way the shots come in. The wizard's status light goes further and names the likely cause:</p>
+      <div class="tbl"><table>
+        <thead><tr><th>What you see</th><th>Why</th><th>What to do</th></tr></thead>
+        <tbody>
+          <tr><td class="wrapok">CLOSE GSPRO / ANOTHER PROGRAM IS USING PORT 921</td><td class="wrapok">GSPro, or another simulator, is open: it answers on the same port.</td><td class="wrapok">Close it. The game takes the port by itself within a few seconds.</td></tr>
+          <tr><td class="wrapok">WAITING FOR YOUR CONNECTOR</td><td class="wrapok">The port is open and nothing has connected.</td><td class="wrapok">Start the connector and press its Connect button. Check its address and port against the wizard's.</td></tr>
+          <tr><td class="wrapok">NOTHING HAS CONNECTED YET (a connector on another device)</td><td class="wrapok">Windows Firewall is the usual reason. The game cannot see that directly, so this is a likely cause, not a detected one.</td><td class="wrapok">Windows Security &gt; Firewall &gt; Allow an app through firewall: tick Private for the game. Check the connector has this PC's network address, not <code>127.0.0.1</code>.</td></tr>
+          <tr><td class="wrapok">THE CONNECTOR DISCONNECTED</td><td class="wrapok">The connector closed, crashed or lost its network.</td><td class="wrapok">Start it again, or press Connect in it.</td></tr>
+          <tr><td class="wrapok">CONNECTED, BUT NO SHOT YET</td><td class="wrapok">The connector is talking to the game but the launch monitor is not sending shots.</td><td class="wrapok">In the connector, check that the launch monitor shows as connected and ready; check the unit itself.</td></tr>
+          <tr><td class="wrapok">THAT LOOKS WRONG (after the test ball)</td><td class="wrapok">The numbers are not a golf shot: usually units. A speed about half of what you expect means metres per second.</td><td class="wrapok">See <a href="#network">odd units</a> below, or fix the unit in the connector.</td></tr>
+        </tbody>
+      </table></div>
+      <p>A swing while the title screen or a menu is up is never played or counted: get onto a stage first. More in the <a href="faq.html#trouble">troubleshooting list</a>.</p>
     </section>
 
     <section id="network">
       <h2>Two PCs, odd units</h2>
-      <h3>Connector on a different PC</h3>
-      <p>The game accepts Open Connect from other machines on your network. On the PC running Sim Clash, allow inbound TCP 921 in Windows Firewall, and point the connector (or the bridge's target) at that PC's address instead of <code>127.0.0.1</code>.</p>
+      <h3>Connector on a different device</h3>
+      <p>The game accepts Open Connect from other machines on your network. On the PC running Sim Clash, let the game through Windows Firewall on private networks, and point the connector at that PC's network address instead of <code>127.0.0.1</code>.</p>
       <h3>Shots flying about half as far as they should</h3>
-      <p>Open Connect speeds are in miles per hour. A connector that sends metres per second makes every shot play about 2.2 times too short. Start the game with the environment variable <code>BIRDIE_SPEED_SCALE=2.23694</code> to correct it.</p>
+      <p>Open Connect speeds are in miles per hour. A connector that sends metres per second makes every shot play about 2.2 times too short. Start the game with the environment variable <code>BIRDIE_SPEED_SCALE=2.23694</code> to correct it. (Shots through the Foresight bridge are always in miles per hour and are not scaled.)</p>
       <h3>A different port</h3>
       <p><code>BIRDIE_OC_PORT</code> moves the game's listener off 921, for connectors that can be told to use another port.</p>
     </section>
 
     <section id="no-monitor">
       <h2>No launch monitor? Try it with test swings</h2>
-      <p>You can play the whole game, matches included, without hitting a real ball. In a game, press <kbd>T</kbd> or use the <strong>TEST SWING</strong> button in the corner ("no monitor needed").</p>
+      <p>You can play the whole game, matches included, without hitting a real ball. While no launch monitor is connected a <strong>TEST SWING</strong> button sits at the bottom right ("no monitor needed"); the arrow beside it, or the <kbd>T</kbd> key, opens the list of swings. With a launch monitor connected the list is still behind <kbd>T</kbd>.</p>
       <ul>
         <li><strong>SMART SWING</strong> plays a sensible shot for wherever the ball lies: a drive off the tee, a wedge from 80 yards, a putt on the green.</li>
-        <li>Or pick one yourself: <strong>DRIVE</strong> (245 yards), <strong>IRON</strong> (150), <strong>WEDGE</strong> (80), <strong>CHIP</strong> (15) or <strong>PUTT</strong>.</li>
+        <li>Or pick one yourself: <strong>DRIVE</strong>, <strong>IRON</strong>, <strong>WEDGE</strong>, <strong>CHIP</strong> or <strong>PUTT</strong> (keys <kbd>1</kbd> to <kbd>6</kbd> while the list is open).</li>
         <li><strong>SLIDERS</strong> opens the full controls, for any ball speed, launch angle, direction and spin you like.</li>
       </ul>
-      <p>The game treats a test swing exactly like a shot from a monitor: it is graded, it scores, it wins and loses holes. It is the quickest way to see whether Sim Clash is for you before you move a single cable.</p>
+      <p>The game treats a test swing exactly like a shot from a launch monitor: it is graded, it scores, it wins and loses holes, so two people can play a whole match with the mouse. It is the quickest way to see whether Sim Clash is for you before you move a single cable.</p>
       <figure class="shot">
-        <img src="assets/hud/test-swing.webp" width="1280" height="720" loading="lazy" decoding="async" alt="On the tee at Lagoon Island with the test swing list open: Smart swing, Drive 245 yards, Iron 150, Wedge 80, Chip 15, Putt, and Sliders, above a yellow TEST SWING button.">
+        <img src="assets/shots/test-swing-640.webp" srcset="assets/shots/test-swing-640.webp 640w, assets/shots/test-swing-1280.webp 1280w" sizes="(max-width: 900px) 92vw, 820px" width="1280" height="720" loading="lazy" decoding="async" alt="On a tee with the test swing list open: Smart swing, Drive, Iron, Wedge, Chip, Putt and Sliders, above a yellow TEST SWING button.">
         <figcaption>The test swing list. No monitor needed.</figcaption>
       </figure>
     </section>
@@ -240,19 +629,22 @@
 
 </main>
 
+<!-- gen:footer -->
 <footer class="foot">
   <div class="wrap foot-in">
     <div>
       <h2>Sim Clash</h2>
-      <p>Arcade 1v1 golf for real launch monitors. Free and open source under the MIT licence.</p>
-      <p>Built on Open-Birdie: the original by Rooj Rin (<a href="https://github.com/rroojrooj/Open-Birdie">rroojrooj/Open-Birdie</a>) and the fork by jordan-shilts (<a href="https://github.com/jordan-shilts/Open-Birdie">jordan-shilts/Open-Birdie</a>) that Sim Clash is built on.</p>
+      <p>A quick, video-game-style golf match for your launch monitor. A hobby project, free and open source under the MIT licence.</p>
+      <p>Built on Open-Birdie: the original by Rooj Rin (<a href="https://github.com/rroojrooj/Open-Birdie" rel="noopener">rroojrooj/Open-Birdie</a>) and the fork by jordan-shilts (<a href="https://github.com/jordan-shilts/Open-Birdie" rel="noopener">jordan-shilts/Open-Birdie</a>) that Sim Clash is built on.</p>
     </div>
     <nav aria-label="Pages">
       <h2>Site</h2>
       <ul>
+        <li><a href="whats-new.html">What's new</a></li>
         <li><a href="install.html">Install</a></li>
         <li><a href="connect.html">Connect your launch monitor</a></li>
         <li><a href="play.html">How to play</a></li>
+        <li><a href="make-it-yours.html">Make it yours: build with AI</a></li>
         <li><a href="faq.html">FAQ and troubleshooting</a></li>
         <li><a href="contribute.html">Contribute</a></li>
       </ul>
@@ -263,8 +655,8 @@
         <li><a data-gh="repo" href="contribute.html">GitHub repository</a></li>
         <li><a data-gh="releases" href="install.html">Releases</a></li>
         <li><a data-gh="issues" href="contribute.html">Issues</a></li>
-        <li><a data-gh="license" href="contribute.html">MIT licence</a></li>
-        <li><a data-gh="disclaimer" href="contribute.html">Disclaimer</a></li>
+        <li><a data-gh="license" href="contribute.html#credits">MIT licence</a></li>
+        <li><a data-gh="disclaimer" href="contribute.html#credits">Disclaimer</a></li>
       </ul>
     </nav>
     <p class="fine">Sim Clash is an independent open-source project. It is not affiliated with, endorsed by or sponsored by GSPro, Foresight Sports, Uneekor or any other company named on this site; their names are used only to say what the game works with, and all trademarks belong to their owners. The software is provided as is, with no warranty. Hitting golf balls indoors can hurt people and break things: swing at your own risk.</p>
@@ -272,5 +664,6 @@
 </footer>
 <script src="config.js"></script>
 <script src="site.js"></script>
+<!-- /gen:footer -->
 </body>
 </html>

@@ -37,9 +37,10 @@ regenerable, too large for history). None of this data is committed to the repo.
 - Both are loaded from Poly Haven's CDN (4K .hdr, ~15-17 MB each) the first time the Sky button
   picks them (`public/render/sky-presets.js`); Midday is the bundled sky above and the fallback when
   a download fails.
-- The game product (Sim Clash) never downloads: its installer carries these two files, unmodified,
-  beside the stage courses (`tools/arcade-holes/sky-bundle.mjs`, `lib/sky-bundle.js`; `CREDITS.md`
-  names their authors).
+- The game product (Sim Clash) never downloads, and no longer carries these two files: every stage
+  is lit by its own generated panorama (`public/arcade/env/sky`, `CREDITS.md`). The bundling path
+  (`tools/arcade-holes/sky-bundle.mjs`, `lib/sky-bundle.js`) is kept for a stage that would need a
+  sky photo, and bundles none today.
 
 ## Trees (Tier 1)
 - `public/assets/trees/foliage_diff.jpg`, `foliage_alpha.jpg`, `bark_diff.jpg` — from
@@ -84,3 +85,17 @@ regenerable, too large for history). None of this data is committed to the repo.
 - `public/assets/turf/sand_{color,normal,rough}.jpg` — "Coast Sand 02" by Poly Haven (CC0).
   Source: https://polyhaven.com/a/coast_sand_02
   Tiled bunker sand, brightened in-shader and mixed in on the bunker mask.
+
+## Arcade stage skies and ground materials (v3 environment pass)
+
+- `public/arcade/env/sky/*.webp`: eleven sky panoramas, one for each arcade stage's theme
+  and time of day. Original: generated for this game with an image model (nano_banana_2_1,
+  through Higgsfield) from the prompts in `tools/arcade-art/env/prompts/` and processed by
+  `tools/arcade-art/env/sky-build.mjs`. No photograph or third-party picture is in them,
+  and no real skyline, landmark or logo (a first take of the night city drew towers too
+  like real ones and was thrown away).
+- `public/arcade/env/tex/*_{c,n}.webp`: eight tiling ground material sets (grass, rough,
+  sand, rock, snow, basalt, ice, earth), generated the same way and processed by
+  `tools/arcade-art/env/tex-build.mjs` (colour detail + height, normal + roughness).
+- `public/arcade/env/manifest.json` lists every file with its size, SHA-256, model, job id
+  and prompt. See docs/arcade-look.md, "The world round a stage".

@@ -218,6 +218,27 @@ P('bird-flock', -90, 380, 9, 30); P('bird-flock', 110, 280, 8, 250); P('bird-flo
 // the range beyond: more cones on every horizon
 for (const [x, y, hM, rot] of [[-520, 900, 230, 0], [520, 980, 260, 40], [-760, 420, 200, 200], [640, 300, 180, 120], [-420, -260, 150, 80], [380, -300, 160, 300], [80, 1280, 320, 10]]) P('volcano', x, y, hM, rot);
 
+// ---- gadgets (docs/gadgets.md): what a swing can hit
+//   ROCKET  coins up the full Rocket's flight, and nothing hangs in its way: the hero carry
+//           is the hole. The Dragon's Step, a pad on the scree under the Spine's lip, throws
+//           a Rocket that came up short (struck at about 100 to 108 mph) up onto the Spine.
+//           Beyond the Spine's far end the Dragon's Tail, a pad, throws a ball that runs off
+//           it (165 mph and more) down into the caldera.
+//   the lava spits: three vents across the foot of the Jaw erupt on a four second cycle
+//           from the moment of impact. A plain drive that is falling into the lava over one
+//           while it is firing is thrown up onto the Jaw or the scree above it.
+//   SAFE    the Ash Terrace is a x2 landing.
+const spineRocket = L.flight(height, TEE, PIN, { speedMph: 125, vla: 13, spin: 2600, ball: 'rocket' });
+const gadgets = [
+  L.gadget('pad', 'dragons-step', 0, 272, { radius: 8, heading: 0, angle: 58, minMps: 27, maxMps: 27 }),
+  L.gadget('geyser', 'jaw-vent', 0, 170, { radius: 7, height: 50, strength: 26, cycle: 4, offset: 3.6, burst: 2 }),
+  L.gadget('geyser', 'jaw-vent-west', -22, 166, { radius: 7, height: 50, strength: 26, cycle: 4, offset: 1.6, burst: 2 }),
+  L.gadget('geyser', 'jaw-vent-east', 22, 166, { radius: 7, height: 50, strength: 26, cycle: 4, offset: 2.6, burst: 2 }),
+  L.gadget('pad', 'dragons-tail', 0, 466, { radius: 5, angle: 45, minMps: 21, maxMps: 23 }),
+  L.gadget('zone', 'terrace-x2', 130, 340, { radius: 14, mult: 2 }),
+  spineRocket.coins('spine-coins', 80, 330, 7),
+];
+
 module.exports = {
   id: 'dragons-spine',
   stage: {
@@ -256,6 +277,7 @@ module.exports = {
   trees,
   woods,
   props,
+  gadgets,
   obLine: L.rect(-262, -90, 300, 812),
   height,
   sea: false,

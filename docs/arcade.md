@@ -17,6 +17,13 @@ shot hit with one is worth half points (a Gold ball: double).
 With the layer disabled (`enabled: false`) `Game.shotMods` is `null` and a shot is
 played, scored and broadcast exactly as it was before the layer existed.
 
+The stages also carry **course gadgets** (boost rings, bounce pads, breakable walls, coin
+trails, multiplier rings and more): `docs/gadgets.md`. A shot that met one has
+`result.gadgets`; `gradeShot` adds their coins and points, applies a landing ring's
+multiplier (`multiplier.gadget`) and lets the gadget's own callout (`GADGET_CALLOUTS`:
+RING IT!, SMASHED IT!, BOING! ...) outrank everything about the swing but the pin, a
+streak, a hazard and a holed ball.
+
 The interfaces shared with the match engine, the HUD and the voice pack are fixed in
 `docs/dev/arcade-v2-contract.md`; this file is how `lib/arcade.js` fills them in.
 

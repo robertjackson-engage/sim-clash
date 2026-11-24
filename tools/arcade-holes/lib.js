@@ -18,6 +18,8 @@ const REPO = path.join(__dirname, '..', '..');
 const courseLib = require(path.join(REPO, 'lib', 'course.js'));
 const { normalizeCourseSource, courseCacheStem } = require(path.join(REPO, 'lib', 'course-identity.js'));
 const { makeTerrain } = require(path.join(REPO, 'lib', 'elevation.js'));
+const gadgetTools = require('./gadgets.js');   // v3:gadgets a hole's `gadgets` (docs/gadgets.md)
+const lifeTools = require('./life.js');         // v3:living a hole's `life` (docs/living-world.md)
 
 const YD = 0.9144;                       // lib/physics.js YD
 const TAU = Math.PI * 2;
@@ -42,6 +44,8 @@ const PROP_KINDS = Object.freeze([
   // second wave (detail pass): set pieces and life
   'waterfall', 'castle', 'dragon', 'giant-tree', 'ruins', 'jumbotron', 'fireworks', 'cloud', 'airship',
   'statue', 'fountain', 'tiki', 'hut', 'boat', 'gate', 'tower', 'rock-spire', 'launch-ramp', 'crowd', 'bird-flock',
+  // v3:stadium the stadium kit (docs/arcade-look.md, "The stadium kit")
+  'stand-section', 'stand-corner', 'led-board', 'ad-board', 'barrier', 'camera-tower', 'tunnel', 'podium',
 ]);
 // Kinds whose heightM is not a height, and where they may be put:
 //   target-ring  lies flat on the ground; heightM is its DIAMETER. The only prop allowed on
@@ -58,9 +62,18 @@ const FLAT_PROP_KINDS = Object.freeze(['target-ring']);
 const SPAN_PROP_KINDS = Object.freeze(['bridge']);
 const FLOATING_PROP_KINDS = Object.freeze(['balloon', 'blimp', 'fireworks', 'cloud', 'airship', 'bird-flock']);
 const WIDE_PROP_KINDS = Object.freeze(['crowd']);
+// v3:stadium stand-section, stand-corner: a section of a stadium bowl, modelled straight and bent by the
+//              renderer into the WEDGE its entry gives (wedge { w, tl, tr, sag, sagK }: its front chord
+//              in metres, the splay of its two sides, its bulge; public/render/stadium-kit.js). Its
+//              (x, y) is the middle of its FRONT edge at the foot of the pitch wall, rotDeg faces it
+//              at the pitch, z is the height of the pitch there, and it stands at its modelled size
+//              (heightM is nominal). standRing() below lays a ring of them that closes. A stand must
+//              carry both a wedge and a z.
+const STAND_PROP_KINDS = Object.freeze(['stand-section', 'stand-corner']);
 const WIDE_PROP_ASPECT = 4;              // a crowd's width over its heightM
 // Slim props that may stand a little closer to the tee-to-pin line than a building.
-const SLIM_PROP_KINDS = Object.freeze(['palm', 'cactus', 'pine', 'sakura-tree', 'stone-lantern', 'torch', 'flag-banner', 'obelisk', 'floodlight', 'snowman', 'crystal', 'tiki']);
+const SLIM_PROP_KINDS = Object.freeze(['palm', 'cactus', 'pine', 'sakura-tree', 'stone-lantern', 'torch', 'flag-banner', 'obelisk', 'floodlight', 'snowman', 'crystal', 'tiki',
+  'led-board', 'ad-board', 'barrier']);   // v3:stadium low boards beside the play
 
 // Stage metadata (docs/dev/arcade-v2-contract.md section 1): what a hole file's `stage` may say.
 const THEMES = Object.freeze(['tropical', 'canyon', 'links', 'volcano', 'alpine', 'sakura', 'jungle', 'desert', 'neon', 'stadium']);
@@ -693,6 +706,68 @@ function facing(x, y, tx, ty) {
   return round2(((bearing - 180) % 360 + 360) % 360);
 }
 
+// v3:stadium Where a prop is judged to stand: its own point, but for a stand section (whose point is the
+// middle of its FRONT edge, at the foot of the pitch wall, where a bunker or the mown pitch may
+// run right up to it) the ground 6 m in under its tiers.
+function propFoot(p) {
+  if (!STAND_PROP_KINDS.includes(p.kind)) return [p.x, p.y];
+  const a = (p.rotDeg || 0) * RAD;
+  return [p.x + 6 * Math.sin(a), p.y + 6 * Math.cos(a)];
+}
+
+// v3:stadium A ring (or an arc) of stand sections that closes without a gap.
+// pointAt(t) -> [x, y]: the foot of the pitch wall, t from `from` to `to`, running
+// ANTICLOCKWISE seen from above (the pitch on the left). The arc is cut into n chords of
+// equal length along the curve; section i stands on chord i, facing the pitch. Two
+// neighbours share their side line: the point where their chords meet and the bisector of
+// their two outward normals, so each sees it at the same angle and their tiers meet at
+// every depth (public/render/stadium-kit.js seamGap measures it). The two ends of an arc
+// run out along `endDirs` ([dx, dy] each, e.g. straight back beside a tunnel) or square.
+// opts: z (the pitch's height: the base of every section), kind, corners (indices that are
+// a 'stand-corner'), heightM (nominal), text (i -> lettering for that section's crowd),
+// team ([a, b] hex colours), id (prefix). Returns the props.
+function standRing(pointAt, { from, to, n, z, kind = 'stand-section', corners = [], heightM = 42, endDirs = [null, null], text = null, team = null, id = 'stand', fill = null } = {}) {
+  const N = 1600, pts = [], cum = [0];
+  for (let i = 0; i <= N; i++) pts.push(pointAt(from + (to - from) * (i / N)));
+  for (let i = 1; i <= N; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+  const at = (len) => {
+    let k = 1;
+    while (k < N && cum[k] < len) k++;
+    const t = (len - cum[k - 1]) / Math.max(1e-9, cum[k] - cum[k - 1]);
+    return [lerp(pts[k - 1][0], pts[k][0], t), lerp(pts[k - 1][1], pts[k][1], t)];
+  };
+  const total = cum[N], B = [], out = [];
+  for (let i = 0; i <= n; i++) B.push(at((total * i) / n));
+  const unit = (v) => { const l = Math.hypot(v[0], v[1]) || 1; return [v[0] / l, v[1] / l]; };
+  // chord i: its own +x axis (from its far end back to its near end) and its outward normal
+  const axis = [], back = [];
+  for (let i = 0; i < n; i++) {
+    const c = unit([B[i][0] - B[i + 1][0], B[i][1] - B[i + 1][1]]);
+    axis.push(c); back.push([-c[1], c[0]]);
+  }
+  const side = [];
+  for (let j = 0; j <= n; j++) {
+    if (j === 0) side.push(endDirs[0] ? unit(endDirs[0]) : back[0]);
+    else if (j === n) side.push(endDirs[1] ? unit(endDirs[1]) : back[n - 1]);
+    else side.push(unit([back[j - 1][0] + back[j][0], back[j - 1][1] + back[j][1]]));
+  }
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1];
+  const r5 = (v) => Math.round(v * 1e5) / 1e5 + 0;
+  for (let i = 0; i < n; i++) {
+    const c = axis[i], b = back[i], w = Math.hypot(B[i][0] - B[i + 1][0], B[i][1] - B[i + 1][1]);
+    const mid = [(B[i][0] + B[i + 1][0]) / 2, (B[i][1] + B[i + 1][1]) / 2], onCurve = at((total * (i + 0.5)) / n);
+    const sag = dot([onCurve[0] - mid[0], onCurve[1] - mid[1]], b);
+    const wedge = { w: r5(w), tr: r5(dot(side[i], c) / dot(side[i], b)), tl: r5(-dot(side[i + 1], c) / dot(side[i + 1], b)), sag: r5(sag), sagK: r5((8 * sag * sag) / (w * w)) };
+    const t = typeof text === 'function' ? text(i) : null;
+    out.push({
+      id: `${id}-${i + 1}`, kind: corners.includes(i) ? 'stand-corner' : kind, x: mid[0], y: mid[1],
+      rotDeg: Math.round((((Math.atan2(-c[1], c[0]) / RAD) % 360 + 360) % 360) * 1e4) / 1e4, heightM, z, wedge,
+      ...(t ? { text: t } : {}), ...(team ? { team } : {}), ...(fill != null ? { fill } : {}),
+    });
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------- course assembly
 
 /**
@@ -777,7 +852,12 @@ function placePiece(piece, dx, dy, dz, ref) {
     let id = `${piece.id}/${p.id || `${p.kind}-${i + 1}`}`;
     while (used.has(id)) id += '+';
     used.add(id);
-    return { id, kind: p.kind, x: round2(p.x + dx), y: round2(p.y + dy), rotDeg: p.rotDeg || 0, heightM: p.heightM };
+    return {
+      id, kind: p.kind, x: round2(p.x + dx), y: round2(p.y + dy), rotDeg: p.rotDeg || 0, heightM: p.heightM,
+      // v3:stadium a stand's wedge and base height, and how its crowd is dressed (public/render/stadium-kit.js)
+      ...(p.wedge ? { wedge: p.wedge } : {}), ...(Number.isFinite(p.z) ? { z: round2(p.z + dz) } : {}),
+      ...(p.text ? { text: p.text } : {}), ...(p.team ? { team: p.team } : {}), ...(Number.isFinite(p.fill) ? { fill: p.fill } : {}),
+    };
   });
   return {
     id: piece.id, dx, dy, dz,
@@ -800,6 +880,8 @@ function placePiece(piece, dx, dy, dz, ref) {
     woods: (piece.woods || []).map((w) => w.map(move)),
     props,
     obLine: piece.obLine ? piece.obLine.map(move) : null,
+    gadgets: gadgetTools.placeGadgets(piece.gadgets, dx, dy, dz),   // v3:gadgets
+    life: lifeTools.placeLife(lifeTools.lifeOf(piece), dx, dy, dz),   // v3:living
     probes: (piece.probes || []).map((p) => ({ at: move(p.at), kind: p.kind, what: `${piece.id}: ${p.what || p.kind}` })),
     sea: Boolean(piece.sea),
   };
@@ -891,6 +973,14 @@ function assembleCourse({ id, number, name, origin, pieces, cellM = 2, base = nu
       ...(stage && stage.wind ? { wind: { min: stage.wind.min, max: stage.wind.max } } : {}),
     },
   };
+  // v3:gadgets a stage's gadgets (lib/gadgets.js): checked and tidied, alt turned into z on this
+  // ground. Only a stage carries them (Arcade Classics is the three holes as they were).
+  if (stage) {
+    const gadgets = gadgetTools.buildGadgets(placed.flatMap((p) => p.gadgets), course.elevation, id);
+    if (gadgets.length) course.gadgets = gadgets;
+  }
+  // v3:living a stage's life (public/render/world-life.js): what moves through its world. Scenery, like props.
+  if (stage) { const life = placed.flatMap((p) => p.life); if (life.length) course.life = life; }
   const expect = {
     sea: sea === null ? placed.some((p) => p.sea) : Boolean(sea),
     // a hole's own out-of-bounds line is not the line of a course of several holes
@@ -1006,6 +1096,12 @@ function validateCourse(course, { expect = null, maxGreenSlope = 0.03, maxFairwa
       if (ids.has(p.id)) bad(`prop id ${p.id} is used twice`);
       ids.add(p.id);
       if (!PROP_KINDS.includes(p.kind)) warnings.push(`prop ${p.id} has kind '${p.kind}', which has no model yet`);
+      // v3:stadium a section of a bowl is nothing without its wedge and its base height
+      if (STAND_PROP_KINDS.includes(p.kind)) {
+        const w = p.wedge;
+        if (!w || !(w.w > 4) || ![w.tl, w.tr, w.sag, w.sagK].every(Number.isFinite) || Math.abs(w.tl) > 1.6 || Math.abs(w.tr) > 1.6) bad(`prop ${p.id} (${p.kind}) needs a wedge { w, tl, tr, sag, sagK }`);
+        if (!Number.isFinite(p.z)) bad(`prop ${p.id} (${p.kind}) needs its base height z`);
+      }
     }
   }
   if (problems.length) fail();
@@ -1101,7 +1197,7 @@ function validateCourse(course, { expect = null, maxGreenSlope = 0.03, maxFairwa
   // balloons and blimps float far above the ground: see the notes at PROP_KINDS)
   for (const p of course.props || []) {
     if (FLOATING_PROP_KINDS.includes(p.kind) || FLAT_PROP_KINDS.includes(p.kind)) continue;
-    const on = surfaceAt(p.x, p.y);
+    const on = surfaceAt(...propFoot(p));   // v3:stadium (a stand is judged by the ground under it, not at its front edge)
     if (on === 'green' || on === 'tee') bad(`prop ${p.id} stands on a ${on}`);
     if (SPAN_PROP_KINDS.includes(p.kind)) continue;
     if (WIDE_PROP_KINDS.includes(p.kind)) {
@@ -1125,6 +1221,8 @@ function validateCourse(course, { expect = null, maxGreenSlope = 0.03, maxFairwa
       if (distToSegment(p.x, p.y, h.tee[0], h.tee[1], h.pin[0], h.pin[1]) < reach) bad(`prop ${p.id} stands in hole ${h.ref}'s line from the tee to the pin`);
     }
   }
+  gadgetTools.validateGadgets(course, { surfaceAt, terrain, inGrid, bad, warnings });   // v3:gadgets
+  lifeTools.validateLife(course, { inGrid, bad });   // v3:living
   for (const probe of (expect && expect.probes) || []) {
     const got = surfaceAt(probe.at[0], probe.at[1]);
     if (got !== probe.kind && !(sea === undefined && probe.kind === 'water')) bad(`${probe.what}: (${probe.at[0]}, ${probe.at[1]}) plays as '${got}', expected '${probe.kind}'`);
@@ -1151,7 +1249,7 @@ function writeCourse(course, dataDir, { expect = null } = {}) {
 
 module.exports = {
   YD, BOUNDARY_BUFFER_M, ARCADE_OSM_ID_BASE, SURFACE_KINDS, PLAY_PRIORITY, PROP_KINDS,
-  FLAT_PROP_KINDS, SPAN_PROP_KINDS, FLOATING_PROP_KINDS, SLIM_PROP_KINDS, WIDE_PROP_KINDS, WIDE_PROP_ASPECT,
+  FLAT_PROP_KINDS, SPAN_PROP_KINDS, FLOATING_PROP_KINDS, SLIM_PROP_KINDS, WIDE_PROP_KINDS, WIDE_PROP_ASPECT, STAND_PROP_KINDS,
   THEMES, STAGE_ROLES, TIMES_OF_DAY, CONDITIONS, BLURB_MAX, TOUR_STAGES, MAX_MATCH_ORDER, MAX_TIEBREAK_ORDER, FREE_BALLS, ROUTE_IDS, WIND_MAX_MPH,
   // numbers
   round2, lerp, clamp, smoothstep, yards, metres, mulberry32,
@@ -1163,7 +1261,9 @@ module.exports = {
   // heights
   fbm, bump, plateauWeight, plane, Heightfield, nearField, ridged, strata, tiers, awayFrom,
   // trees and props
-  scatterTrees, clusterTrees, prop, facing, widePropSpan,
+  scatterTrees, clusterTrees, prop, facing, widePropSpan, standRing, propFoot,
+  // v3:gadgets
+  gadget: gadgetTools.gadget, flight: gadgetTools.flight, bearing: gadgetTools.bearing,
   // courses
   arcadeSource, normalizeStage, normalizeRoutes, assembleCourse, findCourseSea, validateCourse, writeCourse, ArcadeCourseError,
 };

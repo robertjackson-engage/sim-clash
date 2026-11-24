@@ -253,6 +253,26 @@ const props = [
     .map(([x, y, h], i) => P('pine', x, y, h, i * 47)),
 ].filter((p) => L.FLOATING_PROP_KINDS.includes(p.kind) || p.kind === 'bridge' || (!onMown(p.x, p.y) && offLine(p.x, p.y, L.SLIM_PROP_KINDS.includes(p.kind) ? 6 : 9)));
 
+// ---- gadgets (docs/gadgets.md): what a swing can hit
+//   RISKY   the Lake Ring hangs over the ice where a 127 to 138 mph drive at the flag is
+//           starting to fall: through it and the ball flies on to the far shore (a 150 mph
+//           drive passes over the top of it and needs no help). The shelf where the hero
+//           drive lands is a x3 ring, with a snowman either side of it (a ball launched at
+//           100 mph or more goes through one for coins).
+//   SAFE    the Black Ice on the ridge: a drive that lands on it slides on down the ridge
+//           toward the turn.
+//   ROCKET  coins up the Rocket's climb to the cirque.
+const lakeDrive = L.flight(height, TEE, PIN, { speedMph: 132, vla: 13, spin: 2800 });
+const cirqueRocket = L.flight(height, TEE, [62, 379], { speedMph: 135, vla: 12, spin: 2600, ball: 'rocket' });
+const gadgets = [
+  lakeDrive.ring('lake-ring', 150, { radius: 6, strength: 1.3 }),
+  L.gadget('zone', 'shelf-x3', 48, 266, { radius: 10, mult: 3 }),
+  L.gadget('breakable', 'snowman-west', 27, 268, { radius: 2.4, height: 5, breakMph: 100, style: 'snowman' }),
+  L.gadget('breakable', 'snowman-east', 71, 270, { radius: 2.4, height: 5, breakMph: 100, style: 'snowman' }),
+  L.gadget('ice', 'black-ice', -33, 246, { size: [36, 46], heading: 356, friction: 0.7 }),
+  cirqueRocket.coins('cirque-coins', 70, 330, 7),
+];
+
 module.exports = {
   id: 'frostbite-ridge',
   extent: { minX: -300, minY: -150, maxX: 320, maxY: 620 },
@@ -289,6 +309,7 @@ module.exports = {
     L.blob(-34, 46, 30, 22, { wobble: 0.2, seed: 41 }),
   ],
   props,
+  gadgets,
   // far up in the mountains on every side: a wild one finds a snow slope, not a penalty
   obLine: L.rect(-286, -124, 304, 540),
   height,

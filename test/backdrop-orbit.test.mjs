@@ -110,5 +110,5 @@ test('on every real stage the whole flight stays out of every prop, with room to
     }
   }
   // most stages keep the orbit they were designed and looked at with
-  assert.deepEqual(changed.sort(), ['ice-pick', 'midnight-mile', 'thunder-dome']);
+  assert.deepEqual(changed.sort(), ['bullseye-bay', 'ice-pick', 'midnight-mile', 'thunder-dome']);   // v3:stadium Bullseye Bay too: its galleries are real bleachers now, a metre and a half deeper
 });

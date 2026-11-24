@@ -115,7 +115,7 @@ Other ways to run it:
 | `npm run start:server` | the game server without a window; open `http://localhost:8222` in a browser |
 | `npm test` | the test suite (Node 22 or newer) |
 | `npm run pack` | build the unpacked Windows app into `dist/win-unpacked` |
-| `npm run prepare:sky` | fetch (or find on this PC) the sky photos the stages use, into `build/arcade-data/sky` |
+| `npm run prepare:sky` | write the sky bundle into `build/arcade-data` (no photo today: every stage has its own panorama in `public/arcade/env/sky`) |
 | `npm run dist` | build the Windows installer into `dist/` and check it |
 
 ## Connect a launch monitor

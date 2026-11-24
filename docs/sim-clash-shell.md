@@ -17,6 +17,7 @@ Files:
 | `public/arcade/shell-core.js` | the menu's state machine and lists, no DOM (unit tested) |
 | `public/arcade/shell.js`, `shell.css` | the screens (classes prefixed `sc-`) and the in-game chrome |
 | `test/product-mode.test.mjs`, `test/product-mode-sim.test.mjs`, `test/shell-core.test.mjs`, `test/solo.test.js`, `test/backdrop-orbit.test.mjs` | the tests |
+| `public/arcade/party.js`, `bullseye.js`, `duel.js`, `highlights.js`, `replay.js` | the newer modes' own screens (`docs/modes.md`); the shell only follows them |
 
 ## The product switch
 
@@ -86,10 +87,10 @@ courses, so for real simulator play start the server with `BIRDIE_PRODUCT=open-b
   serves a sky that is already in `DATA_DIR/sky-cache` and 404s otherwise (the page then uses
   the bundled sky). `test/product-mode.test.mjs` runs a whole session with every TCP
   connection of the process watched and asserts that none leaves the machine.
-  - The two sky photos the stages are lit by ship with the game and are copied into
-    `DATA_DIR/sky-cache` on the first start (`lib/sky-bundle.js`, docs/dev/packaging.md
-    "How the skies reach a player's PC"), so a fresh install has its golden-hour and
-    morning skies with no network. `BIRDIE_SKY_FETCH=1` still allows the one-time download
+  - Every stage is lit by its own panorama inside the app (`public/arcade/env/sky`), so a
+    fresh install has all its skies with no network and no sky photo is copied into
+    `DATA_DIR/sky-cache` any more (`lib/sky-bundle.js` is kept for a stage that would need
+    one: docs/dev/packaging.md "How the skies reach a player's PC"). `BIRDIE_SKY_FETCH=1` still allows the one-time download
     of any other sky from Poly Haven (CC0); nothing in the game asks for one.
   - The announcer's player-name clips (`lib/voice.js`) still call ElevenLabs when, and only
     when, the user has put their own API key in the environment. No key, no request.
@@ -144,22 +145,30 @@ fly the usual orbit; Midnight Mile, Thunder Dome and Ice Pick a narrower one
 ```
 TITLE ── any key / click / a real swing
   └─ (first run, no monitor chosen: CONNECT wizard)
-MAIN MENU                      number keys 1-7, arrows + Enter, mouse, touch
+MAIN MENU                      number keys 1-9, arrows + Enter, mouse, touch
+  two columns: the ways of playing as tiles (down the first), the rest beside them (← → step across)
   1 VERSUS ───── the match lobby (public/arcade/match.js) ── START ── the match
-  2 SOLO ─────── PLAYING AS (← → changes the player)
+  2 PARTY ────── the party lobby, 2 to 4 players (public/arcade/party.js) ── START ── the game
+  3 BULLSEYE ─── its lobby (public/arcade/bullseye.js) ── START ── the game
+  4 TRICK SHOT DUEL ─ its lobby (public/arcade/duel.js) ── START ── the duel
+  5 SOLO ─────── PLAYING AS (← → changes the player)
   │              SPRINT (3 stages) · HALF TOUR (6) · FULL TOUR (all) ── the tour
   │              SINGLE STAGE ── stage picker (12 stages + 3 arenas) ── the stage
-  3 PRACTICE ─── FREE PLAY · CLOSEST TO THE PIN · PUTTING CHALLENGE · UP AND DOWN
+  6 PRACTICE ─── FREE PLAY · CLOSEST TO THE PIN · PUTTING CHALLENGE · UP AND DOWN
   │              └─ stage picker (only the stages a game fits) ── the game
-  4 PLAYERS ──── the roster: add, rename, remove; rank, trophies, W / L, tour best
-  5 SETTINGS ─── sound, volume, announcer, shot camera, putting, straighter shots,
+  7 HIGHLIGHTS ─ the reel: the last game's notable shots, the best of the night (public/arcade/highlights.js)
+  8 PLAYERS ──── the roster: add, rename, remove; rank, trophies, W / L, tour best
+  9 SETTINGS ─── sound, volume, announcer, shot camera, putting, straighter shots,
   │              tap-ins, graphics
   │              ├─ LAUNCH MONITOR (what the game listens for, the Foresight bridge panel,
   │              │                   SET UP MY LAUNCH MONITOR when the wizard is in the build)
   │              └─ CREDITS
-  6 HOW TO PLAY ─ four pages: the game, the modes, the balls, the keys
-  7 QUIT ─────── closes the window (Electron only; not shown in a browser)
+    HOW TO PLAY ─ five pages: the game, the modes, more games, the balls, the keys
+    QUIT ─────── closes the window (Electron only; not shown in a browser)
 ```
+
+PARTY, BULLSEYE, TRICK SHOT DUEL and HIGHLIGHTS are in the menu when their modules are in
+the build (`mainItems({ modes })`); without them it is the single column it always was.
 
 ESC always steps back one level; from the main menu it goes to the title. In a game:
 
@@ -177,6 +186,8 @@ back, `whoosh` leaving the title and a stage card, `lobby-open` the results). No
 | Address | Opens |
 | --- | --- |
 | `?match=1` | the match lobby (ESC still steps back to the main menu) |
+| `?party=1` | the party lobby |
+| `?replay=0` | no instant replay plays by itself (tools and screenshots) |
 | `?menu=main` | the main menu, no title |
 | `?menu=0` | straight onto the loaded stage in free play: no title, no menu. **Use this for tools, screenshots and QA that post test shots**: with a page on the title, swings are dropped |
 | `?connect=1` | the launch-monitor wizard (when its module is in the build) |
@@ -308,6 +319,24 @@ player colour, so a rename is one line and nothing is redrawn. The credit to Ope
 stays in SETTINGS > CREDITS, whatever the game is called.
 
 ## How to add a mode
+
+**The short way, for a mode with a game of its own** (Bullseye, the Trick Shot Duel and the
+Highlights reel are built this way; `docs/modes.md` "How a mode plugs in"):
+
+- the rules as a pure engine `lib/<id>.js`, the server side `lib/<id>-mode.js` exporting
+  `create(ctx)`, one line in `server.js` (`registerMode('./lib/<id>-mode')`): the routes
+  `/api/<id>` and `/api/<id>/<action>`, the event `<id>`, the swing (`beforeShot` /
+  `afterShot`) and "one game at a time" come with the registry;
+- the screens as a module `public/arcade/<id>.js` exporting `mount(ctx)` (the contract is in
+  the comment above `Shell._loadModes()`), its id added to the list there, a screen
+  `{ parent: 'main', module: true }` in `SCREENS` and an item with `mode: '<id>'` in
+  `MAIN_ITEMS`. The shell follows the module (`lobbyOpen`: the menu screen, swings held;
+  `live`: play) and never draws for it.
+
+A game for the hot seat with holes, stages and loadouts is a format of the match engine
+instead (PARTY: `lib/match.js`, `public/arcade/party.js`).
+
+The long way, for a mode the shell itself draws:
 
 1. **The menu.** Add an item to `MAIN_ITEMS` in `shell-core.js` (`{ id, label, sub, to,
    tone }`) and, if it has screens of its own, a screen to `SCREENS` with its `parent` (where

@@ -200,11 +200,9 @@ npm run dist
 development clone, push, pull here and build again. To sign, set the variables from
 `docs/dev/signing.md` before `npm run dist`.
 
-The build needs the internet once: besides Electron and the NSIS tools, it fetches the two
-sky photos the stages are lit by from Poly Haven (33 MB, CC0) and stops if what arrives does
-not match the checksums pinned in `tools/arcade-holes/sky-files.mjs`. To build without that
-download, copy `build\arcade-data\sky` from the development clone into the same place in
-the fresh clone first (the same checksums are checked).
+The build needs the internet once, for Electron and the NSIS tools. It no longer fetches
+sky photos from Poly Haven: every stage's sky is a panorama in the repository
+(`public/arcade/env/sky`), and `npm run prepare:sky` writes an empty sky bundle.
 
 The installer and its checksum:
 

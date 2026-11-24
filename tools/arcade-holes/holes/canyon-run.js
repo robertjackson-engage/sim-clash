@@ -200,6 +200,25 @@ const props = D.clean([
   P('fireworks', 134, 306, 30, 0), P('fireworks', 62, 326, 30, 0),
 ], { surfaces, tee: TEE, pin: PIN, dry: gentle });
 
+// ---- gadgets (docs/gadgets.md): what a swing can hit
+//   ROCKET  Over the Top is barred by the Barricade: a wall hanging 45 m out on the line at
+//           the flag that only a ball of 150 mph or more (or a Rocket) smashes. Behind it
+//           the Mesa Ring throws the ball that got through on over the gorge: 150 to 165 mph
+//           finishes on the mesa (the Mesa Wall at its back stops the hot ones). Anything
+//           slower comes back off the Barricade to the foot of the butte.
+//   SAFE    the Ramp Runner, a speed strip at the turn, carries a drive that reaches it on
+//           up the ramp toward the green.
+//   RISKY   coins across the gorge on the line to the Porch, and the Porch is a x2 landing.
+const porchDrive = L.flight(height, TEE, [122, 185], { speedMph: 142, vla: 13.5, spin: 3400 });
+const gadgets = [
+  L.gadget('breakable', 'barricade', 15.55, 42.23, { z: 33, size: [16, 14], heading: 200.22, breakMph: 150, keep: 1, style: 'wall' }),
+  L.gadget('ring', 'mesa-ring', 41.53, 112.72, { z: 52.9, radius: 8, heading: 20.22, strength: 1.36 }),
+  L.gadget('backboard', 'mesa-wall', 103.5, 286.5, { size: [26, 16], heading: 200.22, strength: 0.15 }),
+  L.gadget('strip', 'ramp-runner', -9, 224, { size: [34, 40], heading: 55, strength: 8, maxMps: 11 }),
+  L.gadget('zone', 'porch-x2', 124, 188, { radius: 12, mult: 2 }),
+  porchDrive.coins('gorge-coins', 45, 175, 6),
+];
+
 module.exports = {
   id: 'canyon-run',
   stage: {
@@ -229,6 +248,7 @@ module.exports = {
   trees,
   woods: [],
   props,
+  gadgets,
   // up the walls on every side: a ball that reaches them comes back down
   obLine: [[-120, -80], [190, -80], [190, 372], [-120, 372]],
   height,

@@ -130,7 +130,7 @@ export class SeeOverRig {
   _crownField() {
     const sc = this.scene;
     const trees = sc._allTreeSpots || sc._placedTrees || null;
-    const pv = sc.props?.version || 0;
+    const pv = (sc.props?.version || 0) + 1e6 * (sc.gadgets?.version || 0);   // v3:gadgets (and the gadgets)
     if (this._crowns && this._crownTrees === trees && this._crownProps === pv) return this._crowns;
     this._crownTrees = trees; this._crownProps = pv;
     const list = [];
@@ -140,6 +140,7 @@ export class SeeOverRig {
       list.push({ x: t.x, y: t.y, r: t.r || 4.5 * s, top: g + (t.h || 14 * s), base: g });
     }
     for (const b of sc.props?.blockers?.(sc.ballSim) || []) list.push(b);
+    for (const b of sc.gadgets?.blockers?.(sc.ballSim) || []) list.push(b);   // v3:gadgets a wall, a backboard, a cannon stand in the view like a prop
     this._crowns = crownField(list);
     return this._crowns;
   }

@@ -236,13 +236,18 @@ test('extreme stages: the free Rocket makes the hero target from 125 to 155 mph,
     for (const [vla, spin] of [[10, 2200], [16, 3000]]) for (const speed of [130, 140, 150]) {
       const g = newGame(id);
       const r = swing(g, { speed, vla, spin });
-      assert.ok(onHero(id, g, r), `${id}: ${speed} mph launched at ${vla} degrees: ${where(g, r)}`);
+      // v3:gadgets (or better: a low one that runs off the Spine's far end is thrown into the caldera by the Dragon's Tail, a pad)
+      const thrown = (r.gadgets || []).some((h) => h.id === 'dragons-tail') && r.penalty === 0 && r.distToPinYd < 40;
+      assert.ok(thrown || onHero(id, g, r), `${id}: ${speed} mph launched at ${vla} degrees: ${where(g, r)}`);
     }
     // a plain ball, however hard, is nowhere near (and so is a Rocket hit like a chip)
     for (const speed of [125, 140, 152, 170]) {
       const g = newGame(id);
       const r = swing(g, { speed, rocket: false });
-      assert.ok(!onHero(id, g, r) && (r.penalty || zAt(g, r) < want.hero.z - 12), `${id}: a plain ${speed} mph drive: ${where(g, r)}`);
+      // v3:gadgets (by its own flight: on Sky Fortress the Great Bombard, a cannon on the Rampart ledge,
+      // fires a plain ball that comes down on it up into the courtyard: test/gadgets.test.js)
+      const fired = (r.gadgets || []).some((h) => h.kind === 'warp');
+      assert.ok(fired || (!onHero(id, g, r) && (r.penalty || zAt(g, r) < want.hero.z - 12)), `${id}: a plain ${speed} mph drive: ${where(g, r)}`);
     }
   }
   // what the Rocket leaves: a putt on Sky Fortress, a wedge down on Dragon's Spine
@@ -276,7 +281,10 @@ test('extreme stages: the hero carry is still on in the stiffest wind the stage 
     for (const speed of [125, 135]) {
       const g = newGame(id, { windMph: max, windFromDeg: 180 });
       const r = swing(g, { speed });
-      assert.ok(onHero(id, g, r), `${id}: ${speed} mph with ${max} mph behind: ${where(g, r)}`);
+      // v3:gadgets (or better than the hero target: on Dragon's Spine a ball that runs to the Spine's far
+      // end is thrown down into the caldera by the Dragon's Tail, a pad, and finishes by the green)
+      const thrown = (r.gadgets || []).some((h) => h.id === 'dragons-tail') && r.penalty === 0 && r.distToPinYd < 40;
+      assert.ok(thrown || onHero(id, g, r), `${id}: ${speed} mph with ${max} mph behind: ${where(g, r)}`);
     }
     // across, from either side: aimed off into it, as a player would
     for (const fromDeg of [90, 270]) for (const speed of [125, 140]) {

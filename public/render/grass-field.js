@@ -53,6 +53,9 @@ const GRASS_VERT = /* glsl */`
   uniform vec2 uFade;                    // full size inside .x, gone by .y (m from camera)
   uniform vec2 uBladeH;                  // blade height (m): mown cut, rough
   uniform vec3 uFescue;                  // links fescue on open ground: strength (0..1), height (m), fescue only (1: no other blades)
+  #ifdef GRASS_ARCADE
+  uniform vec4 uWind;                    // v3:environment the hole's wind: toward (east, north), strength 0..1, blade width x
+  #endif
   varying vec3 vGrassCol;
   varying float vTip;
   varying vec3 vGrassW;   // world position (translucency view vector)
@@ -113,12 +116,24 @@ const GRASS_BEGIN = /* glsl */`
     float a = hh.y * 6.2831853;
     // a clump with no height collapses to a point: its triangles have no area to raster
     vec2 r = mat2(cos(a), sin(a), -sin(a), cos(a)) * position.xz * mix(1.4, 1.0, cut) * (0.55 + 0.45 * fk) * step(1e-4, h);
+    #ifdef GRASS_ARCADE
+    r *= uWind.w;
+    #endif
     float t = position.y;
     // wind: a slow gusting lean plus a little per-clump flutter, more on long blades
     float sway = (sin(uTime * 1.3 + sim.x * 0.21 + sim.y * 0.17) * 0.6 + sin(uTime * 2.9 + hh.x * 30.0) * 0.4) * (0.08 + 0.25 * (1.0 - cut) + 0.2 * native);
     vec3 wp = vec3(sim.x + r.x, ground - 0.02 + t * h, -sim.y + r.y);
     wp.x += sway * t * t * h;
     wp.z += sway * 0.5 * t * t * h;
+    #ifdef GRASS_ARCADE
+    {
+      // lean downwind, gusting: more on the long blades of the rough
+      float gust = uWind.z * (0.55 + 0.45 * sin(uTime * 1.7 + sim.x * 0.11 + sim.y * 0.13)) * (0.5 + 0.9 * (1.0 - cut));
+      wp.x += uWind.x * gust * t * t * h * 1.4;
+      wp.z -= uWind.y * gust * t * t * h * 1.4;
+      wp.y -= gust * gust * t * t * h * 0.25;
+    }
+    #endif
     transformed = wp;
     // dark deep in the clump (the blades shade each other), bright toward the lit tips,
     // so a blade reads against the ground it grows from instead of melting into it
@@ -129,8 +144,9 @@ const GRASS_BEGIN = /* glsl */`
     vGrassW = wp;
   }`;
 
-function grassMaterial(u) {
+function grassMaterial(u, arcade = false) {
   const m = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.95, metalness: 0, side: THREE.DoubleSide });
+  if (arcade) m.defines = { ...(m.defines || {}), GRASS_ARCADE: '' };
   m.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, u);
     shader.vertexShader = shader.vertexShader
@@ -158,7 +174,7 @@ function grassMaterial(u) {
       // a blade's back face must keep the up normal (DoubleSide flips it: black blades)
       .replace('#include <normal_fragment_begin>', '#include <normal_fragment_begin>\n normal = normalize(vNormal); nonPerturbedNormal = normal;');
   };
-  m.customProgramCacheKey = () => 'grass-field-v6';
+  m.customProgramCacheKey = () => `grass-field-v6${arcade ? '-arcade' : ''}`;
   return m;
 }
 
@@ -241,7 +257,9 @@ const _frustum = new THREE.Frustum(), _pv = new THREE.Matrix4();
 // fescue: 0..1, how much of the open ground grows links fescue (none at the ball);
 // fescueOnly: draw the fescue and no other blades (the ring at the camera not at all).
 export class GrassField {
-  constructor({ turf, elev, hAt, hdBounds = [], scale = 1, sunDir = null, fescue = 0, fescueOnly = false }) {
+  // arcade (optional, v3:environment; arcade-look.js turf.blades): { mul: x the blades' height and
+  // width, rough: false for no blades off the mown ground }; the blades then lean with the wind.
+  constructor({ turf, elev, hAt, hdBounds = [], scale = 1, sunDir = null, fescue = 0, fescueOnly = false, arcade = null }) {
     this.group = new THREE.Group();
     this.group.name = 'grassField';
     const b = turf.bounds;
@@ -262,6 +280,8 @@ export class GrassField {
       uSunDir: { value: sunDir || new THREE.Vector3(0.4, 0.8, -0.4) },   // live ref: follows the sky
     };
     this._time = common.uTime;
+    const aMul = arcade ? (arcade.mul ?? 1) : 1, aRough = arcade && arcade.rough === false ? 0 : 1;
+    if (arcade) { common.uWind = { value: new THREE.Vector4(0, 1, 0, 1 + 0.5 * (aMul - 1)) }; this._wind = common.uWind; }
     const geom = clumpGeometry();
     // [spacing m, fade start, fade end (m from the camera), mown blade m, rough blade m,
     //  fescue (share of the course's)]
@@ -275,6 +295,7 @@ export class GrassField {
     ];
     this.rings = rings.map(([spacing, f0, f1, hm, hr, fk]) => {
       if (fescueOnly && fk) f0 = Math.min(f0, f1 * 0.35);   // fescue thins out over most of the reach
+      hm *= aMul; hr *= aMul * aRough;
       const u = {
         ...common,
         uSpacing: { value: spacing }, uGrid: { value: 1 },
@@ -285,12 +306,12 @@ export class GrassField {
       };
       const g = geom.clone();
       g.instanceCount = 0;
-      const mesh = new THREE.Mesh(g, grassMaterial(u));
+      const mesh = new THREE.Mesh(g, grassMaterial(u, !!arcade));
       mesh.frustumCulled = false;
       mesh.receiveShadow = true;
       mesh.castShadow = false;
       this.group.add(mesh);
-      return { spacing, reach: f1, u, mesh, off: fescueOnly && !fk };
+      return { spacing, reach: f1, u, mesh, off: (fescueOnly && !fk) || (!!arcade && hm <= 0 && hr <= 0) };
     });
     geom.dispose();
   }
@@ -312,8 +333,12 @@ export class GrassField {
   }
 
   // Fit each ring's rect to what this camera sees (none at all from high up).
-  update(camera, timeSec) {
+  update(camera, timeSec, wind = null) {
     this._time.value = timeSec;
+    if (this._wind && wind) {
+      const to = (wind.toDeg || 0) * Math.PI / 180;
+      this._wind.value.set(Math.sin(to), Math.cos(to), Math.min(1, (wind.mph || 0) / 22), this._wind.value.w);
+    }
     camera.updateMatrixWorld();
     _pv.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
     _frustum.setFromProjectionMatrix(_pv);

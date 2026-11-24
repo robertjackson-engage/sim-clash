@@ -1,13 +1,14 @@
 # Sim Clash: how to play
 
-A golf video game for a real launch monitor: two players in one bay, real swings, a new
-world on every hole. It also plays alone, and it can be tried with no launch monitor at
-all. This page is the player's guide and the honest list of what is known to be rough.
+A golf video game for a real launch monitor: two players in one bay (or up to four), real
+swings, a new world on every hole. It also plays alone, and it can be tried with no launch
+monitor at all. This page is the player's guide and the honest list of what is known to be rough.
 
 The reference documents: the rules in full are in `docs/match.md`, the balls and the
 grading in `docs/arcade.md`, the stages in `docs/arcade-holes.md`, the look in
 `docs/arcade-look.md`, the camera and slow motion in `docs/arcade-feel.md`, the sound in
-`docs/arcade-voice.md`, the menus in `docs/sim-clash-shell.md`, launch monitors in
+`docs/arcade-voice.md`, the menus in `docs/sim-clash-shell.md`, the party games, handicaps,
+Bullseye, the Trick Shot Duel and replays in `docs/modes.md`, launch monitors in
 `docs/launch-monitors.md` and `docs/foresight-bridge.md`.
 
 ## Starting
@@ -26,12 +27,18 @@ all work; **Esc** always steps back one level.
 | | | |
 | --- | --- | --- |
 | 1 | **VERSUS** | two players, head to head: the match lobby |
-| 2 | **SOLO** | one player: a tour of 3, 6 or all 12 stages for a score, or any single stage |
-| 3 | **PRACTICE** | free play on any stage, and three mini games |
-| 4 | **PLAYERS** | the roster: add, rename, remove; rank, trophies, wins and losses, tour best |
-| 5 | **SETTINGS** | sound, volume, announcer, shot camera, putting, straighter shots, tap-ins, graphics, launch monitor, credits |
-| 6 | **HOW TO PLAY** | four pages: the game, the modes, the balls, the keys |
-| 7 | **QUIT** | closes the game (the desktop app only) |
+| 2 | **PARTY** | two to four players on one bay: skins, a stroke race, elimination |
+| 3 | **BULLSEYE** | one to four players: darts with a golf ball, on the three arenas |
+| 4 | **TRICK SHOT DUEL** | two players: hit any shot, the other has to match it or take a letter |
+| 5 | **SOLO** | one player: a tour of 3, 6 or all 12 stages for a score, or any single stage |
+| 6 | **PRACTICE** | free play on any stage, and three mini games |
+| 7 | **HIGHLIGHTS** | watch the best shots of the last game and of the night again |
+| 8 | **PLAYERS** | the roster: add, rename, remove; rank, trophies, wins and losses, tour best |
+| 9 | **SETTINGS** | sound, volume, announcer, shot camera, putting, straighter shots, tap-ins, graphics, launch monitor, credits |
+| | **HOW TO PLAY** | five pages: the game, the modes, more games, the balls, the keys |
+| | **QUIT** | closes the game (the desktop app only) |
+
+The games are the first column; the rest is beside them (Left / Right step across).
 
 The shortest way into a match is three presses: any key, Enter (VERSUS), Enter (START).
 
@@ -85,6 +92,8 @@ The match ends the moment it is won. The winner screen shows the awards (longest
 closest to the pin, shot of the match, most perfects), trophies, coins and a chest of balls
 for the bay, and **REMATCH / NEW MATCH / EXIT**. Matches are friendly: there are no stakes.
 
+OPTIONS also has **HELP** for each of the two players: a handicap (see "Help: a handicap").
+
 ### Rules
 
 - **Who plays.** The coin decides the first tee; after that the winner of the last hole has
@@ -124,6 +133,115 @@ for the bay, and **REMATCH / NEW MATCH / EXIT**. Matches are friendly: there are
 
 **Stray ball?** A swing under 40 mph from a full-shot lie counts, but the game asks at
 once: **U** undo, **C** count it. The prompt goes away by itself after eight seconds.
+
+## Party (two to four players)
+
+Main menu, **PARTY**. Four slots in four colours (red, blue, mint, pink; each also has its
+own mark: a disc, a diamond, a triangle, a square): two are always in, **+ ADD A PLAYER**
+brings a third and a fourth. Tap a slot to pick somebody else from the roster or type a new
+name. Pick a game, how long (3, 6 or 9 holes of the tour), and **START**.
+
+| Game | How it is won |
+| --- | --- |
+| **SKINS** | Every hole is worth a skin. The lowest score ALONE takes it; a tie carries it over, so the next hole is worth two. A tie on the last hole goes straight to sudden death for everything that is left. Most skins wins. |
+| **STROKE RACE** | Every stroke counts; the lowest total wins. Level on strokes: the most arcade points. Still level: sudden death. |
+| **ELIMINATION** | The highest score on each hole is OUT. A tie for the highest goes to an arena: closest to the pin, and the FARTHEST ball goes. One hole fewer than there are players; the last two play the final. |
+
+- **Who plays.** The first tee is drawn. After that the best score of the last hole tees off
+  first. Off the tee the farthest from the hole plays. On the green the player with the
+  fewest strokes putts first (in a stroke race: the farthest, as golf has it).
+- **Out of the hole.** To keep the bay moving, a player who can no longer matter to the hole
+  **picks up** at once. Skins: somebody is in, and you have already taken as many strokes.
+  Elimination: you are the last one out and already sure to be the highest. One stroke short
+  of that you get one swing: **PUTT IN TO STAY ALIVE**. In a stroke race nobody picks up:
+  only the stroke limit (par + 3; it then counts one more) stops you.
+- **The stake line** says what the swing is for, as in a match: **PUTT IN TO WIN THE HOLE**,
+  **PUTT IN FOR 3 SKINS**, **PUTT IN TO STAY ALIVE**, **PUTT IN TO KNOCK OUT SAM**,
+  **PUTT IN TO WIN THE RACE**.
+- **Balls and tricks** work as in a match (3 charges each over three holes, 4 over six, 6
+  over nine). A trick is cast on ONE opponent: **SABOTAGE GOES TO** under the header shows
+  who; **X** (or a tap on a name) changes it.
+- **The menu** (Esc or M) is the match's: undo the last shot, drop on the line, restart the
+  hole (everybody back on the tee), restart the game, and **LEAVE THE GAME**: the player who
+  is up drops out and the others play on.
+- **At the end** the winner takes the trophies, the coins and the chest; the last place drops
+  a few trophies; everybody in between keeps theirs. **PLAY AGAIN / NEW GAME / EXIT.**
+
+The header in play is a bar across the top with a card for each player: their strokes, how
+far they are from the pin, and their skins, their score against par, or IN / OUT.
+
+## Help: a handicap
+
+So somebody new can play a good golfer. In the party lobby it is on each player's card
+(**HELP: OFF 1 2 3**); in the versus lobby it is in OPTIONS. Each level adds to the last:
+
+| | Putting | Power-ups | Tee |
+| --- | --- | --- | --- |
+| **HELP 1** | EASY, for that player only | one more | the same tee |
+| **HELP 2** | EASY | one more | a **forward tee**, 20 % of the hole closer |
+| **HELP 3** | EASY | two more | a forward tee, 35 % closer |
+
+The forward tee is always on mown ground on the hole's own line. A hole that has none (the
+par 3s that are all carry: Lagoon Island, Volcano Drop) is played from the same tee as
+everybody else, and the other two levers are the help there. The stage card says where a
+helped player starts, and an **H** with the level sits beside their name.
+
+The lobby **suggests** a level from the players' records (a ring round it, and SUGGESTED).
+It never sets one: nothing changes until somebody presses it.
+
+## Bullseye (one to four players)
+
+Darts with a golf ball, on the three arenas (Bullseye Bay 115 yd, Thunder Dome 140 yd, Ice
+Pick 105 yd). The target rings painted round the pin are the board: the game reads their
+real sizes, so the score is what you see on the ground.
+
+- Three balls a turn, three rounds (the lobby also offers five and seven). Every ball is hit
+  from the tee.
+- The innermost ring (or a ball that drops) is the **BULLSEYE: 50**. The rings outside it are
+  25, 15, 10 and 5 (Thunder Dome has four rings: 50, 15, 10, 5). Off the last ring scores
+  nothing; water or out of bounds is a miss.
+- **HIGH SCORE**: most points wins. Scoring balls in a row in one turn count double, then
+  triple; a blank breaks the run. A perfect turn is 300.
+- **COUNTDOWN** (100, 200 or 300): first to exactly zero. A ball that would take you below
+  zero is a **BUST**: the turn's points go back. A check-out is played to the end of the
+  round, and the check-out in the fewest balls wins; the game is capped (6, 10 or 14 rounds)
+  and then the nearest to zero wins.
+- The **board** shows every ball as a dart in its player's colour and mark, small in the
+  corner during play and big between turns. The game keeps each player's best score on each
+  arena, and the **nearest the pin of the night** (the night turns over at 6 in the morning).
+- Esc or M: resume, undo the last ball, restart, exit. A ball under 40 mph is asked about
+  (STRAY BALL?) as in a match.
+
+## Trick shot duel (two players)
+
+Call your shot. The challenger hits ANY shot from the tee of the stage picked; the game
+reads what made it special and calls it: **MATCH IT: 150 YD CARRY · DRAW · INSIDE 20 FT**.
+The other player gets one ball to match every part of the call, or takes a letter. Then the
+roles swap. First to spell the word (CLASH by default; PIG and HORSE in the lobby) loses.
+
+- The call always has the carry (to match: within 10 %), and up to two more of: a bend (the
+  same side, 40 % of it), where it finished (inside twice the distance), on the green, a
+  tall one or a low one, and a gadget or ring the ball went through on the stages that have
+  them.
+- A challenger's ball in the water, out of bounds, a duff under 40 yd or a putt is **NO
+  CALL**: no letter, the roles swap.
+- The duel is capped at four rounds a letter; at the cap the fewer letters wins.
+
+## Instant replay and highlights
+
+A shot worth seeing again is shown again from a **different camera**: a ball that drops from
+off the green, a long putt, an epic callout, the shot that wins a hole or the game.
+
+- In a match or a party the replay plays **once, by itself**, with a REPLAY tag; any key, a
+  click or a swing skips it. In solo play it is **offered** (the chip, or **P**).
+- **A replay never makes anybody wait.** A real swing during one cancels it on the spot and
+  is played.
+- Three cameras: **GREEN-SIDE** (low beyond the cup, watching the ball arrive), **SKY CAM**
+  (straight down on a big drive, with its trace) and **REVERSE ANGLE** (flying ahead of the
+  ball, looking back). Time slows only by the pin, as in live play.
+- The winner screen has **SHOT OF THE MATCH**: a button, and the replay of it.
+- Main menu, **HIGHLIGHTS**: the notable shots of the last game and the best of the night,
+  to watch again on their own stage.
 
 ## Solo
 
@@ -259,12 +377,14 @@ In solo they are stages 10 to 12 of the full tour: the dock says FREE ROCKET BAL
 | D | show or hide the shot data panels (the last shot's numbers, the club card) |
 | F | fly over the hole |
 | Esc | the match menu, or the pause menu in solo and practice; in the menus, one step back |
-| M | the match menu (in a match); take the last shot back (free play) |
+| M | the match menu (in a match, a party, Bullseye, a duel); take the last shot back (free play) |
+| X | a party of three or four: who your trick is cast on |
+| P | play the replay that is offered (solo play) |
 | U / C | undo / count a stray ball (while the prompt is up, in a match) |
 | U | unlimited balls on / off (outside a match) |
 | S | sound on / off |
 | F11 or Alt+Enter | full screen on / off |
-| any key or a click | skip an intro screen |
+| any key or a click | skip an intro screen, or a replay |
 
 ## Camera and sound
 
@@ -283,6 +403,18 @@ Checked against the build of 23 November 2026. "Not re-checked" means the item w
 during the integration playthrough and nobody has looked at it again since.
 
 Open, not fixed:
+
+- **The party games, Bullseye, the Trick Shot Duel and the replays have been played with
+  test swings only.** Their rules are tested by machine and their screens were looked at in
+  a headless browser; nobody has yet stood in a bay with four people and a launch monitor.
+  The numbers that need real golfers to judge: the help levels, Bullseye's ring values and
+  countdown targets, the duel's tolerances, how long a replay should hold the screen.
+- **The new voice lines do not exist yet.** The party, Bullseye, duel and replay screens ask
+  the announcer for lines that have not been recorded (`docs/modes.md` lists them); the
+  existing lines and sounds they share with a match do play. Player 3 and Player 4 have no
+  spoken name without your own ElevenLabs key.
+- **A forward tee needs mown ground on the hole's line.** On the all-carry par 3s there is
+  none, so HELP 2 and 3 are worth the same as HELP 1 there, plus the extra power-up.
 
 - **The installed game's window has not been tested on a second PC.** The installer, the
   installed files and the game server inside it are checked by machine; the full-screen

@@ -18,6 +18,12 @@
 //   - Y up, front to +Z, origin at the centre of the base (the node's translation in the
 //     scene, a grid slot, is dropped).
 //
+// v3:stadium Four more material slots, named in the second UV set's v (lib.py SLOT): `glass`
+// (0.8: palette colour, alpha blended), and three TEXTURED ones whose first UV set is a real
+// UV instead of a colour: `screen` (0.2), `led` (0.4), `ad` (0.6). Those carry no texture in
+// the file: the material's NAME is the contract, and the renderer (props.js) gives each its
+// shared texture (the jumbotron's screen, the scrolling LED strip, the sponsor atlas).
+//
 //   node tools/arcade-art/bake.mjs <scene.glb> [--out public/arcade/props] [--only a,b]
 //        [--skip zz-test] [--manifest] [--heights kind=h,kind=h]
 //   node tools/arcade-art/bake.mjs --verify [--out public/arcade/props]
@@ -88,7 +94,7 @@ function nodeTriangles(g, node) {
     const idx = prim.indices != null ? readAccessor(g, prim.indices).data : Float64Array.from({ length: P.length / 3 }, (_, i) => i);
     const c8 = (v) => Math.max(0, Math.min(255, Math.round(v * 255)));
     for (let t = 0; t + 2 < idx.length; t += 3) {
-      const tri = { pos: [], nrm: [], rgb: 0, glow: false };
+      const tri = { pos: [], nrm: [], rgb: 0, glow: false, slot: 'base', uv: null };
       for (let k = 0; k < 3; k++) {
         const i = idx[t + k];
         tri.pos.push(quatRotate(q, [P[i * 3] * s[0], P[i * 3 + 1] * s[1], P[i * 3 + 2] * s[2]]));
@@ -97,7 +103,10 @@ function nodeTriangles(g, node) {
       const i0 = idx[t];
       // the exporter flips v: stored v = 1 - blender v
       tri.rgb = (c8(U0[i0 * 2]) << 16) | (c8(1 - U0[i0 * 2 + 1]) << 8) | c8(U1[i0 * 2]);
-      tri.glow = 1 - U1[i0 * 2 + 1] > 0.5;
+      const sv = 1 - U1[i0 * 2 + 1];
+      tri.slot = sv > 0.9 ? 'glow' : sv > 0.7 ? 'glass' : sv > 0.5 ? 'ad' : sv > 0.3 ? 'led' : sv > 0.1 ? 'screen' : 'base';
+      tri.glow = tri.slot === 'glow';
+      if (TEXTURED.includes(tri.slot)) { tri.rgb = 0; tri.uv = [0, 1, 2].map((k) => [U0[idx[t + k] * 2], U0[idx[t + k] * 2 + 1]]); }
       // face normal: drop degenerate triangles, fill missing normals
       const [a, b, c] = tri.pos;
       const e1 = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], e2 = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
@@ -127,13 +136,16 @@ function png(width, height, rgb) {
   return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(raw, { level: 9 })), chunk('IEND', Buffer.alloc(0))]);
 }
 
+export const TEXTURED = ['screen', 'led', 'ad'];
+export const SLOTS = ['base', 'glow', 'glass', 'screen', 'led', 'ad'];
 const pow2 = (n) => { let p = 1; while (p < n) p *= 2; return p; };
 const pad4 = (b, fill = 0) => (b.length % 4 ? Buffer.concat([b, Buffer.alloc(4 - (b.length % 4), fill)]) : b);
 
 // ---------------------------------------------------------------- bake one model
 export function bakeModel(name, tris) {
   // palette
-  const colours = [...new Set(tris.map((t) => t.rgb))].sort((a, b) => a - b);
+  const colours = [...new Set(tris.filter((t) => !t.uv).map((t) => t.rgb))].sort((a, b) => a - b);
+  if (!colours.length) colours.push(0x808080);
   const cols = pow2(Math.ceil(Math.sqrt(colours.length))), rows = pow2(Math.ceil(colours.length / cols));
   const slot = new Map(colours.map((c, i) => [c, i]));
   const W = cols * CELL, H = rows * CELL, px = Buffer.alloc(W * H * 3);
@@ -148,12 +160,12 @@ export function bakeModel(name, tris) {
   const uvOf = (rgb) => { const i = slot.get(rgb); return [Math.round(((i % cols) + 0.5) / cols * 65535), Math.round((((i / cols) | 0) + 0.5) / rows * 65535)]; };
 
   // weld, one vertex pool per primitive (base, glow)
-  const groups = [{ glow: false, pos: [], nrm: [], uv: [], idx: [], map: new Map() }, { glow: true, pos: [], nrm: [], uv: [], idx: [], map: new Map() }];
+  const groups = SLOTS.map((slot) => ({ slot, glow: slot === 'glow', tex: TEXTURED.includes(slot), pos: [], nrm: [], uv: [], idx: [], map: new Map() }));
   for (const t of tris) {
-    const gr = groups[t.glow ? 1 : 0], uv = uvOf(t.rgb);
+    const gr = groups[SLOTS.indexOf(t.slot || (t.glow ? 'glow' : 'base'))], uvc = t.uv ? null : uvOf(t.rgb);
     for (let k = 0; k < 3; k++) {
-      const p = t.pos[k], n = t.nrm[k];
-      const key = `${Math.round(p[0] * 2000)},${Math.round(p[1] * 2000)},${Math.round(p[2] * 2000)},${Math.round(n[0] * 60)},${Math.round(n[1] * 60)},${Math.round(n[2] * 60)},${t.rgb}`;
+      const p = t.pos[k], n = t.nrm[k], uv = t.uv ? t.uv[k] : uvc;
+      const key = `${Math.round(p[0] * 2000)},${Math.round(p[1] * 2000)},${Math.round(p[2] * 2000)},${Math.round(n[0] * 60)},${Math.round(n[1] * 60)},${Math.round(n[2] * 60)},${t.uv ? `${uv[0].toFixed(4)},${uv[1].toFixed(4)}` : t.rgb}`;
       let i = gr.map.get(key);
       if (i == null) { i = gr.pos.length / 3; gr.map.set(key, i); gr.pos.push(...p); gr.nrm.push(...n); gr.uv.push(...uv); }
       gr.idx.push(i);
@@ -175,26 +187,30 @@ export function bakeModel(name, tris) {
     accessors.push({ bufferView: P, componentType: 5126, count, type: 'VEC3', min: mn, max: mx });
     const N = view(Buffer.from(new Float32Array(gr.nrm).buffer), 34962);
     accessors.push({ bufferView: N, componentType: 5126, count, type: 'VEC3' });
-    const U = view(Buffer.from(new Uint16Array(gr.uv).buffer), 34962);
-    accessors.push({ bufferView: U, componentType: 5123, normalized: true, count, type: 'VEC2' });
+    const U = view(Buffer.from((gr.tex ? new Float32Array(gr.uv) : new Uint16Array(gr.uv)).buffer), 34962);
+    accessors.push(gr.tex ? { bufferView: U, componentType: 5126, count, type: 'VEC2' } : { bufferView: U, componentType: 5123, normalized: true, count, type: 'VEC2' });
     const big = count > 65535;
     const X = view(Buffer.from((big ? new Uint32Array(gr.idx) : new Uint16Array(gr.idx)).buffer), 34963);
     accessors.push({ bufferView: X, componentType: big ? 5125 : 5123, count: gr.idx.length, type: 'SCALAR' });
     const a0 = accessors.length - 4;
-    primitives.push({ attributes: { POSITION: a0, NORMAL: a0 + 1, TEXCOORD_0: a0 + 2 }, indices: a0 + 3, material: gr.glow ? 1 : 0, mode: 4 });
+    primitives.push({ attributes: { POSITION: a0, NORMAL: a0 + 1, TEXCOORD_0: a0 + 2 }, indices: a0 + 3, material: gr.slot, mode: 4 });
     nTris += gr.idx.length / 3;
   }
   const imageView = view(image);
-  const hasGlow = used.some((g) => g.glow), hasBase = used.some((g) => !g.glow);
+  const hasGlow = used.some((g) => g.glow);
   const baseMat = { name: 'base', pbrMetallicRoughness: { baseColorTexture: { index: 0 }, metallicFactor: 0, roughnessFactor: 0.85 }, doubleSided: true };
   // glow: the palette colour comes from the emissive texture; the lit base is turned down
   // so daylight does not wash a screen or a lamp out to white
   const glowMat = { name: 'glow', pbrMetallicRoughness: { baseColorFactor: [0.22, 0.22, 0.22, 1], baseColorTexture: { index: 0 }, metallicFactor: 0, roughnessFactor: 0.6 }, emissiveTexture: { index: 0 }, emissiveFactor: [1, 1, 1], doubleSided: true };
   // material indices must be dense: a model that is all glow (or has none) keeps one material
+  const lit = (name) => ({ name, pbrMetallicRoughness: { baseColorFactor: [0.05, 0.05, 0.06, 1], metallicFactor: 0, roughnessFactor: 0.5 }, emissiveFactor: [1, 1, 1], doubleSided: true });
+  const byName = {
+    base: baseMat, glow: glowMat,
+    glass: { name: 'glass', pbrMetallicRoughness: { baseColorFactor: [1, 1, 1, 0.42], baseColorTexture: { index: 0 }, metallicFactor: 0, roughnessFactor: 0.25 }, alphaMode: 'BLEND', doubleSided: true },
+    screen: lit('screen'), led: lit('led'), ad: lit('ad'),
+  };
   const materials = [];
-  if (hasBase) materials.push(baseMat);
-  if (hasGlow) materials.push(glowMat);
-  for (const p of primitives) p.material = p.material === 1 ? materials.indexOf(glowMat) : 0;
+  for (const p of primitives) { const m = byName[p.material]; if (!materials.includes(m)) materials.push(m); p.material = materials.indexOf(m); }
   const json = {
     asset: { version: '2.0', generator: 'open-birdie tools/arcade-art/bake.mjs' },
     scene: 0, scenes: [{ nodes: [0] }], nodes: [{ name, mesh: 0 }],
@@ -207,7 +223,7 @@ export function bakeModel(name, tris) {
   const head = Buffer.alloc(12); head.writeUInt32LE(0x46546c67, 0); head.writeUInt32LE(2, 4); head.writeUInt32LE(12 + 8 + jb.length + 8 + bb.length, 8);
   const jh = Buffer.alloc(8); jh.writeUInt32LE(jb.length, 0); jh.writeUInt32LE(0x4e4f534a, 4);
   const bh = Buffer.alloc(8); bh.writeUInt32LE(bb.length, 0); bh.writeUInt32LE(0x004e4942, 4);
-  return { glb: Buffer.concat([head, jh, jb, bh, bb]), tris: nTris, box, colours: colours.length, glow: hasGlow };
+  return { glb: Buffer.concat([head, jh, jb, bh, bb]), tris: nTris, box, colours: colours.length, glow: hasGlow, slots: used.map((g) => g.slot) };
 }
 
 // ---------------------------------------------------------------- verify (reads the file back)
@@ -241,6 +257,8 @@ export function inspectGlb(file) {
 }
 
 const r2 = (v) => Math.round(v * 100) / 100;
+// v3:stadium stand modules have their FRONT EDGE on the origin (z = 0) and run back from it (stadium-kit.js)
+const ANCHOR_FRONT = ['stand-section', 'stand-corner', 'grandstand', 'crowd', 'tunnel'];
 
 function main() {
   const argv = process.argv.slice(2);
@@ -282,6 +300,9 @@ function main() {
     const entry = {
       file, tris: s.tris, heightM: r2(s.box.max[1]), widthM: r2(s.size[0]), depthM: r2(s.size[2]),
       skirtM: r2(Math.max(0, -s.box.min[1])), bytes: s.bytes, glow: baked.glow, source: 'blender',
+      ...(baked.slots.some((x) => x !== 'base' && x !== 'glow') ? { slots: baked.slots } : {}),
+      ...(man.kinds[name] && man.kinds[name].anchor ? { anchor: man.kinds[name].anchor } : {}),
+      ...(ANCHOR_FRONT.includes(name) ? { anchor: 'front' } : {}),
     };
     if (argv.includes('--manifest')) man.kinds[name] = entry;
     rows.push({ kind: name, tris: s.tris, KB: Math.round(s.bytes / 1024), mats: s.materials, colours: baked.colours, w: entry.widthM, h: entry.heightM, d: entry.depthM, minY: r2(s.box.min[1]), cx: r2((s.box.min[0] + s.box.max[0]) / 2), cz: r2((s.box.min[2] + s.box.max[2]) / 2), winding: r2(s.windingOk) });

@@ -1,5 +1,21 @@
 {
   "kinds": {
+    "ad-board": {
+      "file": "ad-board.glb",
+      "tris": 120,
+      "heightM": 2.37,
+      "widthM": 6.4,
+      "depthM": 1.7,
+      "skirtM": 0.33,
+      "bytes": 11024,
+      "glow": true,
+      "source": "blender",
+      "slots": [
+        "base",
+        "glow",
+        "ad"
+      ]
+    },
     "airship": {
       "file": "airship.glb",
       "tris": 1610,
@@ -21,6 +37,21 @@
       "bytes": 33024,
       "glow": true,
       "source": "blender"
+    },
+    "barrier": {
+      "file": "barrier.glb",
+      "tris": 402,
+      "heightM": 0.87,
+      "widthM": 7.96,
+      "depthM": 0.72,
+      "skirtM": 0.25,
+      "bytes": 29112,
+      "glow": false,
+      "source": "blender",
+      "slots": [
+        "base",
+        "led"
+      ]
     },
     "billboard": {
       "file": "billboard.glb",
@@ -46,23 +77,23 @@
     },
     "boat": {
       "file": "boat.glb",
-      "tris": 881,
-      "heightM": 6.56,
-      "widthM": 3.49,
-      "depthM": 10.7,
-      "skirtM": 0,
-      "bytes": 59104,
+      "tris": 1479,
+      "heightM": 6.83,
+      "widthM": 3.78,
+      "depthM": 10.93,
+      "skirtM": 0.45,
+      "bytes": 92468,
       "glow": true,
       "source": "blender"
     },
     "cabin": {
       "file": "cabin.glb",
-      "tris": 1700,
-      "heightM": 8.95,
-      "widthM": 12.16,
-      "depthM": 10.69,
-      "skirtM": 0.67,
-      "bytes": 113144,
+      "tris": 3412,
+      "heightM": 9,
+      "widthM": 12.61,
+      "depthM": 11.3,
+      "skirtM": 0.7,
+      "bytes": 213812,
       "glow": true,
       "source": "blender"
     },
@@ -77,27 +108,48 @@
       "glow": false,
       "source": "blender"
     },
+    "camera-tower": {
+      "file": "camera-tower.glb",
+      "tris": 758,
+      "heightM": 11.41,
+      "widthM": 4.9,
+      "depthM": 5.13,
+      "skirtM": 0.5,
+      "bytes": 51212,
+      "glow": true,
+      "source": "blender",
+      "slots": [
+        "base",
+        "glow",
+        "ad"
+      ]
+    },
     "castle": {
       "file": "castle.glb",
-      "tris": 6359,
-      "heightM": 43,
-      "widthM": 44,
-      "depthM": 48.61,
+      "tris": 14618,
+      "heightM": 43.38,
+      "widthM": 46.57,
+      "depthM": 50.1,
       "skirtM": 1.5,
-      "bytes": 382688,
+      "bytes": 874796,
       "glow": true,
       "source": "blender"
     },
     "crowd": {
       "file": "crowd.glb",
-      "tris": 2990,
-      "heightM": 4.45,
-      "widthM": 18.4,
-      "depthM": 4.3,
+      "tris": 632,
+      "heightM": 4.3,
+      "widthM": 18.28,
+      "depthM": 4.54,
       "skirtM": 0.3,
-      "bytes": 229580,
+      "bytes": 46112,
       "glow": false,
-      "source": "blender"
+      "source": "blender",
+      "slots": [
+        "base",
+        "ad"
+      ],
+      "anchor": "front"
     },
     "crystal": {
       "file": "crystal.glb",
@@ -145,13 +197,13 @@
     },
     "fountain": {
       "file": "fountain.glb",
-      "tris": 1680,
-      "heightM": 6.35,
+      "tris": 2546,
+      "heightM": 6.41,
       "widthM": 10.9,
       "depthM": 10.9,
       "skirtM": 0.5,
-      "bytes": 93832,
-      "glow": false,
+      "bytes": 149592,
+      "glow": true,
       "source": "blender"
     },
     "gate": {
@@ -178,23 +230,31 @@
     },
     "grandstand": {
       "file": "grandstand.glb",
-      "tris": 11855,
-      "heightM": 14.6,
-      "widthM": 31.9,
-      "depthM": 17.05,
-      "skirtM": 0.6,
-      "bytes": 848328,
+      "tris": 2731,
+      "heightM": 15.82,
+      "widthM": 31.73,
+      "depthM": 17.6,
+      "skirtM": 1.2,
+      "bytes": 149456,
       "glow": true,
-      "source": "blender"
+      "source": "blender",
+      "slots": [
+        "base",
+        "glow",
+        "glass",
+        "led",
+        "ad"
+      ],
+      "anchor": "front"
     },
     "hut": {
       "file": "hut.glb",
-      "tris": 1964,
-      "heightM": 5.6,
-      "widthM": 9.11,
-      "depthM": 9.02,
+      "tris": 2402,
+      "heightM": 5.72,
+      "widthM": 9.19,
+      "depthM": 9.1,
       "skirtM": 0.4,
-      "bytes": 122412,
+      "bytes": 150588,
       "glow": true,
       "source": "blender"
     },
@@ -222,14 +282,21 @@
     },
     "jumbotron": {
       "file": "jumbotron.glb",
-      "tris": 3078,
-      "heightM": 18.31,
-      "widthM": 18.5,
-      "depthM": 3.98,
+      "tris": 1998,
+      "heightM": 19.6,
+      "widthM": 19.95,
+      "depthM": 4.32,
       "skirtM": 0.6,
-      "bytes": 163844,
+      "bytes": 130444,
       "glow": true,
-      "source": "blender"
+      "source": "blender",
+      "slots": [
+        "base",
+        "glow",
+        "screen",
+        "led",
+        "ad"
+      ]
     },
     "launch-ramp": {
       "file": "launch-ramp.glb",
@@ -261,6 +328,32 @@
       "depthM": 7.99,
       "skirtM": 0.5,
       "bytes": 68008,
+      "glow": true,
+      "source": "blender"
+    },
+    "led-board": {
+      "file": "led-board.glb",
+      "tris": 98,
+      "heightM": 1.25,
+      "widthM": 12,
+      "depthM": 1.21,
+      "skirtM": 0.25,
+      "bytes": 8932,
+      "glow": false,
+      "source": "blender",
+      "slots": [
+        "base",
+        "led"
+      ]
+    },
+    "lighthouse": {
+      "file": "lighthouse.glb",
+      "tris": 2865,
+      "heightM": 28,
+      "widthM": 22.18,
+      "depthM": 20.83,
+      "skirtM": 1.2,
+      "bytes": 169736,
       "glow": true,
       "source": "blender"
     },
@@ -299,14 +392,30 @@
     },
     "pagoda": {
       "file": "pagoda.glb",
-      "tris": 5238,
-      "heightM": 25.78,
-      "widthM": 14.17,
-      "depthM": 15.07,
+      "tris": 8234,
+      "heightM": 25.95,
+      "widthM": 15.63,
+      "depthM": 17.02,
       "skirtM": 0.9,
-      "bytes": 330344,
+      "bytes": 501164,
       "glow": true,
       "source": "blender"
+    },
+    "palm": {
+      "file": "palm-a.glb",
+      "tris": 852,
+      "heightM": 13.42,
+      "widthM": 9.52,
+      "depthM": 8.7,
+      "skirtM": 0.7,
+      "bytes": 278188,
+      "glow": false,
+      "source": "tools/arcade-art/trees (the tree generator's coconut palm)",
+      "variants": [
+        "palm-a.glb",
+        "palm-b.glb",
+        "palm-c.glb"
+      ]
     },
     "pine": {
       "file": "pine.glb",
@@ -319,14 +428,31 @@
       "glow": false,
       "source": "blender"
     },
+    "podium": {
+      "file": "podium.glb",
+      "tris": 1642,
+      "heightM": 10.8,
+      "widthM": 18.51,
+      "depthM": 5.58,
+      "skirtM": 0.3,
+      "bytes": 105236,
+      "glow": true,
+      "source": "blender",
+      "slots": [
+        "base",
+        "glow",
+        "led",
+        "ad"
+      ]
+    },
     "pyramid": {
       "file": "pyramid.glb",
-      "tris": 2308,
-      "heightM": 60.2,
-      "widthM": 104.36,
-      "depthM": 111,
+      "tris": 4752,
+      "heightM": 60.5,
+      "widthM": 103.52,
+      "depthM": 115.51,
       "skirtM": 1.6,
-      "bytes": 135888,
+      "bytes": 292460,
       "glow": true,
       "source": "blender"
     },
@@ -343,13 +469,13 @@
     },
     "ruins": {
       "file": "ruins.glb",
-      "tris": 3732,
-      "heightM": 11.65,
-      "widthM": 21.29,
-      "depthM": 13.84,
+      "tris": 4616,
+      "heightM": 11.87,
+      "widthM": 20.71,
+      "depthM": 14.65,
       "skirtM": 0.7,
-      "bytes": 214396,
-      "glow": false,
+      "bytes": 280064,
+      "glow": true,
       "source": "blender"
     },
     "sakura-tree": {
@@ -447,6 +573,44 @@
       "source": "blender",
       "note": "the lighter hosted-Blender model of sphinx (flat colour, glow parts)"
     },
+    "stand-corner": {
+      "file": "stand-corner.glb",
+      "tris": 4859,
+      "heightM": 61.4,
+      "widthM": 24.7,
+      "depthM": 54.84,
+      "skirtM": 1.5,
+      "bytes": 270500,
+      "glow": true,
+      "source": "blender",
+      "slots": [
+        "base",
+        "glow",
+        "glass",
+        "led",
+        "ad"
+      ],
+      "anchor": "front"
+    },
+    "stand-section": {
+      "file": "stand-section.glb",
+      "tris": 5382,
+      "heightM": 42.5,
+      "widthM": 24.7,
+      "depthM": 48.24,
+      "skirtM": 1.5,
+      "bytes": 270960,
+      "glow": true,
+      "source": "blender",
+      "slots": [
+        "base",
+        "glow",
+        "glass",
+        "led",
+        "ad"
+      ],
+      "anchor": "front"
+    },
     "statue": {
       "file": "statue.glb",
       "tris": 1808,
@@ -495,12 +659,12 @@
     },
     "tiki": {
       "file": "tiki.glb",
-      "tris": 920,
-      "heightM": 4.7,
-      "widthM": 2,
-      "depthM": 2,
+      "tris": 1446,
+      "heightM": 5.12,
+      "widthM": 2.08,
+      "depthM": 1.94,
       "skirtM": 0.3,
-      "bytes": 60252,
+      "bytes": 94748,
       "glow": true,
       "source": "blender"
     },
@@ -517,13 +681,13 @@
     },
     "torii": {
       "file": "torii.glb",
-      "tris": 674,
-      "heightM": 8.82,
-      "widthM": 10.24,
-      "depthM": 3,
-      "skirtM": 0.3,
-      "bytes": 40964,
-      "glow": false,
+      "tris": 1418,
+      "heightM": 9,
+      "widthM": 10.6,
+      "depthM": 3.2,
+      "skirtM": 0.4,
+      "bytes": 84784,
+      "glow": true,
       "source": "blender"
     },
     "tower": {
@@ -536,6 +700,24 @@
       "bytes": 148052,
       "glow": true,
       "source": "blender"
+    },
+    "tunnel": {
+      "file": "tunnel.glb",
+      "tris": 1196,
+      "heightM": 7.4,
+      "widthM": 10.1,
+      "depthM": 15.45,
+      "skirtM": 0.4,
+      "bytes": 80060,
+      "glow": true,
+      "source": "blender",
+      "slots": [
+        "base",
+        "glow",
+        "led",
+        "ad"
+      ],
+      "anchor": "front"
     },
     "waterfall": {
       "file": "waterfall.glb",

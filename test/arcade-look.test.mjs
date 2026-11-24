@@ -149,7 +149,7 @@ test('the tracer and the turf compile their arcade code only when asked', () => 
   assert.ok(!Object.keys(realShader.uniforms).some((k) => k.startsWith('uArc')), 'no arcade uniforms in the real look');
   const arc = makeTurfMaterial({ ...base, arcade: lookTurf('arcade') }), arcShader = fake();
   arc.onBeforeCompile(arcShader);
-  assert.equal(arc.customProgramCacheKey(), 'turf-grain-v46-arcade-cliff');   // the arcade look draws steep ground as rock
+  assert.equal(arc.customProgramCacheKey(), 'turf-grain-v46-arcade-cliff-env3');   // the arcade look draws steep ground as rock; v3:environment and its ground from the material sets (TURF_ENV)
   assert.match(arcShader.fragmentShader, /#define TURF_ARCADE/);
   assert.equal(arcShader.uniforms.uStripeM.value, ARCADE_LOOK.turf.stripeM);
   for (const k of ['uArcStripe', 'uArcTone', 'uArcCollar', 'uArcSand']) assert.ok(arcShader.uniforms[k], k);
@@ -157,7 +157,7 @@ test('the tracer and the turf compile their arcade code only when asked', () => 
   const src = realShader.fragmentShader.split('\n');
   let depth = 0;
   for (const line of src) {
-    if (/^\s*#ifdef TURF_(ARCADE|GLOW|CLIFF)/.test(line)) depth++;
+    if (/^\s*#ifdef TURF_(ARCADE|GLOW|CLIFF|ENV)/.test(line)) depth++;   // v3:environment TURF_ENV: the ground's material sets, arcade only
     else if (depth && /^\s*#endif/.test(line)) depth--;
     else if (!depth) assert.doesNotMatch(line, /uArc/, `arcade code outside its #ifdef: ${line.trim()}`);
   }
@@ -281,6 +281,7 @@ const CONTRACT_PROP_KINDS = [
   'lava-fall', 'sakura-tree', 'torii', 'pagoda', 'stone-lantern', 'bridge', 'temple', 'idol', 'pyramid', 'obelisk', 'sphinx',
   'skyscraper', 'neon-sign', 'billboard', 'grandstand', 'floodlight', 'target-ring', 'balloon', 'blimp', 'windmill',
   'shipwreck', 'crystal', 'torch', 'flag-banner',
+  'stand-section', 'stand-corner', 'led-board', 'ad-board', 'barrier', 'camera-tower', 'tunnel', 'podium',   // v3:stadium the stadium kit
   'waterfall', 'castle', 'dragon', 'giant-tree', 'ruins', 'jumbotron', 'fireworks', 'cloud', 'airship', 'statue',
   'fountain', 'tiki', 'hut', 'boat', 'gate', 'tower', 'rock-spire', 'launch-ramp', 'crowd', 'bird-flock',
 ];
@@ -553,14 +554,14 @@ test('themes: the trail and the ball stay visible, on snow most of all', () => {
 test('themes: the turf\'s night glow is compiled only for a theme that has one; steep ground is rock', () => {
   const plainMat = makeTurfMaterial({ ...turfBase(), arcade: resolveLook('tropical', 'day').turf }), plainShader = fakeShader();
   plainMat.onBeforeCompile(plainShader);
-  assert.equal(plainMat.customProgramCacheKey(), 'turf-grain-v46-arcade-cliff');
+  assert.equal(plainMat.customProgramCacheKey(), 'turf-grain-v46-arcade-cliff-env3');   // v3:environment (TURF_ENV)
   assert.doesNotMatch(plainShader.fragmentShader, /#define TURF_GLOW/);
   assert.match(plainShader.fragmentShader, /#define TURF_CLIFF/);
   assert.ok(!('uArcLift' in plainShader.uniforms));
   assert.ok(plainShader.uniforms.uArcCliff.value.x < plainShader.uniforms.uArcCliff.value.y, 'rock below one slope, turf above another');
   const night = makeTurfMaterial({ ...turfBase(), arcade: resolveLook('neon', 'night').turf }), nightShader = fakeShader();
   night.onBeforeCompile(nightShader);
-  assert.equal(night.customProgramCacheKey(), 'turf-grain-v46-arcade-glow-cliff');
+  assert.equal(night.customProgramCacheKey(), 'turf-grain-v46-arcade-glow-cliff-env3');
   assert.match(nightShader.fragmentShader, /#define TURF_GLOW/);
   assert.ok(nightShader.uniforms.uArcLift.value.x > 0.2);
   assert.ok(nightShader.uniforms.uArcEdge.value.w > 1 && nightShader.uniforms.uArcGreenEdge.value.w > 1);
@@ -570,7 +571,7 @@ test('themes: the turf\'s night glow is compiled only for a theme that has one; 
   assert.equal(snowShader.uniforms.uArcEdge.value.w, 0);
   // a look with no cliff rock and no glow compiles the arcade turf as it first shipped
   const old = makeTurfMaterial({ ...turfBase(), arcade: { ...ARCADE_LOOK.turf, cliff: null } });
-  assert.equal(old.customProgramCacheKey(), 'turf-grain-v46-arcade');
+  assert.equal(old.customProgramCacheKey(), 'turf-grain-v46-arcade-env3');   // (env3, v3:env-polish: the cliff's rock was rewritten)   // v3:environment (TURF_ENV)
 });
 
 test('themes: course.trees keep their place and number, and take the theme\'s species', () => {
@@ -675,7 +676,7 @@ test('props: every procedural model is sound geometry at the size asked for', ()
       assert.ok(Math.abs(above - want) < Math.max(0.05, want * 0.02), `${kind}: ${above.toFixed(2)} m above the ground for ${want} m asked`);
       // a sane silhouette: not a sliver, not a slab
       const wide = Math.max(size.x, size.z), tall = b.max.y - model.baseY;
-      assert.ok(wide / tall > 0.1 && wide / tall < 6.5, `${kind}: ${wide.toFixed(1)} wide by ${tall.toFixed(1)} tall`);
+      assert.ok(wide / tall > 0.1 && wide / tall < (['led-board', 'barrier'].includes(kind) ? 12 : 6.5), `${kind}: ${wide.toFixed(1)} wide by ${tall.toFixed(1)} tall`);   // v3:stadium (a run of low board is long)
       assert.ok(model.baseY - b.min.y <= tall * 1.6, `${kind}: its foundation is no deeper than it needs`);
     }
     g.dispose();

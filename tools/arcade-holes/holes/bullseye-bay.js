@@ -221,6 +221,13 @@ for (let deg = -176; deg <= 180; deg += 8) {
   if (standable(x, y)) props.push(P('palm', x, y, 9 + 3 * Math.abs(onCircle(crestN, deg * 3)), Math.round(deg * 7 + 360) % 360));
 }
 
+// ---- gadgets (docs/gadgets.md): sudden death stays pure. Nothing here touches the ball:
+// only a coin trail along the flight that finishes by the flag (collect all 6 for the bonus).
+const flagFlight = L.flight(height, TEE, PIN, { speedMph: 78, vla: 29, spin: 10000 });
+const gadgets = [
+  flagFlight.coins('bay-coins', 20, Math.floor(flagFlight.carryM) - 8, 6, { reach: 4 }),
+];
+
 module.exports = {
   id: 'bullseye-bay',
   extent: { minX: -270, minY: -150, maxX: 270, maxY: 380 },
@@ -239,6 +246,7 @@ module.exports = {
   trees,
   woods: [],
   props,
+  gadgets,
   obLine: L.rect(-262, -142, 262, 372),
   height,
   sea: true,

@@ -33,6 +33,7 @@ import { realTreeSize } from './tree-placement.js';
 import { generateTree, thinCards } from './tree-gen.js';
 import { leafAtlas, birchBark, ATLAS_TILE_UV } from './leaf-atlas.js';
 import { treeFade, FADE_NEAR_M, FADE_HUG_M, FADE_SHOWN, FADE_AT } from './tree-fade.js';
+import { ArcadeTreeField, treeModeFromQuery } from './tree-models.js';   // v3:vegetation
 
 function rng(seed) {
   let a = seed >>> 0;
@@ -615,3 +616,20 @@ export class TreeField {
 }
 
 export function treeAtlasForTest() { return leafAtlas(); }
+
+// v3:vegetation The trees a scene draws (scene.js _addTrees). In the arcade look
+// (opts.arcade = { theme, timeOfDay }) every world has its own modelled species, with
+// levels of detail, wind, snow, blossom and an understory (tree-models.js
+// ArcadeTreeField; tree-species.js says what grows where). The real look, and
+// `?trees=classic`, keep the TreeField above; so does a copy of the game whose model
+// files are missing (the field falls back to it by itself). Both answer the same calls:
+// group, update(camera, t), setFadeLine(line), setNearDistance(m), fadeOn, stats, dispose().
+export function makeTreeField(spots, hAt, V, opts = {}) {
+  if (opts.arcade && treeModeFromQuery() !== 'classic') {
+    return new ArcadeTreeField(spots, hAt, V, {
+      ...opts, theme: opts.arcade.theme, timeOfDay: opts.arcade.timeOfDay,
+      onFail: (field) => field.adopt(new TreeField(spots, hAt, V, opts)),
+    });
+  }
+  return new TreeField(spots, hAt, V, opts);
+}

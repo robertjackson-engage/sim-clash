@@ -34,9 +34,11 @@ Every asset is CC0, generated for this project, or authored for this project. No
 taken from a commercial game, a film, a broadcast or a video. The full list, file by file
 where it matters, is in `CREDITS.md`, `ASSETS.md` and `public/arcade/sfx/CREDITS.md`.
 
-The installer carries three sky photographs (HDRIs) from [Poly Haven](https://polyhaven.com),
-released by their authors under CC0 1.0: one inside the app, two installed with the stages.
-`CREDITS.md` names each file, its authors and its source page.
+The installer carries one sky photograph (an HDRI) from [Poly Haven](https://polyhaven.com),
+released under CC0 1.0, inside the app. The stages' own sky panoramas and ground textures
+(`public/arcade/env/`) were generated for this project with an image model and processed
+by this repository's tools; they contain no third-party picture. `CREDITS.md` names each
+file's source.
 
 ## Names and trademarks
 

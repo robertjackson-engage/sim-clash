@@ -43,6 +43,10 @@ export const QUALITY_PRESETS = Object.freeze({
     grassDrawM: 600,
     foregroundGrass: false,
     flowers: true,
+    // v3:environment the arcade stages' world (far-world.js, postfx.js setEnv, turf / water detail):
+    // the full panorama, the air pass, the lens effects, blades of grass round the camera,
+    // the water's caustics and reflected far world, and the ground's close detail
+    env: Object.freeze({ tier: 2, skyWidth: 8192, atmosphere: true, lens: true, blades: 1, waterFx: 2, ground: 2 }),
   }),
   high: Object.freeze({
     level: 'high',
@@ -66,6 +70,7 @@ export const QUALITY_PRESETS = Object.freeze({
     grassDrawM: 400,        // the rough's fescue tufts are drawn this far out (scene.js _addGrass)
     foregroundGrass: false, // blade patches read as fuzz at the play cameras (config.js grassField)
     flowers: true,
+    env: Object.freeze({ tier: 1, skyWidth: 8192, atmosphere: true, lens: true, blades: 0.6, waterFx: 1, ground: 2 }),   // v3:environment as Ultra, thinner blades, plainer water
   }),
   low: Object.freeze({
     level: 'low',
@@ -97,6 +102,9 @@ export const QUALITY_PRESETS = Object.freeze({
     grassDrawM: 220,
     foregroundGrass: false,
     flowers: false,
+    // v3:environment Low keeps the sky (at half width) and the ground's materials; the air is the
+    // scene's own plain fog, and there are no lens effects, no blades and no water extras
+    env: Object.freeze({ tier: 0, skyWidth: 4096, atmosphere: false, lens: false, blades: 0, waterFx: 0, ground: 1 }),
   }),
 });
 

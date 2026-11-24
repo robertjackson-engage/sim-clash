@@ -10,6 +10,7 @@
 //  2. Horizon haze band — a camera-centred open cylinder far out, fog-coloured at
 //     the horizon fading to clear by ~7 degrees up, so ground and sky meet in haze.
 import * as THREE from 'three';
+import { envTextures, envLayer, ENV_TEX_GLSL } from './env-materials.js';   // v3:environment
 
 const NOISE_GLSL = /* glsl */`
   float hHash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
@@ -46,7 +47,16 @@ const RINGS = [0, 25, 60, 120, 220, 380, 650, 1100, 1800, 2900, 4500, 7000];
 // sea: { level, isSea(x, y) } (sea.js) or null. Where the course edge is sea the apron
 // runs down under the water line instead of rising into countryside, so the sea plane
 // carries on to the horizon; its edges ease over a few segments into the land's.
-export function buildGroundApron({ bounds, hAt, baseColor, segments = 192, sea = null }) {
+// look (optional, v3:environment; arcade-look.js sky.ground): what an arcade stage stands in.
+//   island: metres. The land past the course edge runs down under the sea within this
+//           distance, all the way round, so the stage is an island (needs `sea`).
+//   hills, woods, straw, vary: x the far hills' height, the woodlots, the straw patches,
+//           the colour patches. lift: this much of the colour given back unlit (snow).
+//   sand: '#hex' the beach where the land meets the sea.
+// Without a look the apron is built and shaded exactly as it always was.
+export function buildGroundApron({ bounds, hAt, baseColor, segments = 192, sea = null, look = null }) {
+  const island = look && look.island > 0 && sea ? look.island : 0;
+  const hillMul = look ? (look.hills ?? 1) : 1;
   const cx = (bounds.minX + bounds.maxX) / 2, cy = (bounds.minY + bounds.maxY) / 2;
   const hw = (bounds.maxX - bounds.minX) / 2, hh = (bounds.maxY - bounds.minY) / 2;
   // edge heights + a robust "countryside" base level (median of the edge)
@@ -77,12 +87,14 @@ export function buildGroundApron({ bounds, hAt, baseColor, segments = 192, sea =
       const x = e.ex + e.dx * d, y = e.ey + e.dy * d;
       const w = Math.min(1, d / 260);                         // edge -> countryside blend
       const ease = w * w * (3 - 2 * w);
-      const amp = Math.min(38, 0.6 + d * 0.011);               // hills grow with distance
+      const amp = Math.min(38, 0.6 + d * 0.011) * hillMul;     // hills grow with distance
       const hills = (fbm(x * 0.0016 + 3.1, y * 0.0016 - 7.7) - 0.47) * 2.0 * amp
         + (fbm(x * 0.006, y * 0.006) - 0.47) * Math.min(4, d * 0.02);
       let h = r === 0 ? e.h - 0.04 : e.h + (base - e.h) * ease + hills * ease;
       // under the sea: down from the water line, never up out of it
       if (r > 0 && wet[i] > 0) h += (Math.min(h, sea.level - 1.5 - d * 0.004) - h) * wet[i];
+      // an island: every edge runs down a beach and under the water
+      if (r > 0 && island) { const k = Math.min(1, Math.max(0, (d - island * 0.3) / (island * 0.7))); h += (Math.min(h, sea.level - 1.2 - d * 0.004) - h) * (k * k * (3 - 2 * k)); }
       const k = (i * nR + r) * 3;
       pos[k] = x; pos[k + 1] = h; pos[k + 2] = -y;
     }
@@ -105,6 +117,49 @@ export function buildGroundApron({ bounds, hAt, baseColor, segments = 192, sea =
   if (up < 0) { idx.reverse(); geo.setIndex(idx); geo.computeVertexNormals(); }
 
   const mat = new THREE.MeshStandardMaterial({ color: baseColor, roughness: 1, metalness: 0, envMapIntensity: 0.25 });
+  if (look) {
+    mat.onBeforeCompile = (shader) => {
+      shader.uniforms.uApronLook = { value: new THREE.Vector4(look.woods ?? 1, look.straw ?? 1, look.vary ?? 1, look.lift ?? 0) };
+      shader.uniforms.uApronSea = { value: new THREE.Vector2(sea ? sea.level : -1e5, island ? 1 : 0) };
+      shader.uniforms.uApronSand = { value: new THREE.Color(look.sand ?? '#f2e2bc') };
+      shader.uniforms.uEnvTex = { value: envTextures().array };
+      shader.uniforms.uApronSet = { value: new THREE.Vector3(envLayer(look.set ?? 'rough'), look.setTileM ?? 3, look.setDetail ?? 0.7) };
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', '#include <common>\nvarying vec3 vApronW;')
+        .replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvApronW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+      shader.fragmentShader = shader.fragmentShader
+        .replace('#include <common>', `#include <common>\nvarying vec3 vApronW;\nuniform vec4 uApronLook; uniform vec2 uApronSea; uniform vec3 uApronSand; uniform vec3 uApronSet;\n${ENV_TEX_GLSL}\n${NOISE_GLSL}`)
+        .replace('#include <color_fragment>', `#include <color_fragment>
+        {
+          vec2 w = vApronW.xz;
+          float m1 = hFbm(w * 0.004 + 3.0) - 0.47, m2 = hFbm(w * 0.018 - 5.0) - 0.47, m3 = hFbm(w * 0.09 + 1.7) - 0.47;
+          float straw = smoothstep(0.52, 0.78, hFbm(w * 0.0025 + 11.0));
+          vec3 c = diffuseColor.rgb * (1.0 + uApronLook.z * (0.30 * m1 + 0.14 * m2 + 0.10 * m3));
+          {
+            // the stage's own unmown ground carried on past its edge: close grain, then broad structure
+            float ad = length(vApronW - cameraPosition);
+            vec2 fu = (mat2(0.8, -0.6, 0.6, 0.8) * vec2(w.x, -w.y)) / 6.3;
+            vec4 d0 = envC(uApronSet.x, vec2(w.x, -w.y) / uApronSet.y), d1 = envC(uApronSet.x, fu / uApronSet.y), d2 = envC(uApronSet.x, fu / (uApronSet.y * 7.0) + 0.31);
+            vec4 dd = mix(mix(d0, d1, smoothstep(14.0, 80.0, ad)), d2, smoothstep(160.0, 700.0, ad));
+            c *= mix(vec3(1.0), dd.rgb, uApronSet.z) * (1.0 + 0.5 * uApronSet.z * (dd.a - 0.5));
+          }
+          c *= mix(vec3(1.0), vec3(1.16, 1.06, 0.74), straw * 0.55 * uApronLook.y);
+          float woods = smoothstep(0.5, 0.6, hFbm(w * 0.0055 + 21.0)) * smoothstep(120.0, 420.0, length(w - cameraPosition.xz));
+          c = mix(c, c * vec3(0.4, 0.48, 0.36), woods * 0.85 * uApronLook.x);
+          if (uApronSea.y > 0.5) {
+            // the beach: dry sand above the water, dark and wet at the line, a lapping edge
+            float up = vApronW.y - uApronSea.x + (hNoise(w * 0.08) - 0.5) * 0.5;
+            float beach = 1.0 - smoothstep(1.2, 3.2, up);
+            c = mix(c, uApronSand * (0.9 + 0.2 * hNoise(w * 0.9)), beach);
+            c *= mix(1.0, 0.62, (1.0 - smoothstep(0.1, 0.7, up)) * beach);
+            c = mix(c, vec3(0.95), (1.0 - smoothstep(0.0, 0.16, abs(up - 0.08))) * 0.7);
+          }
+          diffuseColor.rgb = c;
+        }`)
+        .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * uApronLook.w;');
+    };
+    mat.customProgramCacheKey = () => 'ground-apron-look-v2';
+  } else {
   mat.onBeforeCompile = (shader) => {
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', '#include <common>\nvarying vec3 vApronW;')
@@ -133,6 +188,7 @@ export function buildGroundApron({ bounds, hAt, baseColor, segments = 192, sea =
         }`);
   };
   mat.customProgramCacheKey = () => 'ground-apron-v3';
+  }
   const mesh = new THREE.Mesh(geo, mat);
   mesh.receiveShadow = true;
   mesh.name = 'groundApron';

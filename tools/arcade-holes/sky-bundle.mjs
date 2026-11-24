@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 // Bundle the sky photos the arcade stages are lit by (lib/sky-bundle.js installs them into
-// the data dir on boot; the game itself never downloads anything):
+// the data dir on boot; the game itself never downloads anything). Since every stage has
+// its own panorama inside the app (sky-files.mjs) that is NO photo today: the bundle is a
+// sky.json with an empty list, and nothing is fetched. The tool is kept whole for the stage
+// that will one day name a sky with no panorama:
 //
 //   node tools/arcade-holes/sky-bundle.mjs [--out <dir>] [--soft] [--no-fetch] [--check]
 //     --out        bundle dir (default <repo>/build/arcade-data); run bundle.mjs first
@@ -42,7 +45,13 @@ if (!stages) {
   console.error(`No arcade bundle in ${outDir}: run npm run prepare:arcade-data first.`);
   process.exit(soft ? 0 : 1);
 }
-const courses = stages.courses.map((c) => JSON.parse(fs.readFileSync(path.join(outDir, 'courses', c.file), 'utf8')));
+// v3:env-polish The skies are bundled for the STAGES: the courses the tour lists (arcade-tour.json), which
+// are the only ones the game's menus ever load. The one other bundled course (the legacy
+// three-hole Arcade Classics, on no menu, with no theme and so no panorama) is not worth
+// 17 MB of installer for a golden-hour photo: loaded by hand it plays under the midday sky.
+let onTour = null;
+try { const tour = JSON.parse(fs.readFileSync(path.join(outDir, 'arcade-tour.json'), 'utf8')); onTour = new Set([...(tour.stages || []), ...(tour.tiebreaks || [])].map((s) => s.file)); } catch (_) { /* no tour file: every bundled course counts */ }
+const courses = stages.courses.filter((c) => !onTour || onTour.has(c.file)).map((c) => JSON.parse(fs.readFileSync(path.join(outDir, 'courses', c.file), 'utf8')));
 const needed = neededSkyFiles(courses);
 const unpinned = needed.filter((n) => !SKY_SOURCES[n.file]);
 if (unpinned.length) {
@@ -64,6 +73,10 @@ if (check) {
   const ok = !!manifest && manifest.complete === true
     && needed.length === manifest.files.length
     && needed.every((n) => manifest.files.some((f) => f.file === n.file && f.sha256 === SKY_SOURCES[n.file].sha256) && good(path.join(skyDir, n.file), n.file));
+  // (nothing in the folder that no stage needs, either: a photo left from an older build would ship)
+  let stray = [];
+  try { stray = fs.readdirSync(skyDir).filter((f) => !needed.some((n) => n.file === f)); } catch (_) { /* no folder: nothing stray */ }
+  if (ok && stray.length) { console.log(`Sky bundle holds ${stray.join(', ')}, which no stage needs: run npm run prepare:sky`); process.exit(1); }
   console.log(ok ? `Sky bundle is complete (${needed.length} sky photos).` : 'Sky bundle is missing or incomplete: run npm run prepare:sky');
   process.exit(ok ? 0 : 1);
 }
@@ -117,7 +130,8 @@ try { before = fs.readFileSync(manifestFile, 'utf8'); } catch (_) { /* first run
 if (before !== text) fs.writeFileSync(manifestFile, text);
 
 const bytes = have.reduce((n, h) => n + SKY_SOURCES[h.file].bytes, 0);
-console.log(`Sky bundle: ${have.length} of ${needed.length} sky photos, ${mb(bytes)}${have.length ? ` (${have.map((h) => `${h.file.replace(/_4k\.hdr$/, '')}: ${h.stages.length} stages, from ${h.from}`).join('; ')})` : ''}`);
+if (!needed.length) console.log('Sky bundle: no sky photo is needed (every stage has its own panorama in public/arcade/env/sky).');
+else console.log(`Sky bundle: ${have.length} of ${needed.length} sky photos, ${mb(bytes)}${have.length ? ` (${have.map((h) => `${h.file.replace(/_4k\.hdr$/, '')}: ${h.stages.length} stages, from ${h.from}`).join('; ')})` : ''}`);
 if (missing.length) {
   const what = missing.map((m) => `${m.file} (${m.stages.join(', ')})`).join('; ');
   if (soft) console.warn(`  not bundled: ${what}. Those stages will show the midday sky until npm run prepare:sky succeeds.`);

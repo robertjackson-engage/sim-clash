@@ -65,8 +65,13 @@ All prop models in `public/arcade/props/` were made for this project:
   `tools/arcade-art/bake.mjs` turns the export into the small game models.
 - **Generated with image-to-3D** from this project's own concept and reference images
   (`docs/art/`), then reduced with `tools/arcade-art/fit-glb.mjs`: dragon, giant tree,
-  shipwreck, sphinx and temple (made with [Meshy](https://www.meshy.ai)), and the first four
-  landmarks (lighthouse, volcano, rock arch, palm).
+  shipwreck, sphinx and temple (made with [Meshy](https://www.meshy.ai)), and three of the
+  first landmarks (lighthouse, volcano, rock arch).
+- **Grown in code**: every tree and plant of the arcade worlds (`public/arcade/trees/*.glb`:
+  kapok, strangler fig, coconut, date and fan palms, spruce, fir, larch, cherry, maple, pines
+  and the rest, each with a higher-detail "hero" model for the trees by a tee or a green) is
+  built from seeds by `tools/arcade-art/trees/gen.mjs`. The `palm` prop
+  (`public/arcade/props/palm-a.glb`, `-b`, `-c`) is that generator's coconut palm.
 
 The concept paintings in `docs/art/concepts/` were generated for this project as a style
 guide. No model, texture, layout or name is taken from another game.
@@ -76,22 +81,55 @@ guide. No model, texture, layout or name is taken from another game.
 CC0, listed in `ASSETS.md`: the sky HDRI, tree bark and leaf atlases and bunker sand from
 [Poly Haven](https://polyhaven.com), grass from [ambientCG](https://ambientcg.com).
 
-Three sky photos ship with the game, all from Poly Haven, all
-[CC0 1.0](https://polyhaven.com/license) (public domain: no credit is required, and they
-are named here anyway). The midday sky is inside the app, as in Open-Birdie. The other two
-are installed with the stages (`resources/arcade-data/sky/`, copied into the player's
-`sky-cache` on the first start), because the game itself never downloads anything:
+One sky photo ships with the game: the midday sky inside the app, as in Open-Birdie. It is
+from Poly Haven under [CC0 1.0](https://polyhaven.com/license) (public domain: no credit is
+required, and it is named here anyway), and it is what the game falls back to when a
+stage's own sky cannot be loaded:
 
 | Sky | Lights | Authors | Source |
 | --- | --- | --- | --- |
-| Kloofendal 48d Partly Cloudy (Pure Sky), `public/assets/hdri/puresky_4k.hdr` | the midday stages, and the fallback | Poly Haven | https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky |
-| Kloppenheim 06 (Pure Sky), `kloppenheim_06_puresky_4k.hdr` | the golden-hour stages and the tropical ones (Lagoon Island, Canyon Run, Temple Run, Pharaoh's Gate, Sky Fortress, Bullseye Bay, Ice Pick) | Greg Zaal (original), Jarod Guest (sky edits) | https://polyhaven.com/a/kloppenheim_06_puresky |
-| Rustig Koppie (Pure Sky), `rustig_koppie_puresky_4k.hdr` | the daytime stages (Lighthouse Point, Frostbite Ridge, Sakura Garden, Summit Express) | Greg Zaal (original), Jarod Guest (sky edits) | https://polyhaven.com/a/rustig_koppie_puresky |
+| Kloofendal 48d Partly Cloudy (Pure Sky), `public/assets/hdri/puresky_4k.hdr` | the fallback sky, and the original simulator's midday | Poly Haven | https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky |
 
-Both installed files are the unmodified 4k `.hdr` downloads; their checksums are pinned in
-`tools/arcade-holes/sky-files.mjs`. The dusk, night and volcano skies (Volcano Drop,
-Dragon's Spine, Midnight Mile, Thunder Dome) are painted by the game's own code
-(`public/render/arcade-sky.js`) and use no photo.
+The two Poly Haven photos that used to be installed with the stages (Kloppenheim 06 and
+Rustig Koppie, both Pure Sky, by Greg Zaal with sky edits by Jarod Guest, CC0) no longer
+ship: no stage is lit by them now. The original simulator (`BIRDIE_PRODUCT=open-birdie`)
+still downloads them from Poly Haven the first time its Sky button picks them, as
+Open-Birdie does (`ASSETS.md`); their checksums stay pinned in
+`tools/arcade-holes/sky-files.mjs`.
+
+## The trees' leaves and bark (generated for this project)
+
+The trees are drawn with four textures in `public/arcade/trees/`: a painted leaf atlas
+(`leaves.webp`, twenty tiles: broadleaf clusters, palm frond, fan palm, banana leaf, fern,
+spruce bough with and without snow, pine needles, cherry blossom, maple, acacia, juniper,
+gorse, dry scrub, flowering bush, grass, vines, bare twigs), its masks (`leaves-aux.png`),
+eight bark columns (`bark.webp`: rough broadleaf, flaky conifer, smooth kapok, palm rings,
+cherry with lenticels, date palm, charred wood, mossy jungle bark) and their normal map
+(`bark-n.webp`). Each tile was painted by an image model (Nano Banana 2.1, through
+[Higgsfield](https://higgsfield.ai)) from a written description of the plant alone, on a
+flat background; this project then cut it out, cleaned its edges, sorted leaf from twig from
+flower, made the bark tile, and derived the normal maps
+(`tools/arcade-art/trees/textures.mjs`). The prompts are in
+`tools/arcade-art/trees/prompts.mjs` and the job ids in
+`public/arcade/trees/manifest.json`. No photograph, texture library, artist or other game
+was used or named.
+
+## The stages' skies and ground (generated for this project)
+
+Every stage is drawn under its own sky panorama and on its own ground materials, in
+`public/arcade/env/`: eleven panoramas (`sky/*.webp`: tropical day, canyon sunset, links,
+volcano dusk, alpine day and blue hour, sakura dawn, jungle, desert sunset, a neon night
+city, a stadium night) and eight tiling ground sets (`tex/*_c.webp`, `*_n.webp`: grass,
+rough, sand, rock, snow, basalt, ice, earth). All of it was generated for this project with
+an image model (Higgsfield, `nano_banana_2_1`) from prompts written for it, and processed
+by this repository's own tools (`tools/arcade-art/env/`: the seam closed, the horizon and
+sun found, tiles made to wrap, heights and normals derived). No photograph, texture
+library or third-party picture is in it; the skylines and landscapes in the panoramas are
+invented and stand for no real place or building. `public/arcade/env/manifest.json`
+lists every file with its checksum, the model, the job id and the prompt
+(`tools/arcade-art/env/prompts/`). The far ranges, islands, mesas and towers that stand in
+front of a panorama, the drifting cloud and the dusk and night skies a stage falls back to
+are drawn by the game's own code (`public/render/far-world.js`, `arcade-sky.js`).
 
 ## Stages
 

@@ -20,6 +20,7 @@
 // Sim coordinates: metres, x east, y north. Compass headings clockwise from north.
 import { greenFor, hazardsInPlay, hazardText, holeSurfaces } from './yardages.mjs';
 import { frameMap } from './map-frame.mjs';
+import { GADGET_LOOK, gadgetOutline, gadgetFootprint, drawGadgetGlyph, lineupGadgets } from './render/gadget-core.js';   // v3:gadgets
 
 const YD = 0.9144, FT = 0.3048;
 const DEG = Math.PI / 180;
@@ -164,6 +165,7 @@ export class AimMap {
     ctx.drawImage(this._static, 0, 0);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     if (this._detailsFor(view)) this._drawArcs(ctx, view, w, h, ui);
+    this._drawGadgets(ctx, view, w, h, ui);   // v3:gadgets under the aim line and the prediction
     const aimBox = this._drawAim(ctx, view, w, h, ui);
     // label boxes so far: the aim's, the prediction's carry, stop and legs, then the
     // green's front and back, then the hazards by importance; each later label steers
@@ -778,6 +780,75 @@ export class AimMap {
   }
 
   // wind: an arrow in the map's own frame (up = the default line) with its speed
+  // v3:gadgets The stage's gadgets (geo.gadgets, lib/gadgets.js): each one's shape on the ground in
+  // its own colour with its icon, and bottom left the chip GADGETS AHEAD: the ones on or near the
+  // aim line as far as this club goes, nearest first, with their distance. One the lineup says
+  // the shot MEETS (the prediction's gadgets.hits: its path already shows what that does) is
+  // ringed in white and ticked in the chip.
+  _drawGadgets(ctx, view, w, h, ui) {
+    const list = this.geo && Array.isArray(this.geo.gadgets) ? this.geo.gadgets : null;
+    if (!list || !list.length) return;
+    const rows = this.pred && this.pred.isPutt ? [] : lineupGadgets(list, this.pred, this.hole.ball, this.hole.baseAimDeg + this.aimOffset);
+    const near = new Map(rows.map((r) => [r.id, r]));
+    ctx.save();
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    for (const g of list) {
+      const look = GADGET_LOOK[g.kind];
+      if (!look) continue;
+      // a cannon whose mouth is at its foot is one thing on the map
+      if (g.kind === 'warp-exit' && list.some((m) => m.kind === 'warp' && m.pair === g.id && Math.hypot(m.x - g.x, m.y - g.y) < 10)) continue;
+      const f = gadgetFootprint(g);
+      const [cx, cy] = view.toPx(f.x, f.y);
+      const R = f.r * view.s;
+      if (cx < -R - 20 || cx > w + R + 20 || cy < -R - 20 || cy > h + R + 20) continue;
+      const o = gadgetOutline(g);
+      if (g.kind === 'coins') {
+        ctx.fillStyle = look.color;
+        for (const p of o.points) { const [X, Y] = view.toPx(p[0], p[1]); ctx.beginPath(); ctx.arc(X, Y, Math.max(1.6, 1.9 * ui), 0, Math.PI * 2); ctx.fill(); }
+      } else {
+        ctx.beginPath();
+        o.points.forEach((p, i) => { const [X, Y] = view.toPx(p[0], p[1]); if (i) ctx.lineTo(X, Y); else ctx.moveTo(X, Y); });
+        if (o.closed) { ctx.closePath(); ctx.globalAlpha = 0.3; ctx.fillStyle = look.color; ctx.fill(); ctx.globalAlpha = 1; }
+        ctx.strokeStyle = look.color; ctx.lineWidth = (o.closed ? 1.4 : 3) * ui; ctx.stroke();
+      }
+      // its icon: a dark badge with the kind's glyph
+      const hit = near.get(g.id);
+      const b = 7.5 * ui;
+      const mid = g.kind === 'coins' ? o.points[o.points.length >> 1] : null;
+      const [ix, iy] = mid ? view.toPx(mid[0], mid[1]) : [cx, cy];
+      ctx.beginPath(); ctx.arc(ix, iy, b, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(12,15,13,0.88)'; ctx.fill();
+      ctx.strokeStyle = hit && hit.hit ? '#ffffff' : look.color; ctx.lineWidth = (hit ? 2 : 1.2) * ui; ctx.stroke();
+      drawGadgetGlyph(ctx, look.glyph, ix, iy, b * 0.62, look.color);
+    }
+    // the chip
+    if (rows.length) {
+      const shown = rows.slice(0, 3);
+      const fh = 9.5 * ui, pad = 6 * ui, rowH = 15 * ui;
+      ctx.font = `800 ${fh}px Bahnschrift, "DIN Alternate", Inter, system-ui, sans-serif`;
+      const text = (r) => `${r.short} ${r.distYd}${r.hit ? ' \u2713' : ''}`;
+      const title = shown.every((r) => r.hit) ? 'GADGET ON THE LINE' : `GADGET${rows.length > 1 ? 'S' : ''} AHEAD`;
+      const bw = Math.max(ctx.measureText(title).width, ...shown.map((r) => ctx.measureText(text(r)).width + 16 * ui)) + pad * 2;
+      const bh = rowH * (shown.length + 1) + pad;
+      const x0 = 6 * ui, y0 = h - bh - 6 * ui;
+      ctx.fillStyle = 'rgba(12,15,13,0.84)';
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(x0, y0, bw, bh, 5 * ui); else ctx.rect(x0, y0, bw, bh);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,210,31,0.55)'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#ffd21f'; ctx.fillText(title, x0 + pad, y0 + pad + rowH * 0.4);
+      shown.forEach((r, i) => {
+        const y = y0 + pad + rowH * (i + 1.4);
+        const look = GADGET_LOOK[r.kind];
+        drawGadgetGlyph(ctx, look.glyph, x0 + pad + 5 * ui, y, 5 * ui, look.color);
+        ctx.fillStyle = r.hit ? '#ffffff' : 'rgba(255,255,255,0.82)';
+        ctx.fillText(text(r), x0 + pad + 14 * ui, y);
+      });
+    }
+    ctx.restore();
+  }
+
   _drawWind(ctx, w, h, ui, view) {
     const wd = this.wind;
     if (!wd || !(wd.mph > 0.5)) return;

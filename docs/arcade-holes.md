@@ -174,6 +174,7 @@ Coordinates are local metres, x east, y north. Everything below was read from th
 | `elevation` | `{ minX, minY, cellM, nx, ny, baseM, heights }`: a grid, row j at `y = minY + j * cellM`, `heights[j * nx + i]` in metres above `baseM`, rounded to a centimetre. Physics and the terrain mesh sample it bilinearly and clamp past its edge. `patches` (lidar greens) is not used. |
 | `buildings`, `scenery.water`, `canopy`, `enrichment.aerial` | Scenery layers the enricher would otherwise fetch. Arcade courses carry them filled in: `buildings: []`, `scenery: { water: [] }`, `canopy: { source: 'arcade', trees: [[x, y, heightM, crownRadiusM], ...] }`, `enrichment.aerial: { status: 'none', at: '2999-...' }`. `canopy.trees` holds the same trees as `trees` with sizes; the renderer and the tree obstacles prefer them. |
 | `props` | `[{ id, kind, x, y, rotDeg, heightM }]`: set pieces for the props layer (`public/render/props.js`). Scenery only, no collision. The kinds are listed under "Props" below. Nothing else reads the field; the loader, the game and the activation path pass it through untouched (tested). |
+| `gadgets` | `[{ id, kind, x, y, z?, ... }]`: the stage's course gadgets (boost rings, pads, speed strips, a wind tunnel, geysers, bumpers, walls, a pipe, a cannon, coin trails, multiplier rings). Unlike `props` they ARE part of play: `lib/physics.js` flies the ball through them. A hole file lists them in `gadgets`; the kinds, the data, how to place one and what `validateCourse` refuses are in `docs/gadgets.md`. Only a stage carries them (not Arcade Classics); a sudden-death arena may carry coin trails only. |
 | `arcade` | `{ id, formatVersion, generator, holes: [hole ids], ... }`: marks the course as hand-made. A stage (format 2) adds `theme, role, order, timeOfDay, blurb, difficulty` and, when the hole asks for them, `conditions` (see "Stage metadata"). `conditions` is a hint (`'windy'` on Lighthouse Point) for the match layer to apply; nothing here applies it. |
 
 No aerial photo and no NDVI classmap are needed: without them the renderer paints
@@ -314,6 +315,7 @@ it cannot be aimed at (Dragon's Spine's Ash Road).
      for good (saved rounds, cache entries and HD bundles are keyed by it);
    - `hole: { par, name, line, note, greenNote }`, with the tee as the line's first point;
    - `surfaces`, `trees`, `props`;
+   - `gadgets` (optional): what a swing can hit on the hole (`docs/gadgets.md`; three to eight on a match stage);
    - `obLine`: where a ball is out. The tool draws `boundary` 15 m inside it;
    - `height(x, y)`: the ground, in metres. For a sea hole, the sea is 0;
    - `sea: true | false`: whether the terrain is meant to hold a sea;

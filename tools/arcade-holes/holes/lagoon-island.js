@@ -164,6 +164,23 @@ const props = D.clean([
   P('balloon', -100, 190, 22, 0), P('balloon', 90, 220, 22, 60), P('fireworks', -50, 190, 30, 0), P('fireworks', 20, 196, 30, 0),
 ], { surfaces, tee: TEE, pin: PIN, dry: firm });
 
+// ---- gadgets (docs/gadgets.md): what a swing can hit
+//   SAFE    the Bar Runner, a speed strip on Turtle Bar's path, runs a lay-up on toward the
+//           island (gently: it leaves the ball on the green's east side, not through it).
+//   RISKY   the flag is a bullseye: land the tee shot inside 10 m of it for x2, inside 4.5 m
+//           for x3. The Turtle Shell, a pad on the beach, throws a ball that came up short
+//           on to the green; the Sea Wall behind the island takes the pace off a long one.
+//   ROCKET  coins over the crown of Skull Rock, along the Rocket lob's flight.
+const skullLob = L.flight(height, TEE, [-34, 138], { speedMph: 68, vla: 32, spin: 10500, ball: 'rocket' });
+const gadgets = [
+  L.gadget('strip', 'bar-runner', 47, 94, { size: [18, 26], heading: L.bearing([50, 82], [34, 112]), strength: 6, maxMps: 8 }),
+  L.gadget('zone', 'flag-x2', PIN[0], PIN[1], { radius: 10, mult: 2 }),
+  L.gadget('zone', 'flag-x3', PIN[0], PIN[1], { radius: 4.5, mult: 3 }),
+  L.gadget('pad', 'turtle-shell', -13, 116.5, { radius: 4, heading: 0, angle: 55, minMps: 10, maxMps: 12 }),   // onto the front of the green: a putt, not a tap-in
+  L.gadget('backboard', 'sea-wall', -14, 160.5, { size: [34, 14], heading: 180, strength: 0.2 }),
+  skullLob.coins('skull-coins', 30, 110, 6),
+];
+
 module.exports = {
   id: 'lagoon-island',
   stage: {
@@ -192,6 +209,7 @@ module.exports = {
   trees,
   woods: [],
   props,
+  gadgets,
   obLine: L.rect(-215, -70, 275, 315),
   height,
   sea: true,

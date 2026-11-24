@@ -51,10 +51,15 @@ const START = '<!-- STAGE-TABLE:start (node tools/arcade-holes/table.mjs --write
 const docFile = path.join(repo, 'docs', 'arcade-holes.md');
 const args = process.argv.slice(2);
 if (args.includes('--write') || args.includes('--check')) {
-  const doc = fs.readFileSync(docFile, 'utf8');
+  // The doc is compared and rewritten with LF inside, whatever the checkout's line endings
+  // are (a Windows clone with core.autocrlf has CRLF on disk): the table is stale when its
+  // TEXT differs, never because of how its lines end. --write keeps the file's own endings.
+  const raw = fs.readFileSync(docFile, 'utf8');
+  const crlf = raw.includes('\r\n');
+  const doc = raw.replace(/\r\n/g, '\n');
   const a = doc.indexOf(START), b = doc.indexOf(END);
   if (a < 0 || b < a) { console.error(`No ${START} ... ${END} block in ${docFile}`); process.exit(2); }
   const next = `${doc.slice(0, a)}${START}\n${table}\n${doc.slice(b)}`;
   if (args.includes('--check')) { if (next !== doc) { console.error('docs/arcade-holes.md: the stage table is stale (node tools/arcade-holes/table.mjs --write)'); process.exit(1); } console.log('docs/arcade-holes.md: the stage table is current'); }
-  else { fs.writeFileSync(docFile, next); console.log(`docs/arcade-holes.md: stage table written (${manifest.stages.length} stages, ${manifest.tiebreaks.length} arenas)`); }
+  else { fs.writeFileSync(docFile, crlf ? next.replace(/\n/g, '\r\n') : next); console.log(`docs/arcade-holes.md: stage table written (${manifest.stages.length} stages, ${manifest.tiebreaks.length} arenas)`); }
 } else console.log(table);

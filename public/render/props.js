@@ -5,6 +5,9 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { SEE_OVER } from './see-over.js';   // v2:seeover
+import { STANDS, isStandKind, standWedge, standLamps, wedgePoint, standToCourse } from './stadium-kit.js';   // v3:stadium
+import { CrowdLayer } from './crowd.js';             // v3:stadium
+import { StadiumFx } from './stadium-fx.js';         // v3:stadium
 
 // A rake lying along +x: a thin handle (0..1.5m) with a wider toothed head at
 // the far end. Merged to one geometry so the whole fleet is a single draw call.
@@ -90,6 +93,8 @@ export const PROP_PROCEDURAL_KINDS = Object.freeze([
   // the second wave: set pieces and life
   'waterfall', 'castle', 'dragon', 'giant-tree', 'ruins', 'jumbotron', 'fireworks', 'cloud', 'airship', 'statue',
   'fountain', 'tiki', 'hut', 'boat', 'gate', 'tower', 'rock-spire', 'launch-ramp', 'crowd', 'bird-flock',
+  // v3:stadium the stadium kit (GLBs from the manifest; these are their stand-ins)
+  'stand-section', 'stand-corner', 'led-board', 'ad-board', 'barrier', 'camera-tower', 'tunnel', 'podium',
 ]);
 // A GLB may stand in for any kind: public/arcade/props/manifest.json lists the ones the art
 // stream has made, { "kinds": { "<kind>": { "file": "<kind>.glb", "tris": n, "heightM": h } } },
@@ -110,6 +115,9 @@ export const PROP_KIND_HEIGHT_M = Object.freeze({
   waterfall: 30, castle: 30, dragon: 16, 'giant-tree': 45, ruins: 9, jumbotron: 18, fireworks: 40, cloud: 14,
   airship: 22, statue: 12, fountain: 6, tiki: 4, hut: 5, boat: 7, gate: 14, tower: 30, 'rock-spire': 26,
   'launch-ramp': 8, crowd: 4, 'bird-flock': 8,
+  // v3:stadium (a bowl section always stands at the size it is modelled: PROP_TRUE_SIZE)
+  'stand-section': 42.5, 'stand-corner': 61.4,
+  'led-board': 1.25, 'ad-board': 2.4, barrier: 0.9, 'camera-tower': 11.4, tunnel: 7.4, podium: 10.8,
 });
 // How far above its ground point a floating kind hangs (m, to the bottom of the model):
 // fireworks burst from 60 m up, birds circle at 40 m, clouds drift at 150 m.
@@ -179,6 +187,12 @@ export function normalizeProp(spec, baseUrl = PROP_BASE_URL) {
     scale,
     sinkM: num(spec.sinkM) ?? (z == null ? PROP_SINK_M : 0),
     castShadow: spec.castShadow !== false,
+    // v3:stadium a stand's wedge (stadium-kit.js), and how its crowd is dressed
+    ...(spec.wedge && typeof spec.wedge === 'object' ? { wedge: spec.wedge } : {}),
+    ...(typeof spec.text === 'string' && spec.text ? { text: spec.text.slice(0, 12) } : {}),
+    ...(Array.isArray(spec.team) && spec.team.length >= 2 ? { team: spec.team.slice(0, 2) } : {}),
+    ...(num(spec.fill) != null ? { fill: spec.fill } : {}),
+    ...(typeof spec.url === 'string' && spec.url ? { urlGiven: true } : {}),
   };
 }
 
@@ -210,8 +224,13 @@ export class PropsLayer {
   // material settings for the models, or null (arcade-look.js lookProps).
   // groundAt(x, y): the ground as it is drawn (the scene's drawnGroundAt), for what lies ON it
   // waterAt(x, y): the water's surface there, or null on dry ground (the scene's waterLevelAt)
-  constructor({ scene, hAt, V, onChange = null, style = null, baseUrl = PROP_BASE_URL, groundAt = null, waterAt = null } = {}) {
+  // v3:stadium env(): { quality: 'low' | 'high' | 'ultra', night: bool } (the scene's graphics level and the stage's time of day)
+  constructor({ scene, hAt, V, onChange = null, style = null, baseUrl = PROP_BASE_URL, groundAt = null, waterAt = null, env = null } = {}) {
     this.scene = scene;
+    this.env = env;
+    this.crowd = null;            // v3:stadium the people in the stands (crowd.js), made with the first stand
+    this.fx = null;               // v3:stadium beams, flares, confetti, pyro, fireworks (stadium-fx.js)
+    this._slotTex = null;         // v3:stadium the kit's shared textures { led, ad, screen }
     this.hAt = hAt;
     this.waterAt = waterAt;
     this.groundAt = groundAt || hAt;
@@ -266,6 +285,7 @@ export class PropsLayer {
           p.url = `${this.baseUrl}${m.variants ? m.variants[propVariantIndex(p, m.variants.length)] : m.file}`;
           p.manifest = true;
           if (!(num(given[i].heightM) > 0) && !PROP_KIND_HEIGHT_M[p.kind] && num(m.heightM) > 0) p.heightM = m.heightM;
+          if (PROP_TRUE_SIZE.includes(p.kind) && num(m.heightM) > 0) p.heightM = m.heightM;   // v3:stadium a bowl section stands at the size it is modelled (its seats are people-sized)
         }
         let b = this._batches.get(p.url);
         if (!b) this._batches.set(p.url, (b = { props: [], meshes: [] }));
@@ -307,6 +327,7 @@ export class PropsLayer {
     this._ghostMats?.clear();
     this.skipped = [];
     this._geo = null;
+    this._stadiumClear();   // v3:stadium
     if (this.group) { this.scene.remove(this.group); this.group = null; }
     if (had) this.onChange?.();
   }
@@ -316,13 +337,15 @@ export class PropsLayer {
     this._proc?.material.dispose();
     this._decal?.material.dispose();
     this._proc = this._decal = null;
+    this.crowd?.dispose(); this.fx?.dispose(); this.crowd = this.fx = null;   // v3:stadium
   }
 
   // Each frame (scene._frame): the procedural props' cheap motion and flicker is one
   // uniform. Nothing to do on a course without them.
-  update(t) {
+  update(t, camera = null) {
     if (this._proc) this._proc.uniforms.uPropTime.value = t;
     if (this._decal) this._decal.uniforms.uPropTime.value = t;
+    this._stadiumUpdate(t, camera);   // v3:stadium the crowd, the lights, the boards (nothing on a course without a stand)
   }
 
   // ---- v2:seeover pass-through: what stands between the camera and the ball is drawn as a ghost ----
@@ -424,7 +447,9 @@ export class PropsLayer {
         const f = b.body[i];
         // (the camera or the resting ball inside it: v2:qa's setViewer, which took the model out; now it fades)
         const ft = b.foot?.[i], p = b.props[i];
-        let ghost = !!ft && ((!!cam && Math.hypot(cam.x - p.x, cam.y - p.y) < ft.r && cam.z < ft.top + 1)
+        // v3:stadium a stand is a wedge, front edge on its origin: inside it is inside its own plan (stadium-kit.js)
+        let ghost = b.stand ? (!!f && ((!!cam && cam.z < f.top + 1 && this._inStand(b, i, cam.x, cam.y)) || (!!ball && this._inStand(b, i, ball.x, ball.y))))
+          : !!ft && ((!!cam && Math.hypot(cam.x - p.x, cam.y - p.y) < ft.r && cam.z < ft.top + 1)
           || (!!ball && Math.hypot(ball.x - p.x, ball.y - p.y) < ft.r));
         if (!ghost && line && f) {
           const len = line.d + line.aheadM;
@@ -464,6 +489,7 @@ export class PropsLayer {
           });
         }
         this._drawCopy(b, i);
+        if (b.stand) this.crowd?.setHidden(b.standId[i], ghost);   // v3:stadium its people go with it
         changed = true;
       }
       any ||= changed;
@@ -510,7 +536,7 @@ export class PropsLayer {
           if (KIND_RE.test(kind) && m && typeof m.file === 'string' && safe.test(m.file)) {
             // v2:qa `variants`: other files for the same kind (three skyscrapers), picked per prop
             const variants = Array.isArray(m.variants) ? m.variants.filter((f) => typeof f === 'string' && safe.test(f)) : [];
-            out[kind] = { file: m.file, heightM: num(m.heightM), variants: variants.length > 1 ? variants : null };
+            out[kind] = { file: m.file, heightM: num(m.heightM), variants: variants.length > 1 ? variants : null, anchor: m.anchor === 'front' ? 'front' : null };
           }
         }
         return out;
@@ -604,6 +630,7 @@ export class PropsLayer {
       box.union(g.boundingBox.clone().applyMatrix4(o.matrixWorld));
       for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
         if (m.map) m.map.colorSpace = THREE.SRGBColorSpace;   // base colour is always sRGB
+        if (PROP_SLOTS.includes(m.name)) m.userData.slot = m.name;   // v3:stadium a kit material the layer feeds (screen, led, ad) or keeps clear (glass)
       }
       parts.push({ geometry: g, material: o.material, matrix: o.matrixWorld.clone() });
     });
@@ -651,6 +678,7 @@ export class PropsLayer {
       for (const m of Array.isArray(part.material) ? part.material : [part.material]) {
         if (!m.isMeshStandardMaterial) continue;
         const u = m.userData;
+        if (u.slot) { this._dressSlot(m, st); continue; }   // v3:stadium
         if (st) {
           u.propOwn ||= { roughness: m.roughness, metalness: m.metalness, envMapIntensity: m.envMapIntensity, emissive: m.emissive.clone(), emissiveMap: m.emissiveMap, emissiveIntensity: m.emissiveIntensity };
           m.roughness = st.roughness ?? u.propOwn.roughness;
@@ -705,6 +733,8 @@ export class PropsLayer {
     // box (m) and the height of its top (course z). Nothing for what floats, spans or is small.
     let tbox = t.box || null;
     if (!tbox && t.parts[0] && t.parts[0].geometry) { const g0 = t.parts[0].geometry; if (!g0.boundingBox) g0.computeBoundingBox(); tbox = g0.boundingBox; }
+    b.stand = !!(b.props[0] && isStandKind(b.props[0].kind) && !b.props[0].urlGiven);   // v3:stadium
+    b.standZ = []; b.standK = []; b.standId = [];
     b.foot = [];
     b.body = [];   // v2:seeover each standing copy's box on the course, for the address camera and the pass-through
     b.obst = [];   // v2:final every copy that stands or floats, as an upright cylinder: obstacles()
@@ -736,6 +766,7 @@ export class PropsLayer {
       }
       // sim (x east, y north, z up) -> three (x, z, -y); clockwise from above is a negative turn about +y
       const pos = this.V(p.x, p.y, propOriginZ({ sinkM: sink }, ground, minY, s[1]));
+      if (b.stand) { b.standZ.push(propOriginZ({ sinkM: sink }, ground, minY, s[1])); b.standK.push(s[1]); b.standId.push(p.id || `${p.kind}@${Math.round(p.x * 10)},${Math.round(p.y * 10)}`); }   // v3:stadium
       q.setFromAxisAngle(up, -p.rotDeg * Math.PI / 180);
       const r = tbox && !PROP_FLOAT_M[p.kind] && !(t.proc && (t.proc.span || t.proc.flat))
         ? 0.5 * 0.85 * Math.min((tbox.max.x - tbox.min.x) * s[0], (tbox.max.z - tbox.min.z) * s[2]) : 0;
@@ -775,6 +806,7 @@ export class PropsLayer {
       });
       t.parts[0].geometry.setAttribute('aInst', new THREE.InstancedBufferAttribute(inst, 4));
     }
+    if (b.stand && !t.proc) this._wedge(b, t);   // v3:stadium each copy's wedge, and the shader that bends the straight model into it
     for (const part of t.parts) {
       const im = new THREE.InstancedMesh(part.geometry, part.material, n);
       im.name = `prop:${url}`;
@@ -782,12 +814,15 @@ export class PropsLayer {
       im.instanceMatrix.needsUpdate = true;
       im.computeBoundingBox();
       im.computeBoundingSphere();
-      im.castShadow = cast;
+      im.castShadow = cast && !(part.material.userData && part.material.userData.slot);   // v3:stadium a screen, a board, a glass roof cast nothing
       im.receiveShadow = true;
+      if (b.stand && !t.proc) { im.frustumCulled = false; im.customDepthMaterial = this._wedgeDepth(t); }   // v3:stadium (its box is the straight model's)
+      if (part.material.userData && part.material.userData.slot === 'glass') im.renderOrder = 3;
       if (t.proc?.roam) im.frustumCulled = false;   // it circles or drifts beyond its own box
       this.group.add(im);
       b.meshes.push(im);
     }
+    this._stadiumDirty = (typeof performance !== 'undefined' ? performance.now() : Date.now());   // v3:stadium
     this.onChange?.();
     return n;
   }
@@ -821,4 +856,369 @@ export class PropsLayer {
     this.onChange?.();
     return b.props.length;
   }
+
+  // ---------------------------------------------------------------- v3:stadium
+  // The stadium: the kit's stands are bent into their wedges, people sit in them (crowd.js),
+  // lamps get beams and flares, and the whole stage answers the game together:
+  //
+  //   scene.props.crowdReact('cheer' | 'groan' | 'wave' | 'tense' | 'calm' | 'flash' | 'win',
+  //                          { at: { x, y } (course metres), intensity, label })
+  //
+  // 'win' is a long cheer with camera flashes, confetti, flame jets and fireworks. `label`
+  // is what the big screens say for a few seconds (a default per reaction; '' for nothing).
+  // Returns true when there is a crowd to react. Nothing is made, and nothing runs, on a
+  // course without a stand or a floodlight.
+  crowdReact(kind, { at = null, intensity = 1, label = null } = {}) {
+    const k = String(kind || '');
+    const say = (text, color) => { if (label !== '') this._screenFlash(label || text, color); };
+    if (k === 'win') {
+      this.crowd?.react('cheer', { intensity: Math.max(2, intensity * 2) });
+      this.crowd?.react('flash', { intensity: 1 });
+      this.fx?.fire('win', { intensity });
+      say('WINNER!', '#ffd21f');
+      return !!this.crowd;
+    }
+    if (!this.crowd) return false;
+    if (this.crowd.react(k, { at, intensity }) === false) return false;
+    if (k === 'cheer') {
+      if (intensity >= 1.5) { this.crowd.react('flash', { intensity: 1 }); this.fx?.fire('pyro', { intensity: 1 }); }
+      say(intensity >= 1.5 ? 'IN THE HOLE!' : 'GREAT SHOT', '#3dff8a');
+    } else if (k === 'groan') say('SO CLOSE', '#ff5a4a');
+    return true;
+  }
+
+  // What the big screens show between reactions: { title, big, sub, color }. The screen is a
+  // canvas texture on every material named `screen` in the kit (the jumbotron's 16:9 face,
+  // UV 0..1): scene.props.screen is { canvas, texture, redraw() } for a HUD that wants to
+  // draw into it itself (draw on the canvas, then set texture.needsUpdate = true).
+  setScreen(info) {
+    this._screenInfo = info && typeof info === 'object' ? info : null;
+    this._screenUntil = null;
+    this._drawScreen(null);
+  }
+
+  get screen() {
+    const tex = this._slotTextures();
+    return tex ? { canvas: tex.screen.image, texture: tex.screen, redraw: () => this._drawScreen(null) } : null;
+  }
+
+  // what the stadium is drawing now (the capture tool and the tests)
+  stats() {
+    return { crowd: this.crowd ? this.crowd.stats() : null, fx: this.fx ? this.fx.stats() : null, stands: this._standCount || 0 };
+  }
+
+  _env() {
+    const e = this.env ? this.env() : null;
+    return { quality: (e && e.quality) || 'high', night: !!(e && e.night) };
+  }
+
+  _stadiumUpdate(t, camera) {
+    this._fxT = t;
+    if (this._stadiumDirty != null) {
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      if (now - this._stadiumDirty > 120) { this._stadiumDirty = null; this._stadium(); }
+    }
+    const tex = this._slotTex;
+    if (tex) {
+      tex.led.offset.x = (t * 0.03) % 1;   // the LED boards scroll: one number for every board on the stage
+      if (this._screenUntil != null && t > this._screenUntil) { this._screenUntil = null; this._drawScreen(null); }
+    }
+    if (camera) { this.crowd?.update(t, camera); this.fx?.update(t, camera); }
+  }
+
+  _stadiumClear() {
+    this.crowd?.clear();
+    this.fx?.clear();
+    this._standCount = 0;
+    this._stadiumDirty = null;
+    if (this._slotTex) { for (const t of Object.values(this._slotTex)) t.dispose(); this._slotTex = null; }
+    this._screenInfo = null; this._screenUntil = null;
+  }
+
+  // The stands as they stand now -> the crowd in them, the lamps over them, the cannons at
+  // their feet. Runs once after the models of a course (or a rebuild of them) are in.
+  _stadium() {
+    const stands = [], lamps = [], cannons = [];
+    let ring = 0, cx = 0, cy = 0, top = -Infinity, ax = 0, ay = 0;
+    for (const b of this._batches.values()) {
+      if (b.stand && b.standZ && b.standZ.length === b.props.length) {
+        b.props.forEach((p, i) => {
+          const k = b.standK[i] || 1;
+          const place = { id: b.standId[i], kind: p.kind, x: p.x, y: p.y, z: b.standZ[i], rotDeg: p.rotDeg, wedge: p.wedge, scale: k, text: p.text, team: p.team, ...(p.fill != null ? { fill: p.fill } : {}) };
+          stands.push(place);
+          ax += p.x; ay += p.y;
+          top = Math.max(top, place.z + STANDS[p.kind].heightM * k);
+          for (const l of standLamps(place)) {
+            const reach = (l.z - place.z) * 1.1 + 8;
+            lamps.push({ x: l.x, y: l.y, z: l.z - 0.6, tx: l.x + Math.sin(l.yaw) * reach, ty: l.y + Math.cos(l.yaw) * reach, tz: place.z + 1, power: p.kind === 'stand-corner' ? 1.7 : 1 });
+          }
+          if (p.wedge) {
+            ring++; cx += p.x; cy += p.y;
+            if (p.kind === 'stand-section' && ring % 2 === 0) {
+              const [lx, back] = wedgePoint(standWedge(p.kind, p.wedge, k), 0, 1.3 * k);
+              const [x, y] = standToCourse(p, lx, back);
+              cannons.push({ x, y, z: place.z + 3.6 * k });
+            }
+          }
+        });
+      } else if (b.body) {
+        b.props.forEach((p, i) => {
+          const f = b.body[i];
+          if (p.kind !== 'floodlight' || !f) return;
+          const a = (p.rotDeg + 180) * Math.PI / 180, h = f.top - f.base, reach = h * 1.15;
+          lamps.push({ x: p.x, y: p.y, z: f.base + h * 0.93, tx: p.x + Math.sin(a) * reach, ty: p.y + Math.cos(a) * reach, tz: f.base, power: 1.3 });
+        });
+      }
+    }
+    this._standCount = stands.length;
+    const quality = () => this._env().quality, night = () => this._env().night;
+    if (stands.length) {
+      this.crowd ||= new CrowdLayer({
+        scene: this.scene, V: this.V, quality,
+        style: () => { const st = this.style ? this.style() : null; return { self: st?.self ?? 0, emissive: st?.emissive ?? 1, night: night() }; },
+      });
+      this.crowd.setStands(stands, { centre: ring >= 6 ? { x: cx / ring, y: cy / ring } : null, theme: this._geo?.arcade?.theme || null });
+      for (const b of this._batches.values()) if (b.stand && b.ghost) b.ghost.forEach((g, i) => { if (g) this.crowd.setHidden(b.standId[i], true); });
+    } else this.crowd?.clear();
+    if (lamps.length || cannons.length) {
+      this.fx ||= new StadiumFx({ scene: this.scene, V: this.V, quality, night });
+      this.fx.setLamps(lamps);
+      this.fx.setCannons(cannons);
+      const n = Math.max(1, stands.length);
+      this.fx.setSkyZone(stands.length ? { x: ring >= 6 ? cx / ring : ax / n, y: ring >= 6 ? cy / ring : ay / n, z: top + 40, r: ring >= 6 ? 70 : 40 } : null);
+    } else this.fx?.clear();
+    this.onChange?.();
+  }
+
+  // Is the point (course x, y) inside copy i of a stand's plan (its wedge, from just behind
+  // the front wall to its back)?
+  _inStand(b, i, x, y) {
+    const p = b.props[i], k = b.standK[i] || 1, def = STANDS[p.kind];
+    const a = p.rotDeg * Math.PI / 180, dx = x - p.x, dy = y - p.y;
+    const lx = dx * Math.cos(a) - dy * Math.sin(a), back = dx * Math.sin(a) + dy * Math.cos(a);
+    if (back < 0.6 || back > def.depthM * k) return false;
+    const w = standWedge(p.kind, p.wedge, k);
+    return lx > -w.w / 2 - back * w.tl && lx < w.w / 2 + back * w.tr;
+  }
+
+  // Each copy's wedge as per-instance attributes on the model's geometry (shared by its
+  // ghost twins), and the model's materials taught to bend by it (once per model).
+  _wedge(b, t) {
+    const n = b.props.length, W = STANDS[b.props[0].kind].widthM;
+    const a = new Float32Array(n * 4), sk = new Float32Array(n);
+    b.props.forEach((p, i) => {
+      const k = b.standK[i] || 1, w = standWedge(p.kind, p.wedge, k);
+      a[i * 4] = w.w / k; a[i * 4 + 1] = w.tl; a[i * 4 + 2] = w.tr; a[i * 4 + 3] = w.sag / k; sk[i] = w.sagK;
+    });
+    const aw = new THREE.InstancedBufferAttribute(a, 4), ak = new THREE.InstancedBufferAttribute(sk, 1);
+    t.wedgeW = W;
+    for (const part of t.parts) {
+      part.geometry.setAttribute('aWedge', aw);
+      part.geometry.setAttribute('aWedgeK', ak);
+      for (const m of Array.isArray(part.material) ? part.material : [part.material]) wedgeMaterial(m, W);
+    }
+  }
+
+  // the shadow pass draws the same wedge
+  _wedgeDepth(t) {
+    return (t.wedgeDepth ||= wedgeMaterial(new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking }), t.wedgeW));
+  }
+
+  // The kit's shared textures, made with the first model that needs one: the LED strip
+  // (scrolling), the sponsor atlas (still), the big screen. null without a DOM (the tests).
+  _slotTextures() {
+    if (this._slotTex) return this._slotTex;
+    if (typeof document === 'undefined') return null;
+    const stage = { tiebreak: this._geo?.arcade?.role === 'tiebreak', name: String(this._geo?.name || 'Sim Clash').toUpperCase() };
+    const mk = (canvas, repeat) => {
+      const t = new THREE.CanvasTexture(canvas);
+      t.colorSpace = THREE.SRGBColorSpace; t.flipY = false; t.anisotropy = 4;
+      if (repeat) t.wrapS = THREE.RepeatWrapping;
+      return t;
+    };
+    this._slotTex = { led: mk(paintLedStrip(stage), true), ad: mk(paintSponsorAtlas(), false), screen: mk(document.createElement('canvas'), false) };
+    this._slotStage = stage;
+    this._drawScreen(null);
+    return this._slotTex;
+  }
+
+  _drawScreen(flash) {
+    const tex = this._slotTex;
+    if (!tex) return;
+    paintScreen(tex.screen.image, this._slotStage, this._screenInfo, flash);
+    tex.screen.needsUpdate = true;
+  }
+
+  _screenFlash(text, color) {
+    if (!text || !this._slotTex) return;
+    this._drawScreen({ big: text, color });
+    this._screenUntil = (this._fxT || 0) + 4.5;
+  }
+
+  // A kit material the layer feeds: screen, led, ad carry no texture in the file (their NAME
+  // is the contract: tools/arcade-art/bake.mjs); glass is the canopy.
+  _dressSlot(m, st) {
+    const slot = m.userData.slot, night = this._env().night;
+    if (slot === 'glass') {
+      m.transparent = true; m.depthWrite = false; m.roughness = 0.2;
+      m.emissive.set(0x9fd8ff); m.emissiveMap = null; m.emissiveIntensity = night ? 0.14 : 0;
+      m.needsUpdate = true;
+      return;
+    }
+    const tex = this._slotTextures();
+    m.color.set(tex ? 0x000000 : 0x202428); m.map = null;
+    m.emissive.set(0xffffff); m.emissiveMap = tex ? tex[slot] : null;
+    m.emissiveIntensity = (slot === 'ad' ? 0.8 : 1.1) * (night ? 1.2 : 0.9) * (st ? 1 : 0.85);
+    m.roughness = 0.45; m.metalness = 0;
+    m.needsUpdate = true;
+  }
+}
+
+// ---------------------------------------------------------------- v3:stadium
+// The kit's material slots (tools/arcade-art/bake.mjs writes them by NAME into the GLBs).
+export const PROP_SLOTS = Object.freeze(['screen', 'led', 'ad', 'glass']);
+export const PROP_TRUE_SIZE = Object.freeze(['stand-section', 'stand-corner']);
+
+// The wedge, in the vertex shader: the four lines of stadium-kit.js wedgePoint(), on the
+// straight model (x across its width W, front edge on z = 0, running back to -z), before
+// the instance matrix places it. aWedge = (front chord, left splay, right splay, sag), all
+// in the model's own metres; aWedgeK = how the sag grows with depth.
+export const WEDGE_VERTEX = (W) => `
+  #ifdef USE_INSTANCING
+  {
+    float wu = position.x / ${W.toFixed(3)}, wd = -position.z;
+    float wxl = -0.5 * aWedge.x - wd * aWedge.y, wxr = 0.5 * aWedge.x + wd * aWedge.z;
+    transformed.x = wxl + (wxr - wxl) * (wu + 0.5);
+    transformed.z = -(wd + (1.0 - 4.0 * wu * wu) * (aWedge.w + wd * aWedgeK));
+  }
+  #endif`;
+export const WEDGE_NORMAL = (W) => `
+  #ifdef USE_INSTANCING
+  {
+    float wnu = position.x / ${W.toFixed(3)};
+    float wth = atan(-aWedge.y + (aWedge.z + aWedge.y) * (wnu + 0.5));
+    float wc = cos(wth), ws = sin(wth);
+    objectNormal = vec3(objectNormal.x * wc - objectNormal.z * ws, objectNormal.y, objectNormal.x * ws + objectNormal.z * wc);
+  }
+  #endif`;
+
+// A material that bends its model by the wedge (whatever else it already does).
+export function wedgeMaterial(m, W) {
+  if (m.userData.wedge === W) return m;
+  m.userData.wedge = W;
+  const before = m.onBeforeCompile;
+  m.onBeforeCompile = (shader, renderer) => {
+    if (before) before.call(m, shader, renderer);
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', `#include <common>
+  #ifdef USE_INSTANCING
+  attribute vec4 aWedge; attribute float aWedgeK;
+  #endif`)
+      .replace('#include <beginnormal_vertex>', `#include <beginnormal_vertex>${WEDGE_NORMAL(W)}`)
+      .replace('#include <begin_vertex>', `#include <begin_vertex>${WEDGE_VERTEX(W)}`);
+  };
+  m.customProgramCacheKey = () => `prop-wedge-${W}`;
+  m.needsUpdate = true;
+  return m;
+}
+
+// ---- the boards' artwork, painted once per stage on canvases. Every name is invented.
+export const SPONSORS = Object.freeze([
+  ['VOLTARA', '#ffd21f', '#14171f'], ['KITEWAVE AIR', '#19c2b8', '#ffffff'], ['NOVAFIZZ', '#e8372c', '#ffffff'], ['PEAKLINE', '#1f5fd0', '#ffffff'],
+  ['ZORBO TYRES', '#14171f', '#ffd21f'], ['GLIMMER BANK', '#f4f4ee', '#1f5fd0'], ['FERN & FIG', '#2fbf4a', '#ffffff'], ['HALCYON HOTELS', '#8e4de0', '#ffffff'],
+  ['BRIGHTBOLT', '#ff8a1f', '#14171f'], ['SIM CLASH', '#14171f', '#3dff8a'], ['ARCADIA GOLF', '#f4f4ee', '#e8372c'], ['QUILLON', '#28507a', '#ffd21f'],
+  ['TIDEPOOL', '#8fe3ff', '#14171f'], ['MAPLEJET', '#e8372c', '#f4f4ee'], ['OXLEY & SONS', '#3b4252', '#f4f4ee'], ['DUNE COLA', '#ffb46b', '#5a2a12'],
+]);
+
+const FONT_UI = '"Arial Black", "Segoe UI", Impact, system-ui, sans-serif';
+function fitText(g, text, maxW, px, weight = '900') {
+  let size = px;
+  do { g.font = `${weight} ${size}px ${FONT_UI}`; size -= 2; } while (g.measureText(text).width > maxW && size > 8);
+}
+
+// The sponsor atlas: 4 x 4 cells of 512 x 128 (the kit's `ad` material; a model's UVs pick cells).
+export function paintSponsorAtlas() {
+  const c = document.createElement('canvas'); c.width = 2048; c.height = 512;
+  const g = c.getContext('2d');
+  SPONSORS.forEach(([name, bg, ink], n) => {
+    const x = (n % 4) * 512, y = Math.floor(n / 4) * 128;
+    g.fillStyle = bg; g.fillRect(x, y, 512, 128);
+    g.fillStyle = ink; g.globalAlpha = 0.14;
+    g.beginPath(); g.moveTo(x + 330, y); g.lineTo(x + 512, y); g.lineTo(x + 512, y + 128); g.lineTo(x + 250, y + 128); g.closePath(); g.fill();
+    g.globalAlpha = 1;
+    // a mark: a different simple shape for each
+    g.save(); g.translate(x + 62, y + 64);
+    g.beginPath();
+    if (n % 4 === 0) { g.moveTo(8, -40); g.lineTo(-22, 6); g.lineTo(-2, 6); g.lineTo(-10, 40); g.lineTo(24, -8); g.lineTo(4, -8); g.closePath(); }
+    else if (n % 4 === 1) { g.arc(0, 0, 34, 0, Math.PI * 2); g.arc(0, 0, 17, 0, Math.PI * 2, true); }
+    else if (n % 4 === 2) { g.moveTo(0, -38); g.lineTo(36, 30); g.lineTo(-36, 30); g.closePath(); }
+    else { g.rect(-32, -32, 26, 64); g.rect(6, -32, 26, 64); }
+    g.fill('evenodd'); g.restore();
+    g.textBaseline = 'middle'; g.textAlign = 'left';
+    fitText(g, name, 370, 70);
+    g.fillText(name, x + 120, y + 68);
+  });
+  return c;
+}
+
+// The LED strip, 2048 x 128, two rows: the pitch-side perimeter board (top: sponsors) and
+// the tier ribbon (bottom: the stage and the occasion). It scrolls (texture offset).
+export function paintLedStrip(stage) {
+  const c = document.createElement('canvas'); c.width = 2048; c.height = 128;
+  const g = c.getContext('2d');
+  g.fillStyle = '#05070c'; g.fillRect(0, 0, 2048, 128);
+  g.textBaseline = 'middle'; g.textAlign = 'center';
+  const picks = [0, 2, 3, 6, 8, 9, 1, 13];
+  picks.forEach((n, i) => {
+    const [name, bg, ink] = SPONSORS[n], x = i * 256;
+    g.fillStyle = bg; g.fillRect(x + 3, 3, 250, 58);
+    g.fillStyle = ink; fitText(g, name, 226, 38);
+    g.fillText(name, x + 128, 34);
+  });
+  const words = stage.tiebreak ? ['SUDDEN DEATH', stage.name, 'CLOSEST TO THE PIN', 'SIM CLASH'] : ['SIM CLASH TOUR', stage.name, 'SIM CLASH TOUR', stage.name];
+  const cols = ['#ffd21f', '#ffffff', '#3dff8a', '#ff5fa8'];
+  words.forEach((w, i) => {
+    const x = i * 512;
+    g.fillStyle = cols[i]; fitText(g, w, 400, 44);
+    g.fillText(w, x + 230, 98);
+    g.fillStyle = cols[(i + 1) % 4];
+    for (let k = 0; k < 3; k++) { g.beginPath(); const cx = x + 452 + k * 20; g.moveTo(cx, 78); g.lineTo(cx + 14, 98); g.lineTo(cx, 118); g.lineTo(cx + 8, 98); g.closePath(); g.fill(); }
+  });
+  // the diodes: a fine dark grid over everything
+  g.fillStyle = 'rgba(0,0,0,0.28)';
+  for (let x = 0; x < 2048; x += 4) g.fillRect(x, 0, 1, 128);
+  for (let y = 0; y < 128; y += 4) g.fillRect(0, y, 2048, 1);
+  return c;
+}
+
+// The big screen, 1024 x 576: a broadcast card. info: { title, big, sub, color } (what it shows
+// between reactions; the stage's own by default); flash: { big, color } (a reaction's word).
+export function paintScreen(c, stage, info, flash) {
+  if (c.width !== 1024) { c.width = 1024; c.height = 576; }
+  const g = c.getContext('2d');
+  const accent = (flash && flash.color) || (info && info.color) || '#ffd21f';
+  const bg = g.createLinearGradient(0, 0, 0, 576);
+  bg.addColorStop(0, '#101a3a'); bg.addColorStop(1, '#05070f');
+  g.fillStyle = bg; g.fillRect(0, 0, 1024, 576);
+  // target rings behind the words
+  g.save(); g.translate(790, 330); g.globalAlpha = flash ? 0.5 : 0.85;
+  [[210, '#1f5fd0'], [160, '#f4f4ee'], [112, '#e8372c'], [62, '#ffd21f']].forEach(([r, col]) => { g.fillStyle = col; g.beginPath(); g.ellipse(0, 0, r, r * 0.62, 0, 0, Math.PI * 2); g.fill(); });
+  g.restore();
+  g.fillStyle = 'rgba(5,7,15,0.55)'; g.fillRect(0, 150, 1024, 290);
+  g.fillStyle = accent; g.fillRect(0, 150, 1024, 8); g.fillRect(0, 432, 1024, 8);
+  g.textBaseline = 'middle'; g.textAlign = 'left';
+  g.fillStyle = '#f4f4ee'; fitText(g, (info && info.title) || stage.name, 620, 54);
+  g.fillText((info && info.title) || stage.name, 40, 78);
+  g.fillStyle = '#e8372c'; g.beginPath(); g.arc(880, 78, 13, 0, Math.PI * 2); g.fill();
+  g.fillStyle = '#f4f4ee'; g.font = `900 34px ${FONT_UI}`; g.fillText('LIVE', 904, 80);
+  const big = (flash && flash.big) || (info && info.big) || (stage.tiebreak ? 'SUDDEN DEATH' : 'SIM CLASH');
+  g.textAlign = 'center'; g.fillStyle = accent; fitText(g, big, 940, flash ? 170 : 130);
+  g.fillText(big, 512, 288);
+  const sub = flash ? '' : (info && info.sub) || (stage.tiebreak ? 'ONE BALL EACH  •  CLOSEST TO THE PIN WINS' : 'THE CLASH TOUR');
+  g.fillStyle = '#f4f4ee'; fitText(g, sub, 900, 38, '700');
+  g.fillText(sub, 512, 396);
+  g.fillStyle = '#3dff8a'; fitText(g, 'SIM CLASH', 300, 44); g.textAlign = 'left'; g.fillText('SIM CLASH', 40, 510);
+  g.fillStyle = 'rgba(0,0,0,0.22)';
+  for (let y = 0; y < 576; y += 3) g.fillRect(0, y, 1024, 1);
+  return c;
 }
