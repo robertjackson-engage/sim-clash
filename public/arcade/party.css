@@ -260,3 +260,14 @@
 .pt-sd-vs b .pt-mark { color: inherit; font-size: .7em; }
 .mt-drawer:has(.mt-opt-pair) { gap: calc(var(--u) * 1.1); padding-top: calc(var(--u) * 1.4); padding-bottom: calc(var(--u) * 1.2); }
 .mt-drawer:has(.mt-opt-pair) .mt-seg button { height: calc(var(--u) * 3.5); }
+
+/* The one-tap button in the party lobby (shown while fewer than two players are picked): the
+   match lobby tucks it under the bottom edge of its two tall player cards; here the four
+   cards are short and their names sit at that edge, so it stands clear below them. */
+.pt-slots ~ .mt-quick2 { margin-top: calc(var(--u) * .9); }
+
+/* A party's stage intro stands on a taller foot (four scores, then who tees off and who has a
+   forward tee), and its column carries the stage's gadget chips: the column starts a little
+   higher and the name is a little smaller, or the second row of chips lay under the scores. */
+.mt-stage-main:has(~ .pt-stage-foot) { top: 15%; }
+.mt-stage-main:has(~ .pt-stage-foot) .mt-stage-name { --fs-max: calc(var(--u) * 9); }

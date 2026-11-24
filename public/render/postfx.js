@@ -74,6 +74,24 @@ export function guardOutput(pass) {
   return pass;
 }
 
+// three's own FXAA shader makes Direct3D's compiler print two warnings the first time it is
+// compiled on a PC ("gradient instruction used in a loop", "potentially uninitialized
+// variable"), and three passes the log on to the console: every start at Low graphics said
+// so. Nothing is wrong with the shader and none of it is ours, so three's log check is off
+// for that pass's first draw (its only compile: nothing recompiles it).
+export function quietFirstCompile(pass) {
+  const render = pass.render.bind(pass);
+  let first = true;
+  pass.render = (renderer, ...rest) => {
+    if (!first) return render(renderer, ...rest);
+    first = false;
+    const debug = renderer.debug || {}, check = debug.checkShaderErrors;
+    debug.checkShaderErrors = false;
+    try { return render(renderer, ...rest); } finally { debug.checkShaderErrors = check; }
+  };
+  return pass;
+}
+
 // Cinematic grade in display space (after tone-map/sRGB): gentle contrast +
 // saturation, a warm-highlight / cool-shadow split-tone, and a soft vignette. It runs at
 // the end of the OutputPass (gradeInto), not as a pass of its own: that was one more
@@ -351,7 +369,7 @@ export class PostFX {
     this.smaa = new SMAAPass();
     this.composer.addPass(this.smaa);
     // Low's antialiasing instead (setQuality, quality.js aa): one pass where SMAA takes three
-    this.fxaa = new FXAAPass();
+    this.fxaa = quietFirstCompile(new FXAAPass());
     this.fxaa.enabled = false;
     this.composer.addPass(this.fxaa);
     // sharpening last, over the antialiased frame (setSharpness follows the upscale)

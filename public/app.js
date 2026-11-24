@@ -833,6 +833,7 @@ function showReplayChip(job, offer) {
   chipEl.innerHTML = '<kbd>P</kbd>▶ REPLAY<span></span>';
   chipEl.querySelector('span').textContent = offer.title || '';
   chipEl.classList.remove('rp-hidden');
+  try { arcadeAudio?.cue?.('replay-offer'); } catch { /* a cue never breaks a shot */ }   // a soft pluck as the chip appears
   clearTimeout(chipTimer);
   chipTimer = setTimeout(hideReplayChip, 9000);
 }

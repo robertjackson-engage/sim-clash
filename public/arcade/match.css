@@ -369,9 +369,10 @@ body.toast-live #hud:has(.mt-hdr:not(.hidden)) .mt-ticker { visibility: hidden; 
   animation: mt-in-r .5s .2s var(--mt-ease) both;
 }
 .mt-stage-top { position: absolute; left: 5%; top: 6%; display: flex; gap: calc(var(--u) * 1.2); animation: mt-in-l .4s .2s var(--mt-ease) both; }
-.mt-stage-main { position: absolute; left: 5%; top: 16%; width: 52%; display: flex; flex-direction: column; align-items: flex-start; gap: calc(var(--u) * 1.1); }
+/* (the column carries a row or two of gadget chips under the routes since v3: its gaps and the name gave up the height, or the second row of chips lay under the series score at the foot) */
+.mt-stage-main { position: absolute; left: 5%; top: 16%; width: 52%; display: flex; flex-direction: column; align-items: flex-start; gap: calc(var(--u) * .7); }
 .mt-stage-kicker { font-size: calc(var(--u) * 3.6); letter-spacing: .22em; color: var(--tg); animation: mt-in-l .4s .26s var(--mt-ease) both; }
-.mt-stage-name { --fs-max: calc(var(--u) * 13); --fs-w: 49cqw; color: #fff; text-shadow: 0 .055em 0 rgba(0, 0, 0, .55); transform: skewX(-8deg); transform-origin: 0 100%; animation: mt-stage-name .5s .34s var(--mt-ease) both; }
+.mt-stage-name { --fs-max: calc(var(--u) * 11); --fs-w: 49cqw; color: #fff; text-shadow: 0 .055em 0 rgba(0, 0, 0, .55); transform: skewX(-8deg); transform-origin: 0 100%; animation: mt-stage-name .5s .34s var(--mt-ease) both; }
 @keyframes mt-stage-name { from { opacity: 0; transform: translateX(-40%) skewX(-24deg); } to { opacity: 1; transform: skewX(-8deg); } }
 .mt-stage-facts { display: flex; align-items: center; gap: calc(var(--u) * 1); animation: mt-rise .4s .6s both; }
 .mt-stage-facts b { padding: .14em .6em .06em; background: var(--mt-white); color: #07090d; font-size: calc(var(--u) * 4); transform: skewX(-10deg); }
@@ -784,8 +785,11 @@ body.toast-live #hud:has(.mt-hdr:not(.hidden)) .mt-ticker { visibility: hidden; 
 .mt-tiedup { font-size: 22px; }
 /* FOR THE WIN! stamped on the hole-won screen */
 .mt-clutch { position: absolute; right: 5%; top: 9%; z-index: 3; transform: rotate(7deg); pointer-events: none; animation: mt-clutch-in .46s .95s var(--mt-back) both; }
+/* (on the hole's result screen the top right corner is the winner's own row of the score table, which the stamp lay across: there it is stamped in the open space under the headline) */
+.mt-s-result .mt-clutch { right: auto; left: 30%; top: 57%; transform: rotate(-5deg); animation-name: mt-clutch-in-low; }
 .mt-clutch .mt-x { padding: .14em .5em .04em; font-size: calc(var(--u) * 6.2); background: linear-gradient(180deg, #fff06a, var(--mt-gold) 55%, #f0a800); color: #1a1300; box-shadow: 0 0 0 calc(var(--u) * .4) #fff, 0 calc(var(--u) * .9) 0 calc(var(--u) * .4) rgba(0, 0, 0, .5); }
 @keyframes mt-clutch-in { 0% { opacity: 0; transform: scale(3.2) rotate(-8deg); } 55% { opacity: 1; transform: scale(.94) rotate(7deg); } 100% { opacity: 1; transform: rotate(7deg); } }
+@keyframes mt-clutch-in-low { 0% { opacity: 0; transform: scale(3.2) rotate(8deg); } 55% { opacity: 1; transform: scale(.94) rotate(-5deg); } 100% { opacity: 1; transform: rotate(-5deg); } }
 
 /* ---------------------------------------------------------------- v2:menu the match menu
    The way out of a match: a pause panel of big buttons (RESUME, UNDO LAST SHOT, RESTART HOLE,
