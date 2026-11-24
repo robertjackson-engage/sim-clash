@@ -961,11 +961,18 @@ export class GadgetLayer {
     }
     if (time < F.sUntil + 0.1 && F.sUntil > -1e8) {
       const pos = F.sparks.geometry.attributes.position, col = F.sparks.geometry.attributes.color;
+      const lens = this._lens;
       for (let i = 0; i < F.S; i++) {
         const t = time - F.sT[i];
         if (t < 0 || t > F.sLife[i]) { pos.setXYZ(i, 0, -1e5, 0); col.setXYZ(i, 0, 0, 0); continue; }
-        const k = 1 - t / F.sLife[i];
-        pos.setXYZ(i, F.sP[i * 3] + F.sV[i * 3] * t, F.sP[i * 3 + 1] + F.sV[i * 3 + 1] * t - 4 * t * t, F.sP[i * 3 + 2] + F.sV[i * 3 + 2] * t);
+        let k = 1 - t / F.sLife[i];
+        const x = F.sP[i * 3] + F.sV[i * 3] * t, y = F.sP[i * 3 + 1] + F.sV[i * 3 + 1] * t - 4 * t * t, z = F.sP[i * 3 + 2] + F.sV[i * 3 + 2] * t;
+        // A spark is an additive glow 2.2 m wide. The ball cam follows the ball through the
+        // sparks of every coin it has just taken, and one of them a metre from the lens is
+        // the whole screen: a coin trail washed the picture out in yellow (Bullseye Bay,
+        // where the landing is the game). A spark fades out over its last metres to the lens.
+        if (lens) k *= smooth(4, 14, Math.hypot(x - lens.x, y - lens.y, z - lens.z));
+        pos.setXYZ(i, x, y, z);
         col.setXYZ(i, F.sC[i * 3] * k, F.sC[i * 3 + 1] * k, F.sC[i * 3 + 2] * k);
       }
       pos.needsUpdate = true; col.needsUpdate = true;
@@ -977,14 +984,15 @@ export class GadgetLayer {
       if (u >= 1 || u < 0) { w.mesh.visible = false; continue; }
       const e = 1 - (1 - u) * (1 - u);
       w.mesh.scale.setScalar(w.r0 + (w.r1 - w.r0) * e);
-      w.mesh.material.opacity = 0.9 * (1 - u);
+      // (a ring the ball cam is about to fly through the middle of fades as the lens nears it, like the sparks)
+      w.mesh.material.opacity = 0.9 * (1 - u) * (this._lens ? smooth(6, 20, w.mesh.position.distanceTo(this._lens)) : 1);
     }
     for (const f of F.flashes) {
       if (!f.sp.visible) continue;
       const u = (time - f.t0) / f.life;
       if (u >= 1 || u < 0) { f.sp.visible = false; continue; }
       f.sp.scale.setScalar(f.size * (0.6 + 1.2 * u));
-      f.sp.material.opacity = 0.7 * (1 - u);
+      f.sp.material.opacity = 0.7 * (1 - u) * (this._lens ? smooth(8, 26, f.sp.position.distanceTo(this._lens)) : 1);
     }
   }
 
@@ -1133,6 +1141,7 @@ export class GadgetLayer {
     if (this._shotT !== null && time - this._stepAt > 2) this.endShot(true);
     const shot = this._shotT;
     const cx = camera ? camera.position.x : 0, cy = camera ? camera.position.y : 0, cz = camera ? camera.position.z : 0;
+    this._lens = camera ? camera.position : null;   // (_fxStep: what glows fades before it reaches the lens)
     for (const rec of this.recs) {
       const g = rec.g, since = time - rec.hitAt;
       const pop = time - rec.popAt < POP_S ? spring(time - rec.popAt, 0.55, 16, 9) : 1;
@@ -1233,8 +1242,11 @@ export class GadgetLayer {
             const took = time - rec.coinAt[i];
             let s = rec.coinR * pop;
             if (rec.coinGot[i]) s = took < 0.18 ? rec.coinR * (1 + 3 * took) * (1 - took / 0.18) : 0;
-            if (s <= 0) { rec.coins.setMatrixAt(i, ZERO_M); continue; }
             const p = rec.coinPos[i];
+            // The ball cam flies the trail a few metres behind the ball: a coin (unlit, bright)
+            // is not let grow to fill the lens. It shrinks to nothing over its last metres.
+            if (camera && s > 0) s *= smooth(2.5, 9, Math.hypot(p.x - cx, p.y - cy, p.z - cz));
+            if (s <= 0) { rec.coins.setMatrixAt(i, ZERO_M); continue; }
             _q.setFromAxisAngle(UP, time * 3 + i * 0.7);
             _m4.compose(_v.set(p.x, p.y + 0.25 * Math.sin(time * 2 + i), p.z), _q, _s.setScalar(s));
             rec.coins.setMatrixAt(i, _m4);
