@@ -158,7 +158,7 @@ const props = D.clean([
   P('rock-spire', -84, 232, 16, 30), P('rock-spire', 42, 246, 12, 120), P('rock-spire', -146, 160, 14, 200), P('rock-spire', -124, 178, 10, 60), P('rock-spire', 96, 270, 12, 300),
   P('volcano', -60, 760, 150, 0), P('volcano', 420, 640, 110, 40),
   // in the air
-  P('bird-flock', SKULL[0], SKULL[1] + 6, 8, 20), P('bird-flock', -74, 222, 8, 200), P('bird-flock', 150, 120, 8, 110), P('bird-flock', 60, 20, 8, 300), P('bird-flock', -120, 60, 8, 50),
+  P('bird-flock', -96, 83, 8, 20), P('bird-flock', -74, 222, 8, 200), P('bird-flock', 150, 120, 8, 110), P('bird-flock', 85, 23, 8, 300), P('bird-flock', -120, 60, 8, 50),
   P('bird-flock', 205, 200, 8, 0),
   P('cloud', -200, 300, 46, 0), P('cloud', 120, 420, 50, 0), P('cloud', 300, 200, 44, 0), P('cloud', -320, 120, 54, 0), P('cloud', -40, 560, 60, 0), P('cloud', 240, -60, 40, 0),
   P('balloon', -100, 190, 22, 0), P('balloon', 90, 220, 22, 60), P('fireworks', -50, 190, 30, 0), P('fireworks', 20, 196, 30, 0),

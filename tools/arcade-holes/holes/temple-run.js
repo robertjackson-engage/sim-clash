@@ -213,7 +213,7 @@ const props = [
   P('rock-spire', -186, 60, 26, 0), P('rock-spire', 192, 80, 28, 120), P('rock-spire', -150, 610, 30, 240), P('rock-spire', 170, 612, 28, 60),
   P('idol', -176, 360, 16, 90), P('idol', 182, 360, 16, 270),
   face('waterfall', -176, 176, 36, -60, 190), face('waterfall', 180, 214, 36, 60, 220), face('waterfall', -170, 520, 30, -60, 500), face('waterfall', 186, 540, 30, 60, 520),
-  P('bird-flock', -40, 180, 10), P('bird-flock', 60, 330, 10), P('bird-flock', -80, 440, 10), P('bird-flock', 120, 520, 10),
+  P('bird-flock', -88, 181, 10), P('bird-flock', 101, 329, 10), P('bird-flock', -80, 440, 10), P('bird-flock', 120, 520, 10),
   P('cloud', -180, 570, 26), P('cloud', 190, 590, 26), P('cloud', 20, 650, 30), P('balloon', -120, 380, 22), P('balloon', 150, 220, 22), P('airship', 160, 480, 26, 250),
   ...palms,
 ].filter((p) => L.FLOATING_PROP_KINDS.includes(p.kind) || p.kind === 'bridge' || (!onPlay(p.x, p.y, 3) && offLine(p.x, p.y, L.SLIM_PROP_KINDS.includes(p.kind) ? 6 : 9)));

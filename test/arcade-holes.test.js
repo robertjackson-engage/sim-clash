@@ -235,7 +235,34 @@ test('validateCourse names what is wrong with a course the loader would mishandl
   assert.match(problems(broken((c) => { c.props.push({ id: 'canyon-run/bridge', kind: 'bridge', x: c.holes[0].pin[0], y: c.holes[0].pin[1], rotDeg: 0, heightM: 40 }); })).join(), /stands on a green/);
   assert.deepEqual(problems(broken(at('blimp', -26, 80, 25))), [], 'a blimp floats over anything');
   assert.deepEqual(problems(broken(at('balloon', 30, 99, 20))), []);
-  for (const kind of ['fireworks', 'cloud', 'airship', 'bird-flock']) assert.deepEqual(problems(broken(at(kind, -26, 80, 20))), [], `${kind} floats over anything`);
+  for (const kind of ['fireworks', 'cloud', 'airship']) assert.deepEqual(problems(broken(at(kind, -26, 80, 20))), [], `${kind} floats over anything`);
+  // a bird-flock floats over anything too, but its birds are white: a small pale mover near
+  // the line of play can be taken for the ball, so none of them comes within 60 m of the
+  // tee-to-pin line (the living world's rule for a pale bird; the flock's own circle counts)
+  assert.equal(L.PALE_FLOCK_CLEAR_M, 60);
+  assert.equal(L.flockReachM(8), 23);
+  assert.match(problems(broken(at('bird-flock', -26, 80, 8))).join(), /flock of white birds.*line from the tee to the pin.*60 m at least/);
+  {
+    // straight out from the middle of canyon-run's line: 82 m is too near for a flock of heightM 8, 84 m is clear
+    const { course } = buildCourse('canyon-run');
+    const [tx, ty] = course.holes[0].tee, [px, py] = course.holes[0].pin;
+    const len = Math.hypot(px - tx, py - ty), mx = (tx + px) / 2, my = (ty + py) / 2;
+    const out = (m) => [Math.round((mx + (py - ty) / len * m) * 100) / 100, Math.round((my - (px - tx) / len * m) * 100) / 100];
+    assert.match(problems(broken(at('bird-flock', ...out(82), 8))).join(), /flock of white birds/);
+    assert.deepEqual(problems(broken(at('bird-flock', ...out(84), 8))), []);
+    assert.match(problems(broken(at('bird-flock', ...out(84), 16))).join(), /flock of white birds/, 'a bigger flock circles wider');
+  }
+  // and no stage ships a flock that breaks it
+  for (const s of STAGES) {
+    const { course } = buildCourse(s.id);
+    for (const p of course.props.filter((q) => q.kind === 'bird-flock')) {
+      for (const h of course.holes) {
+        const k = Math.max(0, Math.min(1, ((p.x - h.tee[0]) * (h.pin[0] - h.tee[0]) + (p.y - h.tee[1]) * (h.pin[1] - h.tee[1])) / ((h.pin[0] - h.tee[0]) ** 2 + (h.pin[1] - h.tee[1]) ** 2)));
+        const d = Math.hypot(p.x - (h.tee[0] + (h.pin[0] - h.tee[0]) * k), p.y - (h.tee[1] + (h.pin[1] - h.tee[1]) * k)) - L.flockReachM(p.heightM);
+        assert.ok(d >= 60, `${s.id}: ${p.id} circles ${Math.round(d)} m from the line`);
+      }
+    }
+  }
   // a crowd is four times as wide as it is tall: all of it must stand on dry open ground, off the line
   const crowdAt = (x, y, heightM, rotDeg = 0) => (c) => { c.props.push({ id: 'canyon-run/crowd', kind: 'crowd', x, y, rotDeg, heightM }); };
   assert.deepEqual(problems(broken(crowdAt(0, -30, 3))), [], 'a crowd behind the tee');

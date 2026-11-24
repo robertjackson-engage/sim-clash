@@ -231,7 +231,7 @@ P('hut', 52, -38, 4.5, 200); P('hut', 64, -30, 4.5, 250); P('hut', 44, -52, 4.2,
 // in the air
 P('fireworks', -18, 478, 40); P('fireworks', 22, 470, 46); P('fireworks', 0, 500, 36);
 P('airship', -160, 330, 26, 110); P('balloon', 170, 230, 22); P('balloon', -206, 140, 20); P('balloon', 150, 524, 24); P('balloon', -150, 560, 22);
-P('bird-flock', -80, 200, 9, 40); P('bird-flock', 110, 310, 8, 300); P('bird-flock', -170, 450, 10, 120);
+P('bird-flock', -90, 200, 9, 40); P('bird-flock', 110, 310, 8, 300); P('bird-flock', -170, 450, 10, 120);
 P('cloud', -200, 420, 16); P('cloud', 180, 480, 14); P('cloud', 20, 570, 18); P('cloud', -90, 110, 12);
 // the country beyond: mesas, spires and arches on every horizon
 for (const [x, y, hM, rot] of [[-420, 300, 110, 20], [-520, 640, 150, 80], [-180, 860, 170, 140], [220, 900, 190, 10], [520, 560, 140, 200], [460, 180, 120, 260],

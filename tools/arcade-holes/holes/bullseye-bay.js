@@ -211,7 +211,7 @@ props.push(
   // overhead
   P('balloon', -84, 170, 22, 0), P('balloon', 110, 236, 20, 120), P('balloon', 64, 30, 21, 40), P('balloon', -150, 60, 19, 200),
   P('blimp', -40, 300, 26, 250),
-  P('bird-flock', -30, 150, 14, 30), P('bird-flock', 70, 110, 12, 300), P('bird-flock', -110, 240, 16, 100), P('bird-flock', 30, 280, 15, 200), P('bird-flock', 130, 20, 12, 60),
+  P('bird-flock', -58, 192, 14, 30), P('bird-flock', 98, 112, 12, 300), P('bird-flock', -110, 240, 16, 100), P('bird-flock', 30, 280, 15, 200), P('bird-flock', 130, 20, 12, 60),
   P('cloud', -180, 360, 40, 0), P('cloud', 160, 380, 46, 0), P('cloud', 0, 430, 52, 0), P('cloud', -260, 120, 38, 0), P('cloud', 250, 160, 42, 0), P('cloud', 90, -160, 36, 0),
 );
 // palms along the lip of the cliff, all the way round (where the lip is fit to stand on)

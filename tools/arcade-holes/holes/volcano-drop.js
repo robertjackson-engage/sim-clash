@@ -217,7 +217,7 @@ const props = D.clean([
   // the range beyond: more cones on the horizon, ash in the air
   P('volcano', -330, 760, 150, 0), P('volcano', 470, 600, 130, 40), P('volcano', -640, 260, 140, 200), P('volcano', 560, -100, 120, 90),
   P('cloud', -160, 240, 50, 0), P('cloud', 140, 320, 56, 0), P('cloud', 40, 520, 60, 0), P('cloud', -260, 40, 48, 0), P('cloud', 240, 90, 46, 0),
-  P('bird-flock', -10, 100, 8, 0), P('bird-flock', 80, 180, 8, 120), P('bird-flock', -100, 60, 8, 240), P('airship', 150, 380, 30, 250),
+  P('bird-flock', -87, 100, 8, 0), P('bird-flock', 87, 180, 8, 120), P('bird-flock', -100, 60, 8, 240), P('airship', 150, 380, 30, 250),
 ], { surfaces, tee: TEE, pin: PIN, dry: gentle });
 
 // ---- gadgets (docs/gadgets.md): what a swing can hit

@@ -206,7 +206,7 @@ const props = [
   // --- on the horizon and overhead
   P('mesa', -250, 470, 50, 30), P('mesa', 270, 480, 46, 200), P('mesa', -256, -100, 30, 100), P('mesa', 268, -96, 34, 300),
   P('balloon', -130, 230, 22), P('balloon', 180, 110, 22), P('balloon', -60, 380, 24), P('airship', -170, 300, 26, 60),
-  P('bird-flock', 60, 140, 10), P('bird-flock', -100, 60, 10), P('cloud', -220, 500, 28), P('cloud', 240, 520, 28),
+  P('bird-flock', 101, 137, 10), P('bird-flock', -100, 60, 10), P('cloud', -220, 500, 28), P('cloud', 240, 520, 28),
   ...cacti,
 ].filter((p) => L.FLOATING_PROP_KINDS.includes(p.kind) || (openGround(p.x, p.y, 3) && L.signedDistance(p.x, p.y, tee) < -3 && offLine(p.x, p.y, L.SLIM_PROP_KINDS.includes(p.kind) ? 6 : 9)));
 

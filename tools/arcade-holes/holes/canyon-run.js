@@ -196,7 +196,7 @@ const props = D.clean([
   // in the air
   P('balloon', -60, 180, 22, 0), P('balloon', 150, 90, 22, 40), P('balloon', 40, 350, 24, 80), P('airship', 150, 420, 30, 250),
   P('cloud', -180, 260, 40, 0), P('cloud', 220, 330, 46, 0), P('cloud', 60, 520, 50, 0), P('cloud', -120, -60, 38, 0), P('cloud', 260, 60, 44, 0),
-  P('bird-flock', 66, 120, 8, 20), P('bird-flock', 118, 292, 8, 200), P('bird-flock', -40, 240, 8, 110), P('bird-flock', 30, 40, 8, 300),
+  P('bird-flock', 128, 97, 8, 20), P('bird-flock', 151, 335, 8, 200), P('bird-flock', -40, 240, 8, 110), P('bird-flock', 98, 15, 8, 300),
   P('fireworks', 134, 306, 30, 0), P('fireworks', 62, 326, 30, 0),
 ], { surfaces, tee: TEE, pin: PIN, dry: gentle });
 

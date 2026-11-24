@@ -62,6 +62,14 @@ const FLAT_PROP_KINDS = Object.freeze(['target-ring']);
 const SPAN_PROP_KINDS = Object.freeze(['bridge']);
 const FLOATING_PROP_KINDS = Object.freeze(['balloon', 'blimp', 'fireworks', 'cloud', 'airship', 'bird-flock']);
 const WIDE_PROP_KINDS = Object.freeze(['crowd']);
+// bird-flock: eleven WHITE birds circling 40 m up, out to 23 m from the prop's point at the
+// model's own height of 8 m (and in proportion at any other heightM). A small pale thing
+// moving near the line of play is the one thing in the picture that can be taken for the
+// ball, so a flock keeps the living world's distance for a pale bird (docs/living-world.md,
+// public/render/world-life.js LINE_CLEAR_M.white): no bird of it within 60 m of the straight
+// line from the tee to the pin.
+const PALE_FLOCK_CLEAR_M = 60;
+const flockReachM = (heightM) => (23 / 8) * heightM;
 // v3:stadium stand-section, stand-corner: a section of a stadium bowl, modelled straight and bent by the
 //              renderer into the WEDGE its entry gives (wedge { w, tl, tr, sag, sagK }: its front chord
 //              in metres, the splay of its two sides, its bulge; public/render/stadium-kit.js). Its
@@ -1196,6 +1204,13 @@ function validateCourse(course, { expect = null, maxGreenSlope = 0.03, maxFairwa
   // (a target-ring lies flat round a pin, a bridge is a deck over whatever it spans, and
   // balloons and blimps float far above the ground: see the notes at PROP_KINDS)
   for (const p of course.props || []) {
+    if (p.kind === 'bird-flock') {
+      // white birds: never near the line of play (see PALE_FLOCK_CLEAR_M)
+      for (const h of course.holes) {
+        const d = distToSegment(p.x, p.y, h.tee[0], h.tee[1], h.pin[0], h.pin[1]) - flockReachM(p.heightM);
+        if (d < PALE_FLOCK_CLEAR_M) bad(`prop ${p.id} (a flock of white birds) circles within ${Math.max(0, Math.round(d))} m of hole ${h.ref}'s line from the tee to the pin (${PALE_FLOCK_CLEAR_M} m at least: a pale bird can be taken for the ball; put its point ${Math.ceil(PALE_FLOCK_CLEAR_M + flockReachM(p.heightM))} m or more from the line)`);
+      }
+    }
     if (FLOATING_PROP_KINDS.includes(p.kind) || FLAT_PROP_KINDS.includes(p.kind)) continue;
     const on = surfaceAt(...propFoot(p));   // v3:stadium (a stand is judged by the ground under it, not at its front edge)
     if (on === 'green' || on === 'tee') bad(`prop ${p.id} stands on a ${on}`);
@@ -1250,6 +1265,7 @@ function writeCourse(course, dataDir, { expect = null } = {}) {
 module.exports = {
   YD, BOUNDARY_BUFFER_M, ARCADE_OSM_ID_BASE, SURFACE_KINDS, PLAY_PRIORITY, PROP_KINDS,
   FLAT_PROP_KINDS, SPAN_PROP_KINDS, FLOATING_PROP_KINDS, SLIM_PROP_KINDS, WIDE_PROP_KINDS, WIDE_PROP_ASPECT, STAND_PROP_KINDS,
+  PALE_FLOCK_CLEAR_M, flockReachM,
   THEMES, STAGE_ROLES, TIMES_OF_DAY, CONDITIONS, BLURB_MAX, TOUR_STAGES, MAX_MATCH_ORDER, MAX_TIEBREAK_ORDER, FREE_BALLS, ROUTE_IDS, WIND_MAX_MPH,
   // numbers
   round2, lerp, clamp, smoothstep, yards, metres, mulberry32,

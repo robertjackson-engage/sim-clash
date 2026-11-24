@@ -245,7 +245,7 @@ const props = [
   P('ice-spire', 250, 446, 30, 0), P('ice-spire', -248, 424, 32, 80), P('ice-spire', 272, 156, 24, 160), P('ice-spire', -276, 46, 22, 220),
   P('ice-spire', -150, 420, 18, 300), P('ice-spire', 200, 318, 16, 40), P('ice-spire', -84, 384, 14, 0), P('ice-spire', 150, 348, 13, 90),
   P('cloud', 90, 590, 30), P('cloud', 260, 470, 26), P('cloud', -260, 440, 28), P('cloud', 290, 120, 24), P('cloud', -290, 20, 24), P('cloud', -80, 560, 26),
-  P('airship', 190, 240, 26, 300), P('bird-flock', 60, 120, 10), P('bird-flock', -90, 300, 10), P('bird-flock', 140, 380, 10),
+  P('airship', 190, 240, 26, 300), P('bird-flock', 113, 111, 10), P('bird-flock', -90, 300, 10), P('bird-flock', 140, 380, 10),
   P('balloon', 150, 318, 20), P('balloon', 40, 500, 24), P('balloon', 220, 40, 20),
   // lone pines up the slopes where the forest thins
   ...Array.from({ length: 26 }, () => [-270 + rnd() * 550, -100 + rnd() * 610, 14 + rnd() * 9])

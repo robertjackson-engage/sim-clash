@@ -164,11 +164,11 @@ const props = D.clean([
   ...D.beside([[-12, 262], [-44, 264], [-70, 274]], 4, 0).map(([x, y]) => P('flag-banner', x, y, 6.5, 0)),
   face('crowd', -20, 268, 3, [-40, 240]), face('crowd', 46, 180, 3, [14, 180]), face('crowd', 36, 262, 3, [0, 230]),
   // in the air: gulls round every cliff, clouds running in off the sea
-  P('bird-flock', -60, 130, 8, 20), P('bird-flock', -120, 215, 8, 200), P('bird-flock', -150, 300, 8, 110), P('bird-flock', -70, 0, 8, 300),
+  P('bird-flock', -134, 100, 8, 20), P('bird-flock', -172, 194, 8, 200), P('bird-flock', -163, 313, 8, 110), P('bird-flock', -90, -8, 8, 300),
   P('bird-flock', -214, 262, 8, 40), P('bird-flock', -150, 118, 8, 160), P('bird-flock', -250, 386, 8, 70), P('bird-flock', 20, 300, 8, 250),
   P('cloud', -260, 180, 46, 0), P('cloud', -120, 440, 50, 0), P('cloud', 120, 260, 40, 0), P('cloud', -380, 320, 54, 0), P('cloud', -200, -120, 42, 0), P('cloud', 60, 520, 48, 0),
   P('balloon', 70, 140, 22, 0), P('balloon', -20, 420, 24, 60), P('balloon', 100, 300, 22, 30), P('blimp', -180, 330, 18, 100),
-  P('bird-flock', -306, 420, 8, 0), P('bird-flock', -40, 190, 8, 90), P('bird-flock', -128, 296, 8, 180), P('bird-flock', 60, 60, 8, 270),
+  P('bird-flock', -306, 420, 8, 0), P('bird-flock', 9, 210, 8, 90), P('bird-flock', -146, 326, 8, 180), P('bird-flock', 68, 63, 8, 270),
   P('cloud', -460, 80, 60, 0), P('cloud', 200, 100, 44, 0), P('cloud', -300, 520, 56, 0), P('cloud', 100, -140, 40, 0),
   P('fireworks', -140, 300, 30, 0), P('fireworks', -60, 320, 30, 0),
 ], { surfaces, tee: TEE, pin: PIN, dry: inland });

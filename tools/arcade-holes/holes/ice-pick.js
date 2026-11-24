@@ -230,7 +230,7 @@ props.push(
   // overhead
   P('balloon', -80, 250, 20, 0), P('balloon', 70, 280, 22, 0), P('balloon', -160, 110, 18, 0), P('balloon', 150, 40, 21, 0),
   P('cloud', -210, 330, 44, 0), P('cloud', 170, 350, 50, 0), P('cloud', 20, 400, 56, 0), P('cloud', -260, 140, 40, 0), P('cloud', 250, 170, 46, 0),
-  P('bird-flock', -40, 190, 14, 40), P('bird-flock', 90, 150, 12, 300), P('bird-flock', 40, 40, 12, 120),
+  P('bird-flock', -40, 190, 14, 40), P('bird-flock', 90, 150, 12, 300), P('bird-flock', 99, 40, 12, 120),
 );
 
 // ---- gadgets (docs/gadgets.md): sudden death stays pure. Nothing here touches the ball:

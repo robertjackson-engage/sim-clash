@@ -384,7 +384,9 @@ hooks in the shared files.
   and 10 m below the tee. It is the stage's set piece and it never hides the ball or the
   landing area, but it is the one mover a player could call busy; `gapS` in
   `tools/arcade-holes/life/midnight-mile.js` spaces it out, the path moves it.
-- **Other streams' white `bird-flock` props** circle close to the line of play on several
-  stages (Canyon Run, Volcano Drop). They are not this layer's and its 60 m rule for pale
-  birds does not reach them.
+- The older white `bird-flock` props (scenery, not this layer's) used to circle close to
+  the line of play on several stages (clearest at address on Canyon Run and Volcano Drop).
+  They now keep this layer's rule: `validateCourse` refuses a flock with a bird within
+  60 m of the tee-to-pin line (`tools/arcade-holes/lib.js`, `PALE_FLOCK_CLEAR_M`), and the
+  24 flocks that broke it were moved straight out from the line.
 - The frame times are one GPU's.

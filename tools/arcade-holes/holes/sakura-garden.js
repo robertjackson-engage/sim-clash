@@ -212,7 +212,7 @@ const props = [
   face('waterfall', -112, 186, 26, -40, 120), face('waterfall', 114, 190, 26, 40, 120),
   P('windmill', 150, 90, 14, 250),
   // --- overhead
-  P('bird-flock', -40, 80, 8), P('bird-flock', 60, 150, 8), P('cloud', -120, 250, 24), P('cloud', 130, 260, 24), P('balloon', -110, 150, 20), P('balloon', 130, 60, 20),
+  P('bird-flock', -88, 80, 8), P('bird-flock', 79, 158, 8), P('cloud', -120, 250, 24), P('cloud', 130, 260, 24), P('balloon', -110, 150, 20), P('balloon', 130, 60, 20),
 ].filter((p) => L.FLOATING_PROP_KINDS.includes(p.kind) || p.kind === 'bridge' || (!onPlay(p.x, p.y) && offLine(p.x, p.y, L.SLIM_PROP_KINDS.includes(p.kind) ? 6 : 9)));
 
 // ---- gadgets (docs/gadgets.md): what a swing can hit
