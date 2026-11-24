@@ -18,7 +18,8 @@
 //   CHANGELOG.md                                           the release notes on the What's new page
 //                                                          (when it has an entry for config.release)
 //   site/config.js                                         owner, repo, release: the absolute
-//                                                          addresses in each <head>, sitemap.xml
+//                                                          addresses in each <head>, sitemap.xml;
+//                                                          downloadUrl: the href of every Download button
 //
 // Everything between <!-- gen:NAME --> and <!-- /gen:NAME --> in the pages is replaced; nothing
 // else is touched. The header, the footer and the link-preview tags are parts too, so the
@@ -47,6 +48,9 @@ const sandbox = { window: {} };
 vm.runInNewContext(fs.readFileSync(path.join(site, 'config.js'), 'utf8'), sandbox);
 const cfg = sandbox.window.SIMCLASH_SITE || {};
 const SITE_URL = `https://${cfg.owner}.github.io/${cfg.repo}/`;
+// Every Download button is a real link (it works with scripts off): the installer itself when
+// config.downloadUrl is set, else the Install page. Written into every page below.
+const DOWNLOAD_HREF = cfg.downloadUrl || 'install.html';
 
 // ---------- the pages: one list for the header, the footer and the sitemap ----------
 const PAGES = [
@@ -68,7 +72,7 @@ const header = (file) => `
     <nav class="nav" aria-label="Site">
 ${PAGES.map((p) => `      <a href="${p.file}"${p.file === file ? ' aria-current="page"' : ''}${p.cls ? ` class="${p.cls}"` : ''}>${esc(p.nav)}</a>`).join('\n')}
     </nav>
-    <a class="btn btn-go btn-sm" data-gh="download" href="install.html"><span>Download</span></a>
+    <a class="btn btn-go btn-sm" data-gh="download" href="${esc(DOWNLOAD_HREF)}"><span>Download</span></a>
   </div>
 </header>
 `;
@@ -332,7 +336,9 @@ for (const file of htmlFiles) {
     const v = parts[name];
     return open + (typeof v === 'function' ? v(file) : v) + close;
   });
-  if (after !== before) { fs.writeFileSync(full, after); changed++; console.log('updated', file); }
+  // the Download buttons written by hand in a page's body get the same address as the header's
+  const linked = after.replace(/<a\s[^>]*data-gh="download"[^>]*>/g, (tag) => tag.replace(/\shref="[^"]*"/, ` href="${esc(DOWNLOAD_HREF)}"`));
+  if (linked !== before) { fs.writeFileSync(full, linked); changed++; console.log('updated', file); }
 }
 
 // sitemap.xml: every page, with the site's real address

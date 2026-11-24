@@ -13,12 +13,14 @@
 //   - weights: each page with its smallest and its largest pictures, and the home page
 //     against its budgets (first screen about 250 KB before video, all of it under 5 MB)
 //   - sitemap.xml names every page; no file in assets/ is left unreferenced (a warning)
+//   - every Download button is a plain link to config.js's downloadUrl (no script needed)
 //   - words the site must not use
 //
 // A development tool: the Pages workflow does not publish site/dev.
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
+import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 
 const site = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -55,6 +57,12 @@ function local(page, ref, what) {
   return target;
 }
 
+// config.js: where the Download buttons must point (dev/refresh.mjs writes it into every page)
+const cfgBox = { window: {} };
+vm.runInNewContext(fs.readFileSync(path.join(site, 'config.js'), 'utf8'), cfgBox);
+const downloadHref = (cfgBox.window.SIMCLASH_SITE || {}).downloadUrl || 'install.html';
+let downloadButtons = 0;
+
 const report = [];
 for (const page of pages) {
   const html = strip(text[page]);
@@ -84,11 +92,17 @@ for (const page of pages) {
     const href = attr(m[0], 'href');
     if (attr(m[0], 'data-poster')) local(page, attr(m[0], 'data-poster'), 'data-poster');   // the picture the trailer lightbox shows while it loads
     if (href == null) { if (!/data-(gh|ext)=/.test(m[0])) err(page, `a link with no href: ${m[0].slice(0, 80)}`); continue; }
+    const isDownload = /\sdata-gh="download"/.test(m[0]);
+    if (isDownload) {
+      // a Download button is a real link to the installer, so it works with scripts off
+      downloadButtons++;
+      if (href !== downloadHref) err(page, `a Download button points at "${href}", not at config.js's downloadUrl: run node site/dev/refresh.mjs`);
+    }
     if (/^https?:\/\//.test(href)) {
       const host = new URL(href).host;
       external.set(host, (external.get(host) || 0) + 1);
       if (!/^https:/.test(href)) err(page, `a link that is not https: ${href}`);
-      if (!/rel="[^"]*noopener/.test(m[0])) warn(page, `external link without rel="noopener": ${href}`);
+      if (!isDownload && !/rel="[^"]*noopener/.test(m[0])) warn(page, `external link without rel="noopener": ${href}`);
       continue;
     }
     local(page, href, 'link');
@@ -166,12 +180,18 @@ for (const f of unreferenced) warnings.push(`${f}: published but nothing points 
 const published = walk(site).map(rel).filter((f) => !f.startsWith('dev/') && f !== 'README.md');
 const publishedBytes = published.reduce((a, f) => a + size(f), 0);
 
+// ----- the "your download has started" panel (site.js)
+const siteJs = fs.readFileSync(path.join(site, 'site.js'), 'utf8');
+for (const needle of ['Your download has started', 'More info', 'Run anyway', 'Try the download again', 'Install help', 'Checksum and older versions']) if (!siteJs.includes(needle)) errors.push(`site.js: the download panel no longer says "${needle}"`);
+if (!/dialog\.dl-panel/.test(css)) errors.push('site.css: no style for the download panel (dialog.dl-panel)');
+
 // ----- the report
 const pad = (s, n) => String(s).padStart(n);
 console.log('page                 html+css+js (gzip)   first pictures   the rest: smallest .. largest   video');
 for (const r of report) console.log(`${r.page.padEnd(20)} ${pad(kb(r.textRaw), 7)} (${pad(kb(r.textGz), 6)})   ${pad(kb(r.eager), 8)}         ${pad(kb(r.lazySmall), 8)} .. ${pad(kb(r.lazyLarge + r.eagerLarge), 8)}        ${pad(r.media ? kb(r.media) : '-', 8)}`);
 if (home) console.log(`\nhome: first screen ${kb(home.textGz + home.eager)} as served (${kb(home.textRaw + home.eager)} uncompressed); everything, largest pictures and the hero clip: ${((home.textRaw + home.eager + home.eagerLarge + home.lazyLarge + home.media) / 1048576).toFixed(2)} MB; on a phone: ${((home.textGz + home.eager + home.lazySmall + home.media) / 1048576).toFixed(2)} MB`);
 console.log(`published: ${published.length} files, ${(publishedBytes / 1048576).toFixed(1)} MB`);
+console.log(`Download buttons: ${downloadButtons}, each a plain link to ${downloadHref}`);
 console.log(`links to other sites: ${[...external].map(([h, n]) => `${h} (${n})`).join(', ') || 'none'}`);
 if (warnings.length) console.log(`\n${warnings.length} warning(s):\n  ` + warnings.join('\n  '));
 if (errors.length) { console.error(`\n${errors.length} error(s):\n  ` + errors.join('\n  ')); process.exit(1); }

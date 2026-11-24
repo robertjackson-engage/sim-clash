@@ -6,6 +6,9 @@
 //   branch       the default branch, for links to files in the source tree
 //   downloadUrl  a direct link to the Windows installer, for the Download buttons.
 //                Leave it empty and they go to the repository's latest release page.
+//                When it is set, every Download button is a plain link to it (it works with
+//                scripts off) and a click also opens the "Your download has started" panel.
+//   downloadSize optional. The installer's size as the panel shows it ("about 160 MB").
 //   youtubeUrl   optional. A YouTube address for the trailer (a watch, share or embed link).
 //                Empty: "Watch the trailer" plays the site's own file, assets/video/trailer.mp4.
 //                Set: the same button plays the YouTube video in the lightbox instead (the
@@ -14,13 +17,15 @@
 //
 // site.js reads this in the browser and fills every link marked data-gh="..." and every text
 // marked data-fill="...". dev/refresh.mjs reads it too, for the things a link preview or a
-// search engine needs as plain HTML: the absolute addresses in each page's <head> and sitemap.xml.
-// After changing owner, repo or release, run:  node site/dev/refresh.mjs
+// search engine needs as plain HTML: the absolute addresses in each page's <head>, sitemap.xml
+// and the address of every Download button.
+// After changing owner, repo, release or downloadUrl, run:  node site/dev/refresh.mjs
 window.SIMCLASH_SITE = {
   owner: 'robertjackson-engage',
   repo: 'sim-clash',
   branch: 'main',
   downloadUrl: 'https://github.com/robertjackson-engage/sim-clash/releases/latest/download/Sim-Clash-Setup.exe',
+  downloadSize: '',
   youtubeUrl: '',
   release: '1.0.0-beta.2',
 };

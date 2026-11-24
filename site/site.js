@@ -1,5 +1,6 @@
 // Sim Clash site: fills the GitHub links from config.js, runs the hero clip, the trailer
-// lightbox, the route overlays, the before / after sliders and the launch-monitor filter.
+// lightbox, the "your download has started" panel, the route overlays, the before / after
+// sliders and the launch-monitor filter.
 // No framework, no network calls of its own, nothing tracked. Every page works without it.
 (function () {
   'use strict';
@@ -122,6 +123,45 @@
         e.preventDefault();
         openTrailer(a.getAttribute('href'), a.getAttribute('data-poster'));
       });
+    });
+  }
+
+  // ---------- the download ----------
+  // Every Download button is a plain link to the installer (config.downloadUrl), so the click
+  // itself starts the download and the page stays where it is. This only adds a short panel
+  // that says what happens next. Closed with the X, Escape or a click outside it.
+  var dl = null;
+  function openDownload() {
+    if (!dl) {
+      dl = doc.createElement('dialog');
+      dl.className = 'dl-panel';
+      dl.setAttribute('aria-labelledby', 'dl-title');
+      var name = String(cfg.downloadUrl).split('/').pop().split('?')[0] || 'the installer';
+      dl.innerHTML = '<div class="dl-card">' +
+        '<button type="button" class="dl-close" aria-label="Close">✕</button>' +
+        '<p class="kicker"></p>' +
+        '<h2 id="dl-title">Your download has started</h2>' +
+        '<ol>' +
+        '<li><b>Find the file.</b> It lands in your Downloads folder. Double-click it when it has finished.</li>' +
+        '<li><b>Windows will warn you.</b> It says “Windows protected your PC” because the installer is not code-signed yet: Windows shows that for any new program it has not seen often. Choose <b>More info</b>, then <b>Run anyway</b>.</li>' +
+        '<li><b>Play.</b> Open Sim Clash from your desktop. No launch monitor connected yet? Press <b>T</b> for a test swing.</li>' +
+        '</ol>' +
+        '<p class="dl-foot">Nothing happening? <a data-dl="again">Try the download again</a> <span aria-hidden="true">·</span> <a href="install.html">Install help</a> <span aria-hidden="true">·</span> <a data-dl="latest" rel="noopener">Checksum and older versions</a></p>' +
+        '</div>';
+      dl.querySelector('.kicker').textContent = name + (cfg.downloadSize ? ' · ' + cfg.downloadSize : '');
+      dl.querySelector('[data-dl="again"]').href = cfg.downloadUrl;
+      dl.querySelector('[data-dl="latest"]').href = links.latest;
+      doc.body.appendChild(dl);
+      dl.querySelector('.dl-close').addEventListener('click', function () { dl.close(); });
+      dl.addEventListener('click', function (e) { if (e.target === dl) dl.close(); });   // the backdrop
+    }
+    if (!dl.open) dl.showModal();
+    dl.querySelector('.dl-close').focus();
+  }
+  if (cfg.downloadUrl && typeof HTMLDialogElement === 'function') {
+    each('a[data-gh="download"]', function (a) {
+      // no preventDefault: the link does the downloading; the panel follows a moment later
+      a.addEventListener('click', function (e) { if (e.button) return; setTimeout(openDownload, 250); });
     });
   }
 

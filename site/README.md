@@ -15,7 +15,8 @@ Settings > Pages > Source: **GitHub Actions**.
 | `owner` | The GitHub account or organisation. |
 | `repo` | The repository name (`sim-clash`). |
 | `branch` | The default branch, for links to files in the tree (`main`). |
-| `downloadUrl` | A direct link to the installer for the Download buttons. Empty: they go to the repository's latest release page. |
+| `downloadUrl` | A direct link to the installer. `dev/refresh.mjs` writes it into every Download button as a plain `href`, so the click downloads with scripts off; with scripts on, a click also opens the "Your download has started" panel (where the file is, the Windows warning, the T key). Empty: the buttons go to the repository's latest release page and there is no panel. Run `node site/dev/refresh.mjs` after changing it. |
+| `downloadSize` | Optional. The installer's size as the panel shows it beside the file name ("about 190 MB"). |
 | `youtubeUrl` | Optional. A YouTube address for the trailer. Empty: "Watch the trailer" plays `assets/video/trailer.mp4`. Set: the same button plays the YouTube video in the lightbox (requested only when a visitor presses it; the home page's Content-Security-Policy allows `youtube-nocookie.com` in a frame for exactly this). |
 | `release` | The version the site describes (the What's new page, the strip on the home page). |
 
