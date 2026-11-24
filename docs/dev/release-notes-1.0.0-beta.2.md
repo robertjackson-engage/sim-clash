@@ -4,7 +4,7 @@ The second public build. Same engine, same holes, same rules as the first; every
 
 ## Download
 
-`Sim-Clash-Setup-1.0.0-beta.2.exe` (Windows 10 or 11, 64-bit, about INSTALLER_MB MB). The same file is also attached as `Sim-Clash-Setup.exe`, which is what the website's Download button fetches.
+`Sim-Clash-Setup-1.0.0-beta.2.exe` (Windows 10 or 11, 64-bit, about 165 MB). The same file is also attached as `Sim-Clash-Setup.exe`, which is what the website's Download button fetches.
 
 SHA-256: `PASTE THE CHECKSUM FROM Get-FileHash HERE`
 

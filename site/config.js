@@ -25,7 +25,7 @@ window.SIMCLASH_SITE = {
   repo: 'sim-clash',
   branch: 'main',
   downloadUrl: 'https://github.com/robertjackson-engage/sim-clash/releases/latest/download/Sim-Clash-Setup.exe',
-  downloadSize: '',
+  downloadSize: 'about 165 MB',
   youtubeUrl: '',
   release: '1.0.0-beta.2',
 };

@@ -4,7 +4,58 @@ What is checked before a release goes public, how to check it again, and what st
 a person. The first section says where `1.0.0-beta.1` stands today; the second records
 what was checked for it; the third is the list to run for every release.
 
-## Where 1.0.0-beta.1 stands (23 November 2026)
+## Where 1.0.0-beta.2 stands (24 November 2026)
+
+**Built and checked by machine, committed on the `next` branch. Not pushed, not published,
+and still never seen in its own window.**
+
+| | |
+| --- | --- |
+| Installer | `release/Sim-Clash-Setup-1.0.0-beta.2.exe` and the same file as `release/Sim-Clash-Setup.exe` (the name the website's Download buttons fetch), 172,609,459 bytes (165 MB), unsigned |
+| SHA-256 | `201ff8063a45490af1e777549efc93b38a5ada7c2b22c23f60a877bd2519e575` (also in `release/Sim-Clash-Setup-1.0.0-beta.2.exe.sha256.txt`) |
+| Release notes | `release/release-notes-1.0.0-beta.2.md`, with that checksum filled in (`docs/dev/release-notes-1.0.0-beta.2.md` is the same text with a place for the checksum of the build that is published) |
+| Tests | 1843 tests: 1841 pass, 0 fail, 2 skipped (the two upstream symlink tests) |
+| Built from | the `next` working tree at the commit that carries this note. A build from a fresh clone has another checksum (line endings) |
+
+Done, by machine, for this release:
+
+- the full suite; `npm run dist` ending in `Package is sound.` (app.asar 120.7 MB, 2194
+  files, every file of the asset folders in the archive: 66 props with the stadium kit 8 of
+  8, 28 skies and ground files, 33 tree files, 151 sound files, 331 voice files);
+- the installer run silently into a scratch folder (exit code 0, eight seconds, no game
+  started; 101 files, 482 MB; both shortcuts and the uninstall entry with version
+  1.0.0-beta.2), its own runtime booted in windowless Node mode on private ports with an
+  empty data folder (16 stage courses installed, the page and the new assets served, test
+  swings played on three stages, a party and a Bullseye game started), then uninstalled
+  silently with nothing left behind and the player's data untouched;
+- **the merged game played for real** from a source server on private ports in a browser
+  with no window and no sound: the title, the first-run wizard, the main menu's eleven
+  entries and every screen under it; a versus best of three to the winner screen with a
+  gadget hit, callouts, a holed putt on the pin cam and replays; three sudden deaths in one
+  match, one on each arena, with the stadium crowd; a four-player skins game with a HELP 3
+  player at 1280 x 720; a Bullseye game; a solo sprint; free play, closest to the pin, up
+  and down and the putting challenge on gadget stages. All fifteen stages from the tee and
+  from a wide angle at High, three at Low. The browser console and the server log were
+  empty through all of it;
+- frame time at 1920 x 1080, High, everything on, on this PC's NVIDIA GeForce RTX 4060 Ti:
+  3.4 to 5.6 ms on every stage (the heaviest: Temple Run, 5.6 ms from behind the green)
+  against a budget of 16.6 ms;
+- the hygiene greps below, and `git grep --untracked -n -i -E "golf ?cl[a]sh|top[g]olf"`:
+  nothing new. (The first grep is not empty and was not for 1.0.0-beta.1 either: it finds
+  upstream Open-Birdie's own planning notes and tools, which say `C:UsersUSER...` with
+  the literal placeholder USER, and test strings with a made-up `alice`. None is this
+  PC's.) The largest files in the tree are upstream's midday sky
+  (`public/assets/hdri/puresky_4k.hdr`, 19.7 MB, shipped since Open-Birdie) and the site's
+  trailer (13.5 MB); nothing added on this branch is over 5 MB.
+
+Still only the owner can do the list under "Only the owner can do these" below. New for
+this release under item 6: the stage skies, the ground textures and the trees' leaves and
+bark were generated with an image model through Higgsfield, and 56 sound effects and 116
+announcer takes were added (ElevenLabs through Higgsfield, Kenney and freesound CC0):
+confirm the plans used allow shipping them. And item 9 matters more than before: nobody
+has listened to any of the new sound.
+
+## Where 1.0.0-beta.1 stood (23 November 2026)
 
 **Built and checked by machine. Not published, not committed, not yet seen in its own
 window.**
