@@ -35,6 +35,15 @@ coin trails and multiplier rings. Each has real physics, a look, a sound cue and
    that shot; mud stops a ball but the next swing from it is an ordinary one.
 6. **Off is off.** A course with no `gadgets` passes nothing to the physics and the shot is
    the shot it was, to the last bit (no `gadgets` key on the result either).
+7. **Practice is the stage.** Every way of playing a stage meets its gadgets the same way:
+   a match, a solo run, PRACTICE > FREE PLAY (the game's ordinary shot), and the practice
+   games (`lib/practice.js`, which gets the same field through `Game.startPractice`):
+   CLOSEST TO THE PIN flies through the lantern and the coin trail and is drawn in by the
+   funnel at the flag, UP AND DOWN chips into that funnel and off the bumpers behind the
+   green. The contacts are on the result (`result.gadgets`, the `gadget` events) and are
+   paid like a match ball's; the lineup of a practice ball flies through them too. The
+   PUTTING CHALLENGE is untouched because every putt is (rule 3). Nothing is hidden in
+   practice: what is drawn is live.
 
 ## The kinds
 

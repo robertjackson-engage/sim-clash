@@ -940,3 +940,62 @@ test('playability: no gadget makes a dead lie; a ball stuck in mud, on ice or un
   const out = g.handleShot({ Speed: 91, VLA: 25.5, HLA: 0, TotalSpin: 9300, SpinAxis: 0 });
   assert.ok(out.sim.totalYd > 80, `a wedge out of the mud flies ${out.sim.totalYd} yd`);
 });
+
+// ---------------------------------------------------------------- practice on a stage
+
+test('practice on a stage meets its gadgets: closest to the pin, up and down; a putt is never touched; the lineup flies through them', () => {
+  // closest to the pin on Sakura Garden: the swing that bursts the lantern and is drawn in by the Tea Bowl in a match
+  let g = stageGame('sakura-garden');
+  const inMatch = g.handleShot({ Speed: 91, VLA: 25.5, HLA: 0, TotalSpin: 9300, SpinAxis: 0 });
+  g.reset();
+  g.startPractice('closest');
+  try {
+    assert.deepEqual(g.practice.spot, g.hole.tee, 'the game plays from the tee the match plays from');
+    const lineup = predictShot(g, { speedMph: 91, vla: 25.5, totalSpin: 9300 });
+    assert.ok(lineup.gadgets && Array.isArray(lineup.gadgets.hits) && Array.isArray(lineup.gadgets.ahead), 'the lineup of a practice ball reports the gadgets');
+    const r = g.handleShot({ Speed: 91, VLA: 25.5, HLA: 0, TotalSpin: 9300, SpinAxis: 0 });
+    assert.deepEqual(met(r), ['festival-lantern:smash', 'tea-bowl:funnel']);
+    assert.deepEqual(met(r), met(inMatch), 'the same swing meets the same gadgets in a match');
+    assert.ok(r.practice && r.practice.shot.counted && r.distToPinYd < 4, `drawn in to ${r.distToPinYd} yd`);
+    // every contact is in the shot's event list, for the page to draw and sound
+    assert.deepEqual(r.sim.events.filter((e) => e.type === 'gadget').map((e) => e.id), r.gadgets.map((h) => h.id));
+    // the arcade grades it as it grades a match ball: the gadgets' coins are banked
+    const graded = A.gradeShot({ result: r, before: { practice: g.practice.state(), hole: null }, practice: g.practice.state(), streak: 0, powerup: null });
+    assert.ok(graded.gadgets && graded.gadgets.coins > 0, 'a practice ball through the lantern is paid for it');
+  } finally { g.endPractice(); }
+  // up and down on Midnight Mile: a chip at the cup runs into the Kick-Off funnel
+  g = stageGame('midnight-mile');
+  g.startPractice('chipping');
+  try {
+    let funnelled = 0;
+    for (let i = 0; i < 6; i++) {
+      const d = Math.hypot(g.practice.target.x - g.practice.spot[0], g.practice.target.y - g.practice.spot[1]);
+      const r = g.handleShot({ Speed: 9 + d * 0.95, VLA: 28, HLA: 0, TotalSpin: 4500, SpinAxis: 0 });
+      assert.ok(Array.isArray(r.gadgets), 'a chip on a stage with gadgets carries the list, met or not');
+      if (met(r).includes('kick-off:funnel')) funnelled++;
+    }
+    assert.ok(funnelled >= 4, `${funnelled} of 6 chips met the funnel by the flag`);
+  } finally { g.endPractice(); }
+  // a putt is never touched, in practice as in a match
+  g.startPractice('putting');
+  try {
+    const r = g.handleShot({ Speed: 6, VLA: 0, HLA: 0, TotalSpin: 0, SpinAxis: 0 });
+    assert.equal(r.sim.isPutt, true);
+    assert.equal('gadgets' in r, false, 'a putt has no gadget list');
+  } finally { g.endPractice(); }
+  // an arena's coin trail is taken by a practice ball as by a match ball
+  g = stageGame('thunder-dome');
+  const arena = g.handleShot({ Speed: 91, VLA: 25.5, HLA: 0, TotalSpin: 9300, SpinAxis: 0 });
+  g.reset();
+  g.startPractice('closest');
+  try {
+    const r = g.handleShot({ Speed: 91, VLA: 25.5, HLA: 0, TotalSpin: 9300, SpinAxis: 0 });
+    assert.ok(r.gadgets.length > 0 && r.gadgets.every((h) => h.id === 'dome-coins'));
+    assert.equal(r.gadgets.length, arena.gadgets.length);
+  } finally { g.endPractice(); }
+  // a course with none: a practice ball is the ball it was, with no key on the result
+  const bare = new Game();
+  bare.setCourse({ name: 'Plain', surfaces: [], boundary: null, elevation: null, holes: [{ ref: 1, par: 3, tee: [0, 0], pin: [0, 130], lengthYd: 142, line: [[0, 0], [0, 130]] }] });
+  bare.startPractice('closest');
+  assert.equal('gadgets' in bare.handleShot({ Speed: 91, VLA: 25.5, HLA: 0, TotalSpin: 9300, SpinAxis: 0 }), false);
+});
