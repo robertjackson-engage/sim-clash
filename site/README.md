@@ -104,15 +104,16 @@ browser (no window, no sound), the way `tools/arcade-art/env/capture.mjs` and
 | `assets/after/` | The tee views the sliders compare them with (the address camera, so the framing matches) | |
 | `assets/hero/` | The hero picture: Thunder Dome from the tee | |
 | `assets/shots/` | Screens with the interface at 640 and 1280 px (title, menus, wizard, lobby, VS, stage intro, turn banner, ball cam, PUTT IN TO WIN, sudden death, replay, the new games' lobbies), the stadium crowd, the gadgets, the page headers | 1600 x 900; the match screens from real matches driven through the server's own routes with test shots |
-| `assets/video/loop.mp4` | The hero's silent loop: six worlds, a slow camera move on each (960 x 540, 24 fps, about 13 s, under 2 MB) | Drawn frame by frame at a fixed clock from the current build, cut together with ffmpeg |
-| `assets/video/trailer.mp4`, `trailer-poster.webp` | The trailer the lightbox plays (1280 x 720) and the picture shown while it loads | `release/media/sim-clash-trailer.mp4` from the trailer tooling, re-encoded for the web |
+| `assets/video/loop.mp4` | The hero's silent loop: five worlds, the game's own hole flyover on each, no interface (960 x 540, 24 fps, about 12 s, under 2.5 MB) | `tools/release/trailer/build.mjs --only site`, from the flyover clips `shoot.mjs --only fly` films |
+| `assets/video/trailer.mp4`, `trailer-poster.webp` | The trailer the lightbox plays (1280 x 720, 30 fps) and the picture shown while it loads (a frame of it) | `tools/release/trailer/build.mjs --only site`: `release/media/sim-clash-trailer.mp4` re-encoded for the web |
 | `assets/og.jpg`, `icon.svg`, `icon-180.png` | Link preview (1200 x 630), favicon | |
 
-**When the trailer is re-shot:** replace `assets/video/trailer.mp4` (H.264 + AAC, 1280 x 720,
-`-movflags +faststart`, 10 to 15 MB) and, if you like, `trailer-poster.webp`. Nothing else
-changes. For a new hero loop, replace `assets/video/loop.mp4` (silent, under about 2.5 MB:
-the home page's 5 MB budget counts it) and `assets/hero/hero-960.webp` / `hero-1280.webp`
-if its first frame should match. Or set `youtubeUrl` and leave the file as the fallback.
+**When the trailer is re-shot:** `node tools/release/trailer/build.mjs --only site` (after
+the build that makes `release/media/sim-clash-trailer.mp4`) writes `assets/video/trailer.mp4`
+(H.264 + AAC, 1280 x 720, `-movflags +faststart`, about 13 MB), `trailer-poster.webp` and
+`assets/video/loop.mp4` (silent, under about 2.5 MB: the home page's 5 MB budget counts it).
+Nothing else changes; replace `assets/hero/hero-960.webp` / `hero-1280.webp` by hand if the
+loop's first frame should match them. Or set `youtubeUrl` and leave the file as the fallback.
 
 When the game's screens change, re-shoot the ones in `assets/shots/`: a site that shows last
 month's menus reads as abandoned. Keep new pictures small (WebP, lazy-loaded below the first
