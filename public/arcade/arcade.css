@@ -1,0 +1,985 @@
+/* Arcade layer (public/arcade/arcade.js). Everything is prefixed .arc- / #arcade and
+   lives inside #hud, so it inherits the HUD's zoom and the app's tokens (style.css).
+   Layout is in the HUD's 1680×945 design pixels; at 1080p one design px is 1.14 screen px.
+
+   Read from four metres: nothing that matters is under about 24 design px. Animated with
+   transform and opacity only (the 3D scene is rendering underneath). The middle of the
+   picture is the ball's: banners live in the upper part and clear quickly, the dock is a
+   hotbar along the bottom, and both the dock and the challenges step aside in flight.
+
+     top band      .arc-top      coins · level · combo meter (solo)
+     upper centre  .arc-stage    callout banner, what it earned, why
+                   .arc-flash    one-line flashes (armed, ball name)
+                   .arc-curse    a trick waiting on the player who is up (match)
+     upper right   .arc-chal     challenges (solo, when the snapshot has them)
+     bottom centre .arc-dock     the ball hotbar; .arc-tray opens upward from it          */
+
+#hud > #arcade, #arcade {
+  position: absolute; inset: 0; pointer-events: none; z-index: 20; overflow: hidden;
+  --arc-p1: #ff5a36;   /* player one: hot orange-red */
+  --arc-p2: #2e9bff;   /* player two: electric blue */
+  --arc-ink: #0b0c0f;
+}
+#arcade.arc-disabled { display: none; }
+/* muted (the ⚡ in the tray): the dock stays, the rest goes quiet */
+#arcade.arc-muted .arc-top, #arcade.arc-muted .arc-stage, #arcade.arc-muted .arc-flash,
+#arcade.arc-muted .arc-fx, #arcade.arc-muted .arc-chest, #arcade.arc-muted .arc-levelup,
+#arcade.arc-muted .arc-chal, #arcade.arc-muted .arc-slowmo-tag { display: none !important; }
+
+#arcade .num, #arcade b { font-family: var(--num); font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; font-weight: 800; }
+#arcade button { font: inherit; color: inherit; }
+
+/* ---------------------------------------------------------------- top band: coins · level · combo */
+.arc-top {
+  position: absolute; top: 14px; left: 50%; transform: translateX(-50%); z-index: 2; pointer-events: auto;
+  display: flex; align-items: stretch; height: 56px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow);
+}
+/* a match owns this band (its header): the solo strip and the challenges step aside */
+#arcade.arc-in-match .arc-top, #arcade.arc-in-match .arc-chal,
+#hud:has(.mt-header:not(.hidden)) #arcade .arc-top { display: none; }
+.arc-top.bump { animation: arc-bump .5s ease-out; }
+@keyframes arc-bump { 0% { transform: translateX(-50%) scale(1); } 30% { transform: translateX(-50%) scale(1.06); } 100% { transform: translateX(-50%) scale(1); } }
+.arc-stat { position: relative; display: flex; align-items: center; gap: 10px; padding: 0 18px; white-space: nowrap; }
+.arc-stat + .arc-stat { border-left: 1px solid var(--line); }
+.arc-stat-coins > b { font-size: 31px; line-height: 1; color: var(--accent); min-width: 2ch; }
+.arc-coin-ico { font-size: 26px; line-height: 1; display: inline-block; transform-origin: 50% 60%; }
+.arc-coin-ico.ding { animation: arc-ding .5s ease-out; }
+@keyframes arc-ding { 0% { transform: scale(1); } 35% { transform: scale(1.6) rotate(-12deg); } 100% { transform: scale(1); } }
+.arc-lvl {
+  display: flex; align-items: baseline; gap: 5px; height: 38px; padding: 0 11px; border-radius: 10px;
+  background: var(--accent); color: var(--accent-ink); line-height: 38px;
+}
+.arc-lvl i { font-style: normal; font-size: 14px; font-weight: 800; letter-spacing: .08em; }
+#arcade .arc-lvl b { font-size: 28px; line-height: 38px; }
+.arc-lvl.up { animation: arc-lvl-up 1s cubic-bezier(.2, 1.5, .3, 1); }
+@keyframes arc-lvl-up { 0% { transform: scale(1); } 30% { transform: scale(1.7) rotate(-8deg); } 60% { transform: scale(.92) rotate(3deg); } 100% { transform: scale(1); } }
+.arc-xp-wrap { display: flex; flex-direction: column; gap: 4px; width: 150px; }
+.arc-xp { display: block; height: 10px; border-radius: 5px; background: rgba(255, 255, 255, .13); overflow: hidden; }
+.arc-xp-fill {
+  display: block; height: 100%; width: 100%; border-radius: 5px; transform-origin: 0 50%; transform: scaleX(0);
+  background: linear-gradient(90deg, #ffb300, var(--accent) 60%, #fff2a8);
+  transition: transform .9s cubic-bezier(.2, .8, .2, 1);
+}
+.arc-xp-text { font-size: 13px; line-height: 1; color: var(--dim); letter-spacing: .04em; }
+.arc-xp-gain {
+  position: absolute; right: 14px; top: 50px; color: var(--accent); font-size: 24px; text-shadow: 0 2px 6px rgba(0, 0, 0, .8);
+  animation: arc-rise 1.5s ease-out forwards; pointer-events: none;
+}
+@keyframes arc-rise { 0% { opacity: 0; transform: translateY(-14px); } 15% { opacity: 1; } 100% { opacity: 0; transform: translateY(26px); } }
+
+/* the combo meter: cold, warm (2), ON FIRE (3), UNSTOPPABLE (5) */
+.arc-combo { --heat: rgba(255, 255, 255, .28); gap: 8px; min-width: 232px; overflow: visible; }
+.arc-combo::before {   /* the cell catches light as it heats */
+  content: ''; position: absolute; inset: 0; border-radius: 0 var(--r) var(--r) 0; opacity: 0; pointer-events: none;
+  background: linear-gradient(0deg, color-mix(in srgb, var(--heat) 55%, transparent), transparent 85%);
+  transition: opacity .4s;
+}
+.arc-combo.h-warm { --heat: #ffb300; }
+.arc-combo.h-fire { --heat: #ff6a1a; }
+.arc-combo.h-inferno { --heat: #ff2e12; }
+.arc-combo.h-warm::before { opacity: .35; }
+.arc-combo.h-fire::before { opacity: .8; animation: arc-flicker-o 1s ease-in-out infinite alternate; }
+.arc-combo.h-inferno::before { opacity: 1; animation: arc-flicker-o .45s ease-in-out infinite alternate; }
+@keyframes arc-flicker-o { from { opacity: .55; } to { opacity: 1; } }
+.arc-flame { position: relative; font-size: 28px; line-height: 1; display: inline-block; transform-origin: 50% 90%; filter: grayscale(1); opacity: .4; }
+.h-warm .arc-flame { filter: none; opacity: 1; animation: arc-flicker 1.1s ease-in-out infinite alternate; }
+.h-fire .arc-flame { filter: none; opacity: 1; animation: arc-flicker .6s ease-in-out infinite alternate; }
+.h-inferno .arc-flame { filter: none; opacity: 1; font-size: 24px; animation: arc-flicker .32s ease-in-out infinite alternate; }
+@keyframes arc-flicker { from { transform: scale(1) rotate(-4deg); } to { transform: scale(1.22) rotate(5deg) translateY(-2px); } }
+#arcade .arc-combo-n { position: relative; font-size: 36px; line-height: 1; color: var(--dim); display: inline-block; transform-origin: 50% 70%; min-width: 2ch; }
+.h-warm .arc-combo-n { color: #ffcf5a; }
+.h-fire .arc-combo-n { color: #ff9b3d; text-shadow: 0 0 14px rgba(255, 120, 20, .9); }
+.h-inferno .arc-combo-n { color: #fff3c4; text-shadow: 0 0 12px #ff5a1a, 0 0 28px rgba(255, 60, 10, .9); }
+.arc-combo-side { position: relative; display: flex; flex-direction: column; gap: 5px; }
+.arc-combo-lbl { font-size: 13px; font-weight: 800; letter-spacing: .16em; color: var(--dim); line-height: 1; }
+.h-warm .arc-combo-lbl { color: #ffcf5a; }
+.h-fire .arc-combo-lbl, .h-inferno .arc-combo-lbl { color: #fff; font-size: 15px; }
+.arc-heat { display: flex; gap: 4px; }
+.arc-heat i { width: 19px; height: 9px; border-radius: 3px; background: rgba(255, 255, 255, .14); transform: skewX(-14deg); }
+.arc-heat i.on { background: #ffd21f; }
+.arc-heat i.on:nth-child(2) { background: #ffb300; }
+.arc-heat i.on:nth-child(3) { background: #ff8a1a; }
+.arc-heat i.on:nth-child(4) { background: #ff5a1a; }
+.arc-heat i.on:nth-child(5) { background: #ff2e12; box-shadow: 0 0 10px #ff2e12; }
+/* a step up: the number punches out of the bar */
+.arc-combo.heat-up .arc-combo-n { animation: arc-heat-pop .8s cubic-bezier(.2, 1.5, .3, 1); }
+.arc-combo.heat-up .arc-flame { animation: arc-whoosh .8s ease-out; }
+.arc-combo.heat-up .arc-heat i.on { animation: arc-seg .5s ease-out both; }
+@keyframes arc-heat-pop { 0% { transform: scale(1); } 30% { transform: scale(2.3) rotate(-7deg); } 60% { transform: scale(.9) rotate(2deg); } 100% { transform: scale(1); } }
+@keyframes arc-whoosh { 0% { transform: scale(1); } 35% { transform: scale(2.6) translateY(-8px); } 100% { transform: scale(1); } }
+@keyframes arc-seg { 0% { transform: skewX(-14deg) scaleY(1); } 40% { transform: skewX(-14deg) scaleY(2.4); } 100% { transform: skewX(-14deg) scaleY(1); } }
+/* broken: it shakes, flashes red and drops out */
+.arc-combo.broke { animation: arc-broke-shake .5s linear; }
+.arc-combo.broke::after {
+  content: 'STREAK BROKEN'; position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: grid; place-items: center;
+  border-radius: 0 var(--r) var(--r) 0; background: #c81e1e; color: #fff; font: 800 19px/1 var(--num); letter-spacing: .12em;
+  animation: arc-broke-flash 1.3s ease-out both; pointer-events: none;
+}
+.arc-combo.broke .arc-combo-n { animation: arc-broke-fall 1.1s cubic-bezier(.5, 0, .8, .4) both; }
+@keyframes arc-broke-shake { 0%, 100% { transform: translateX(0); } 15% { transform: translateX(-9px) rotate(-1deg); } 30% { transform: translateX(8px) rotate(1deg); } 45% { transform: translateX(-6px); } 60% { transform: translateX(5px); } 80% { transform: translateX(-2px); } }
+@keyframes arc-broke-flash { 0% { opacity: 0; } 8% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes arc-broke-fall { 0% { transform: translateY(-40px) rotate(-30deg) scale(1.6); opacity: 0; } 100% { transform: none; opacity: 1; } }
+/* the whole HUD is on fire at streak 3+ */
+#arcade.arc-on-fire .arc-top { border-color: #ff7a1a; box-shadow: 0 0 0 1px rgba(255, 122, 26, .6), 0 0 26px rgba(255, 110, 20, .5), var(--shadow); }
+#arcade.arc-on-fire:not(.arc-has-armed) .arc-dock-bar { border-color: rgba(255, 122, 26, .8); box-shadow: 0 0 26px rgba(255, 110, 20, .4), var(--shadow); }
+#arcade.arc-inferno .arc-top { border-color: #ffd9a8; box-shadow: 0 0 0 2px rgba(255, 90, 26, .8), 0 0 38px rgba(255, 70, 10, .75), var(--shadow); }
+
+/* ---------------------------------------------------------------- challenges
+   A small tab beside the play area (under the line the app's toasts use). It opens into the
+   panel when there is news, for a few seconds, or when tapped; closed, it is three little bars. */
+.arc-chal {
+  position: absolute; right: 16px; top: 162px; z-index: 2; pointer-events: auto;
+  display: flex; flex-direction: column; align-items: stretch;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow);
+  transition: opacity .25s, transform .25s;
+}
+#hud:has(#planner:not(.hidden)) .arc-chal { right: 404px; }
+/* out of the way while a ball flies, while its banner is up, and under a flash */
+#arcade.arc-flying .arc-chal, #arcade.arc-revealing .arc-chal, #arcade.arc-tray-open .arc-chal, #arcade.arc-flashing .arc-chal { opacity: 0; transform: translateY(-10px); pointer-events: none; }
+.arc-ch-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 38px; padding: 0 14px;
+  background: none; border: 0; cursor: pointer; white-space: nowrap;
+}
+.arc-ch-head > span:first-child { font-size: 13px; font-weight: 800; letter-spacing: .2em; color: var(--accent); line-height: 1; }
+.arc-ch-minis { display: flex; gap: 5px; }
+.arc-ch-minis i { display: block; width: 34px; height: 9px; border-radius: 5px; background: rgba(255, 255, 255, .15); overflow: hidden; }
+.arc-ch-minis b { display: block; width: 100%; height: 100%; transform-origin: 0 50%; background: linear-gradient(90deg, #2fbf74, #b6ff2e); }
+.arc-chal.open .arc-ch-minis { display: none; }
+.arc-ch-rows { display: none; flex-direction: column; gap: 11px; width: 350px; padding: 2px 14px 13px; }
+.arc-chal.open .arc-ch-rows { display: flex; animation: arc-ch-open .3s cubic-bezier(.2, 1.2, .3, 1) both; }
+@keyframes arc-ch-open { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
+.arc-ch-row { position: relative; display: flex; flex-direction: column; gap: 5px; }
+.arc-ch-text { font-size: 21px; font-weight: 700; line-height: 1.1; color: var(--text); }
+.arc-ch-line { display: flex; align-items: center; gap: 10px; }
+.arc-ch-rew { font-size: 18px; color: var(--accent); white-space: nowrap; }
+.arc-ch-bar { display: block; flex: 1; height: 10px; border-radius: 5px; background: rgba(255, 255, 255, .13); overflow: hidden; }
+.arc-ch-bar i { display: block; width: 100%; height: 100%; border-radius: 5px; transform-origin: 0 50%; background: linear-gradient(90deg, #2fbf74, #b6ff2e); transition: transform .9s cubic-bezier(.2, .8, .2, 1); }
+#arcade .arc-ch-n { font-size: 20px; line-height: 1; color: var(--dim); text-align: right; min-width: 2.6ch; }
+.arc-ch-row.done .arc-ch-text { color: var(--dim); }
+.arc-ch-row.done .arc-ch-bar i { background: linear-gradient(90deg, #ffb300, #ffd21f); }
+#arcade .arc-ch-row.done .arc-ch-n { color: var(--accent); font-size: 24px; }
+.arc-ch-row.fresh { animation: arc-ch-in .5s cubic-bezier(.2, 1.3, .3, 1) both; }
+@keyframes arc-ch-in { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: none; } }
+.arc-ch-row.pop { animation: arc-ch-pop .9s cubic-bezier(.2, 1.5, .3, 1); z-index: 1; }
+.arc-ch-row.pop::after {
+  content: 'COMPLETE!'; position: absolute; inset: -6px -8px; display: grid; place-items: center; border-radius: 10px;
+  background: linear-gradient(90deg, #ffb300, #ffd21f); color: var(--accent-ink); font: 800 30px/1 var(--num); letter-spacing: .1em;
+  animation: arc-ch-stamp 1.6s ease-out both; pointer-events: none;
+}
+@keyframes arc-ch-pop { 0% { transform: scale(1); } 25% { transform: scale(1.14) rotate(-1.5deg); } 55% { transform: scale(.97); } 100% { transform: scale(1); } }
+@keyframes arc-ch-stamp { 0% { opacity: 0; transform: scale(1.6); } 12% { opacity: 1; transform: scale(1); } 75% { opacity: 1; } 100% { opacity: 0; } }
+
+/* ---------------------------------------------------------------- a trick waiting on the player who is up */
+.arc-curse {
+  --c: #ff7a52;
+  position: absolute; left: 50%; top: 252px; transform: translateX(-50%); z-index: 3;
+  display: flex; align-items: center; gap: 14px; padding: 8px 24px 8px 14px; border-radius: 16px; white-space: nowrap;
+  background:
+    repeating-linear-gradient(-45deg, rgba(0, 0, 0, .0) 0 14px, rgba(0, 0, 0, .28) 14px 28px),
+    linear-gradient(90deg, color-mix(in srgb, var(--c) 82%, #000), color-mix(in srgb, var(--c) 40%, #14161a) 60%, #14161a);
+  border: 3px solid var(--c); box-shadow: 0 0 30px color-mix(in srgb, var(--c) 45%, transparent), var(--shadow);
+  transition: opacity .25s;
+}
+.arc-curse.in { animation: arc-curse-in .7s cubic-bezier(.2, 1.5, .3, 1) both; }
+@keyframes arc-curse-in {
+  0% { opacity: 0; transform: translateX(-50%) scale(2.2) rotate(-5deg); }
+  45% { opacity: 1; transform: translateX(-50%) scale(.94) rotate(1.5deg); }
+  65% { transform: translateX(-50%) scale(1.04) rotate(-1deg); }
+  100% { transform: translateX(-50%) scale(1) rotate(0); }
+}
+.arc-curse-ico { font-size: 44px; line-height: 1; display: inline-block; animation: arc-curse-bob 1.2s ease-in-out infinite alternate; filter: drop-shadow(0 3px 4px rgba(0, 0, 0, .6)); }
+@keyframes arc-curse-bob { from { transform: translateX(-4px) rotate(-8deg); } to { transform: translateX(5px) rotate(8deg); } }
+.arc-curse-text { display: flex; flex-direction: column; gap: 3px; }
+#arcade .arc-curse-text b { font-size: 36px; line-height: 1; letter-spacing: .05em; color: #fff; text-shadow: 0 3px 0 rgba(0, 0, 0, .55); }
+.arc-curse-text span { font-size: 18px; font-weight: 800; letter-spacing: .1em; color: rgba(255, 255, 255, .86); line-height: 1; }
+#arcade.arc-flying .arc-curse, #arcade.arc-revealing .arc-curse, #arcade.arc-tray-open .arc-curse { opacity: 0; }
+
+/* ---------------------------------------------------------------- the ball token */
+.arc-tok {
+  --ts: 72px; --c: #ffd21f; --rar: #9aa3b0;
+  position: relative; display: block; width: var(--ts); height: var(--ts); flex: none;
+  transition: transform .14s cubic-bezier(.2, 1.4, .4, 1);
+}
+.arc-tok.r-rare { --rar: #4fb4ff; }
+.arc-tok.r-epic { --rar: #c670ff; }
+.arc-tok.r-legendary { --rar: #ffd21f; }
+/* the rarity frame: a ring round the ball (rare and up glow, legendary is a double ring) */
+.arc-tok::before {
+  content: ''; position: absolute; inset: 0; border-radius: 50%; border: 4px solid var(--rar); background: rgba(8, 9, 12, .82);
+}
+.arc-tok.r-rare::before { box-shadow: 0 0 10px color-mix(in srgb, var(--rar) 70%, transparent); }
+.arc-tok.r-epic::before { box-shadow: 0 0 14px var(--rar), inset 0 0 8px var(--rar); }
+.arc-tok.r-legendary::before { border-style: double; border-width: 7px; box-shadow: 0 0 18px var(--rar), inset 0 0 10px var(--rar); }
+.arc-tok-ball {
+  position: absolute; inset: 8px; border-radius: 50%; display: grid; place-items: center;
+  background: radial-gradient(circle at 34% 26%, #fff 0 7%, color-mix(in srgb, var(--c) 62%, #fff) 16%, var(--c) 50%, color-mix(in srgb, var(--c) 42%, #000) 100%);
+  box-shadow: inset 0 -5px 9px rgba(0, 0, 0, .38), 0 2px 6px rgba(0, 0, 0, .5);
+}
+.arc-tok.r-legendary .arc-tok-ball { inset: 11px; }
+.arc-tok-emoji { font-size: calc(var(--ts) * .44); line-height: 1; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .6)); }
+.arc-tok-count {
+  position: absolute; right: -7px; bottom: -6px; min-width: 30px; height: 30px; padding: 0 7px; border-radius: 15px;
+  background: var(--accent); color: var(--accent-ink); font-size: 23px; line-height: 27px; text-align: center; border: 2px solid var(--arc-ink);
+}
+.arc-tok-key {
+  position: absolute; left: -7px; top: -7px; min-width: 25px; height: 25px; padding: 0 5px; border-radius: 7px;
+  background: var(--arc-ink); color: #fff; font-size: 16px; line-height: 23px; text-align: center; border: 1px solid var(--line-hi); font-style: normal;
+}
+/* a trick is not a ball: a hazard diamond */
+.arc-tok.k-trick { --rar: #ff3d5a; }
+.arc-tok.k-trick::before { inset: 9px; border-radius: 13px; transform: rotate(45deg); border-color: #ff3d5a; box-shadow: 0 0 12px rgba(255, 61, 90, .6); }
+.arc-tok.k-trick .arc-tok-ball {
+  inset: 17px; border-radius: 8px; transform: rotate(45deg);
+  background: repeating-linear-gradient(90deg, rgba(0, 0, 0, .3) 0 6px, transparent 6px 12px), linear-gradient(135deg, color-mix(in srgb, var(--c) 80%, #fff), color-mix(in srgb, var(--c) 50%, #300));
+}
+.arc-tok.k-trick .arc-tok-emoji { transform: rotate(-45deg); font-size: calc(var(--ts) * .42); }
+/* states */
+.arc-tok.s-empty, .arc-tok.s-used, .arc-tok.s-locked { opacity: .36; filter: grayscale(.95); }
+.arc-tok-stamp {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-18deg); padding: 1px 6px; border-radius: 5px;
+  background: #0b0c0f; border: 2px solid #fff; color: #fff; font: 800 16px/1.2 var(--num); letter-spacing: .08em;
+}
+.arc-tok.s-armed { transform: translateY(-12px) scale(1.2); z-index: 1; }
+.arc-tok.s-armed::before { border-color: #fff; box-shadow: 0 0 0 3px var(--c), 0 0 26px 6px var(--c); }
+.arc-tok.s-armed.k-trick::before { box-shadow: 0 0 0 3px var(--c), 0 0 22px 4px var(--c); }
+.arc-tok.s-armed::after {   /* a ring that keeps leaving the ball */
+  content: ''; position: absolute; inset: -2px; border-radius: 50%; border: 4px solid var(--c);
+  animation: arc-ring 1.3s ease-out infinite; pointer-events: none;
+}
+@keyframes arc-ring { 0% { transform: scale(1); opacity: .95; } 100% { transform: scale(1.7); opacity: 0; } }
+.arc-tok.s-armed .arc-tok-emoji { animation: arc-flicker .8s ease-in-out infinite alternate; }
+.arc-tok.gift, .arc-dock-more.gift { animation: arc-gift 1s cubic-bezier(.2, 1.5, .3, 1); }
+@keyframes arc-gift { 0% { transform: scale(1); } 30% { transform: scale(1.6) rotate(-12deg); } 60% { transform: scale(1.15) rotate(8deg); } 100% { transform: scale(1); } }
+.nope { animation: arc-nope .4s ease-out; }
+@keyframes arc-nope { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-7px); } 50% { transform: translateX(7px); } 75% { transform: translateX(-4px); } }
+
+/* ---------------------------------------------------------------- the dock: a hotbar, bottom centre */
+.arc-dock {
+  --pc: var(--accent); --ac: transparent;
+  position: absolute; left: 50%; bottom: 92px; transform: translateX(-50%); z-index: 5; pointer-events: auto;
+  display: flex; flex-direction: column; align-items: stretch;
+  transition: opacity .25s, transform .3s cubic-bezier(.2, .9, .3, 1);
+}
+#arcade.arc-p1 .arc-dock, #arcade.arc-p1 .arc-tray { --pc: var(--arc-p1); }
+#arcade.arc-p2 .arc-dock, #arcade.arc-p2 .arc-tray { --pc: var(--arc-p2); }
+/* nothing to arm while a ball is in the air, between holes, or with power-ups off */
+#arcade.arc-flying .arc-dock, #arcade.arc-dock-off .arc-dock { opacity: 0; transform: translate(-50%, 46px); pointer-events: none; }
+#arcade.arc-muted .arc-dock { opacity: .6; }
+#arcade.arc-muted .arc-dock:hover { opacity: 1; }
+.arc-dock.arc-turn { animation: arc-turn .55s cubic-bezier(.2, 1.3, .3, 1); }
+@keyframes arc-turn { 0% { opacity: 0; transform: translate(-50%, 70px) scale(.92); } 100% { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+
+/* the head: tabs standing on the bar */
+.arc-dock-head { display: flex; align-items: flex-end; gap: 8px; padding: 0 16px; max-width: 850px; }
+.arc-dock-who, .arc-dock-armed, .arc-dock-sab {
+  display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 16px; border-radius: 14px 14px 0 0; white-space: nowrap;
+}
+.arc-dock-who { background: var(--pc); color: #fff; box-shadow: 0 -4px 18px color-mix(in srgb, var(--pc) 45%, transparent); }
+#arcade .arc-dock-who b { font-size: 28px; line-height: 1; letter-spacing: .04em; max-width: 220px; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
+.arc-dock-pip { font: 800 15px/22px var(--num); font-style: normal; padding: 0 6px; border-radius: 6px; background: rgba(0, 0, 0, .35); letter-spacing: .06em; }
+.arc-charges { display: flex; gap: 5px; align-items: center; }
+.arc-charges i { width: 15px; height: 24px; background: #fff; clip-path: polygon(58% 0, 8% 56%, 44% 56%, 30% 100%, 92% 40%, 54% 40%, 78% 0); font-style: normal; }
+.arc-charges i.inf { width: auto; height: auto; clip-path: none; background: none; font: 800 28px/1 var(--num); }
+.arc-dock-who em { font-style: normal; font-size: 16px; font-weight: 800; letter-spacing: .12em; opacity: .92; }
+#arcade.arc-has-armed .arc-dock-who em { display: none; }   /* three tabs on one bar: the pips say it */
+.arc-dock-armed {
+  --c: var(--accent); background: var(--c); color: var(--arc-ink); height: 52px;
+  box-shadow: 0 -4px 24px color-mix(in srgb, var(--c) 60%, transparent); animation: arc-tab-in .35s cubic-bezier(.2, 1.5, .3, 1) both; transform-origin: 50% 100%;
+}
+@keyframes arc-tab-in { from { transform: translateY(20px) scaleY(.4); opacity: 0; } to { transform: none; opacity: 1; } }
+.arc-dock-armed span { font-size: 15px; font-weight: 800; letter-spacing: .2em; padding: 3px 7px; border-radius: 6px; background: var(--arc-ink); color: #fff; }
+#arcade .arc-dock-armed b { font-size: 34px; line-height: 1; letter-spacing: .04em; }
+.arc-dock-armed.free span { background: #fff; color: var(--arc-ink); }
+/* v2:qa the ball on the grass lies under this tab: the tab lifts clear of it and becomes a
+   label over the ball (`translate`, so the tab-in animation's transform stands) */
+.arc-dock-armed { transition: translate .25s cubic-bezier(.2, .9, .3, 1), border-radius .25s; }
+.arc-dock-head.arc-lift .arc-dock-armed { translate: 0 -78px; border-radius: 14px; }
+.arc-dock-armed em { font-style: normal; font-size: 16px; font-weight: 800; letter-spacing: .08em; padding: 3px 8px; border-radius: 6px; background: rgba(0, 0, 0, .28); }
+.arc-dock-sab { margin-left: auto; background: #3a0d16; border: 2px solid #ff3d5a; border-bottom: 0; color: #ff9aa9; }
+.arc-dock-sab span { font-size: 16px; font-weight: 800; letter-spacing: .16em; }
+#arcade .arc-dock-sab b { font-size: 26px; line-height: 1; color: #fff; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+.arc-dock-sab.cast { background: #ff3d5a; color: #fff; }
+
+/* nine tokens, the tray button and (in a match) the divider must clear the shot planner:
+   at most 850 wide, centred */
+.arc-dock-bar {
+  display: flex; align-items: center; justify-content: center; gap: 9px; padding: 12px 14px; border-radius: 24px;
+  background: var(--panel-solid); border: 2px solid var(--line-hi); box-shadow: var(--shadow);
+}
+#arcade.arc-has-armed .arc-dock-bar { border-color: var(--ac); box-shadow: 0 0 0 1px var(--ac), 0 0 34px color-mix(in srgb, var(--ac) 50%, transparent), var(--shadow); }
+/* a match: the bar wears the colour of the player who is up */
+#arcade.arc-p1 .arc-dock-bar, #arcade.arc-p2 .arc-dock-bar {
+  border-color: var(--pc); border-width: 3px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--pc) 34%, #101215), color-mix(in srgb, var(--pc) 10%, #101215));
+  box-shadow: 0 0 30px color-mix(in srgb, var(--pc) 40%, transparent), var(--shadow);
+}
+.arc-dock-balls, .arc-dock-tricks { display: flex; align-items: center; gap: 9px; }
+.arc-dock-bar .arc-tok { --ts: 70px; }
+.arc-dock-tricks { padding-left: 12px; border-left: 3px dashed rgba(255, 61, 90, .75); }
+.arc-slot { display: block; padding: 0; background: none; border: 0; border-radius: 50%; cursor: pointer; }
+.arc-slot:hover .arc-tok:not(.s-armed):not(.s-empty):not(.s-used):not(.s-locked) { transform: translateY(-5px) scale(1.08); }
+.arc-slot:active .arc-tok { transform: scale(.94); }
+.arc-slot:focus-visible, .arc-dock-more:focus-visible, .arc-cell:focus-visible, .arc-tool:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.arc-dock-none { display: flex; flex-direction: column; gap: 3px; padding: 6px 8px; white-space: nowrap; }
+#arcade .arc-dock-none b { font-size: 24px; line-height: 1; color: var(--dim); letter-spacing: .06em; }
+.arc-dock-none span { font-size: 14px; font-weight: 800; letter-spacing: .12em; color: var(--faint); }
+.arc-dock-more {
+  position: relative; width: 80px; height: 72px; flex: none; border-radius: 18px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  background: rgba(255, 255, 255, .06); border: 2px dashed var(--line-hi); color: var(--text);
+  transition: border-color .15s, background .15s;
+}
+.arc-dock-more:hover, .arc-dock-more.open { border-color: var(--accent); background: var(--accent-soft); }
+#arcade .arc-dock-more b { font-size: 27px; line-height: 1; }
+.arc-dock-more span { font-size: 12px; font-weight: 800; letter-spacing: .12em; color: var(--dim); }
+.arc-dock-more .arc-tok-key { left: auto; right: -7px; }
+
+/* ---------------------------------------------------------------- the tray: every ball, opening upward */
+.arc-tray-scrim { position: absolute; inset: 0; z-index: 4; background: rgba(5, 7, 9, .5); opacity: 0; transition: opacity .2s; }
+#arcade.arc-tray-open .arc-tray-scrim { opacity: 1; pointer-events: auto; }
+.arc-tray {
+  --pc: var(--accent);
+  position: absolute; left: 50%; bottom: 252px; transform: translateX(-50%); z-index: 5; pointer-events: auto;
+  display: flex; flex-direction: column; gap: 12px; padding: 16px 18px 14px; border-radius: 24px;
+  background: var(--panel-solid); border: 2px solid var(--line-hi); box-shadow: 0 24px 60px rgba(0, 0, 0, .6);
+  animation: arc-tray-in .24s cubic-bezier(.2, 1.2, .3, 1) both;
+}
+#arcade.arc-p1 .arc-tray, #arcade.arc-p2 .arc-tray { border-color: var(--pc); }
+@keyframes arc-tray-in { from { opacity: 0; transform: translate(-50%, 40px) scale(.96); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+.arc-tray-head { display: flex; align-items: center; gap: 14px; }
+#arcade .arc-tray-head > b { font-size: 30px; line-height: 1; letter-spacing: .05em; color: var(--pc); white-space: nowrap; }
+.arc-tray-head > span { flex: 1; font-size: 17px; font-weight: 600; color: var(--dim); }
+.arc-tool {
+  position: relative; width: 44px; height: 44px; flex: none; border-radius: 50%; cursor: pointer; background: transparent;
+  border: 2px solid var(--line-hi); color: var(--dim); font: 800 20px/1 var(--num); display: grid; place-items: center;
+}
+.arc-tool:hover { color: var(--accent); border-color: var(--accent); }
+.arc-tool-mute { color: var(--accent); border-color: rgba(255, 210, 31, .5); }
+.arc-tool-mute.off { color: var(--faint); border-color: var(--line); filter: grayscale(1); }
+.arc-tool-mute.off::after { content: ''; position: absolute; width: 32px; height: 3px; background: var(--bad); transform: rotate(-45deg); border-radius: 2px; }
+.arc-tray-grid { display: grid; grid-template-columns: repeat(8, 106px); gap: 8px; }
+.arc-cell {
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 9px; height: 118px; padding: 12px 2px 6px;
+  border-radius: 16px; background: rgba(255, 255, 255, .045); border: 2px solid transparent; cursor: pointer;
+}
+.arc-cell .arc-tok { --ts: 64px; }
+.arc-cell .arc-tok.s-armed { transform: scale(1.08); }
+#arcade .arc-cell > b { font-size: 15px; line-height: 1.05; letter-spacing: .03em; text-align: center; white-space: nowrap; }
+.arc-cell.s-empty > b, .arc-cell.s-used > b, .arc-cell.s-locked > b { color: var(--faint); }
+.arc-cell.cur { border-color: #fff; background: rgba(255, 255, 255, .12); }
+.arc-cell.s-armed { border-color: var(--accent); background: var(--accent-soft); }
+.arc-tray-sab { display: flex; align-items: center; gap: 18px; padding-top: 10px; border-top: 3px dashed rgba(255, 61, 90, .6); }
+.arc-tray-sab-lbl { display: flex; flex-direction: column; gap: 4px; width: 220px; font-size: 17px; font-weight: 800; letter-spacing: .16em; color: #ff8fa0; }
+#arcade .arc-tray-sab-lbl b { font-size: 26px; line-height: 1; letter-spacing: .04em; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.arc-tray-sab .arc-tray-grid { grid-template-columns: repeat(3, 106px); }
+.arc-tray-detail {
+  --c: var(--accent);
+  display: flex; align-items: center; gap: 16px; min-height: 76px; padding: 8px 18px; border-radius: 16px; border-left: 8px solid var(--c);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--c) 30%, transparent), rgba(255, 255, 255, .04) 70%);
+}
+.arc-detail-emoji { font-size: 46px; line-height: 1; filter: drop-shadow(0 3px 4px rgba(0, 0, 0, .6)); }
+.arc-detail-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+#arcade .arc-detail-text b { font-size: 34px; line-height: 1; letter-spacing: .04em; }
+.arc-detail-text span { font-size: 22px; font-weight: 600; color: var(--text); line-height: 1.1; }
+.arc-detail-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+#arcade .arc-detail-meta b { font-size: 26px; line-height: 1; color: var(--accent); white-space: nowrap; }
+#arcade .arc-detail-meta b.s-empty, #arcade .arc-detail-meta b.s-used, #arcade .arc-detail-meta b.s-locked { color: var(--faint); font-size: 20px; }
+.arc-rar { font-style: normal; font-size: 14px; font-weight: 800; letter-spacing: .14em; padding: 3px 9px; border-radius: 6px; border: 2px solid #9aa3b0; color: #c8ced6; line-height: 1.1; }
+.arc-rar.r-rare { color: #8fd0ff; border-color: #4fb4ff; }
+.arc-rar.r-epic { color: #dfa6ff; border-color: #c670ff; }
+.arc-rar.r-legendary { color: var(--accent-ink); border-color: var(--accent); background: var(--accent); }
+.arc-tray-foot { display: flex; gap: 22px; font-size: 14px; font-weight: 600; color: var(--dim); }
+.arc-tray-foot kbd { margin: 0 2px; font-size: 13px; color: var(--text); }
+
+/* ---------------------------------------------------------------- the callout banner (upper centre) */
+.arc-stage {
+  position: absolute; left: 0; right: 0; top: 178px; z-index: 7;   /* under the line the app's toasts use */
+  display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; pointer-events: none;
+}
+.arc-banner { position: relative; display: inline-block; padding: 4px 44px; --fs: 104px; }
+.arc-banner-text {
+  position: relative; display: inline-flex; flex-direction: column; align-items: center;
+  font-family: var(--num); font-weight: 800; font-size: var(--fs); line-height: .94; letter-spacing: .04em;
+  text-transform: uppercase; white-space: nowrap; color: var(--text);
+  text-shadow: 0 .04em 0 rgba(0, 0, 0, .6), 0 .12em .35em rgba(0, 0, 0, .65);
+}
+.arc-line { display: block; white-space: nowrap; }
+.arc-ch { display: inline-block; }
+.arc-banner-glow {
+  position: absolute; inset: -30px -90px; border-radius: 50%; z-index: -2; pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, .62), rgba(0, 0, 0, 0) 70%);
+}
+.arc-banner-ring { position: absolute; left: 50%; top: 50%; width: 0; height: 0; z-index: -1; pointer-events: none; }
+.arc-banner.out { animation: arc-fade-out .5s ease-in forwards !important; }
+.arc-sub.out, .arc-reasons.out { animation: arc-fade-out .4s ease-in forwards !important; }
+@keyframes arc-fade-out { to { opacity: 0; transform: translateY(-22px) scale(.94); } }
+
+/* --- epic: gold, the picture shakes, sparks */
+.arc-banner.t-epic { animation: arc-shake .9s ease-in-out .25s; }
+.arc-banner.t-epic .arc-banner-text {
+  color: #ffd21f; animation: arc-slam .6s cubic-bezier(.2, 1.5, .3, 1) both;
+  text-shadow: 0 .02em 0 #fff6c2, 0 .06em 0 #b98200, 0 .1em 0 #7a5200, 0 0 .3em rgba(255, 210, 31, .85), 0 .18em .4em rgba(0, 0, 0, .75);
+}
+.arc-banner.t-epic .arc-ch { animation: arc-ripple .8s ease-in-out infinite alternate; animation-delay: calc(var(--i, 0) * 55ms); }
+.arc-banner.t-epic .arc-banner-glow {
+  background: radial-gradient(ellipse at center, rgba(255, 190, 31, .46), rgba(120, 70, 0, .3) 45%, rgba(0, 0, 0, 0) 72%);
+  animation: arc-glow 1s ease-in-out infinite alternate;
+}
+.arc-banner.t-epic .arc-banner-ring {   /* god rays turning behind it */
+  width: 1100px; height: 1100px; margin: -550px; border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 210, 31, .34) 0 7deg, rgba(255, 210, 31, 0) 7deg 18deg);
+  -webkit-mask-image: radial-gradient(closest-side, #000 10%, rgba(0, 0, 0, .5) 38%, transparent 62%); mask-image: radial-gradient(closest-side, #000 10%, rgba(0, 0, 0, .5) 38%, transparent 62%);
+  animation: arc-rays 9s linear infinite, arc-fade-in .5s ease-out both;
+}
+/* --- good: bright, a punchy slam and a shock ring */
+.arc-banner.t-good .arc-banner-text {
+  color: #fff; animation: arc-slam .5s cubic-bezier(.2, 1.5, .3, 1) both;
+  text-shadow: 0 .05em 0 #17c46b, 0 .1em 0 #0a7a40, 0 0 .32em rgba(60, 255, 150, .7), 0 .18em .4em rgba(0, 0, 0, .7);
+}
+.arc-banner.t-good.g-perfect .arc-banner-text, .arc-banner.t-good.g-jackpot .arc-banner-text {
+  color: #fff7cf; text-shadow: 0 .05em 0 #ffb300, 0 .1em 0 #8a5a00, 0 0 .32em rgba(255, 210, 31, .8), 0 .18em .4em rgba(0, 0, 0, .7);
+}
+.arc-banner.t-good .arc-banner-glow { background: radial-gradient(ellipse at center, rgba(20, 150, 80, .42), rgba(0, 0, 0, .3) 50%, rgba(0, 0, 0, 0) 72%); }
+.arc-banner.t-good.g-perfect .arc-banner-glow, .arc-banner.t-good.g-jackpot .arc-banner-glow { background: radial-gradient(ellipse at center, rgba(200, 140, 0, .42), rgba(0, 0, 0, .3) 50%, rgba(0, 0, 0, 0) 72%); }
+.arc-banner.t-good .arc-banner-ring {
+  width: 300px; height: 120px; margin: -60px -150px; border-radius: 50%; border: 10px solid #fff;
+  animation: arc-shock .6s cubic-bezier(.1, .7, .3, 1) .12s both;
+}
+/* --- neutral: says it and goes */
+.arc-banner.t-neutral .arc-banner-text { animation: arc-pop .4s cubic-bezier(.2, 1.4, .3, 1) both; }
+.arc-banner.t-neutral .arc-banner-text::after { content: ''; display: block; height: .07em; width: 62%; margin: .1em auto 0; background: var(--accent); border-radius: 3px; animation: arc-grow .45s .2s ease-out both; transform-origin: 50% 50%; }
+.arc-banner.t-neutral.g-ok .arc-banner-text { color: #d6d6d0; }
+/* --- bad: red, it drops and it cracks */
+.arc-banner.t-bad .arc-banner-text {
+  color: #ff4a32; letter-spacing: .07em;
+  text-shadow: 0 .05em 0 #8a1200, 0 .1em 0 #4a0900, 0 0 .3em rgba(255, 50, 20, .55), 0 .18em .4em rgba(0, 0, 0, .8);
+}
+.arc-banner.t-bad .arc-banner-glow { background: radial-gradient(ellipse at center, rgba(150, 20, 0, .5), rgba(0, 0, 0, .35) 50%, rgba(0, 0, 0, 0) 72%); }
+.arc-crack { position: relative; display: inline-block; vertical-align: top; animation: arc-crash .5s cubic-bezier(.5, 0, .9, .5) both; }
+/* it breaks in two like a dropped sign: a jagged crack down the middle, the left piece
+   leans one way, the right piece sags the other (whole letters stay whole) */
+.arc-crack-a { display: flex; transform-origin: 0 100%; clip-path: polygon(-20% -40%, 53% -40%, 46% 28%, 55% 50%, 47% 140%, -20% 140%); }
+.arc-crack-b { position: absolute !important; left: 0; top: 0; display: flex; transform-origin: 100% 100%; clip-path: polygon(53% -40%, 120% -40%, 120% 140%, 47% 140%, 55% 50%, 46% 28%); }
+.arc-banner.t-bad .arc-crack-a { animation: arc-crack-l .5s cubic-bezier(.2, 1.7, .4, 1) .5s both; }
+.arc-banner.t-bad .arc-crack-b { animation: arc-crack-r .55s cubic-bezier(.2, 1.7, .4, 1) .52s both; }
+@keyframes arc-crack-l { to { transform: translate(-.07em, .01em) rotate(-2.4deg); } }
+@keyframes arc-crack-r { to { transform: translate(.09em, .07em) rotate(3.2deg); } }
+.arc-banner.t-bad .arc-banner-ring {   /* the dust it lands in */
+  width: 520px; height: 60px; margin: 20px -260px 0; border-radius: 50%; top: 100%;
+  background: radial-gradient(ellipse at center, rgba(255, 220, 200, .55), rgba(255, 220, 200, 0) 70%);
+  animation: arc-dust .7s ease-out .42s both;
+}
+/* --- funny: tilted, wobbling, cartoon colours, stickers */
+.arc-banner.t-funny { animation: arc-boing .9s cubic-bezier(.2, 1.3, .3, 1) both; transform: rotate(-6deg); }
+.arc-banner.t-funny .arc-banner-text {
+  font-family: "Impact", "Haettenschweiler", "Arial Black", var(--num); font-weight: 400; letter-spacing: .05em; line-height: 1.02;
+  -webkit-text-stroke: .075em #1b0f3a; paint-order: stroke fill;
+  text-shadow: .055em .07em 0 #1b0f3a, .11em .13em 0 rgba(0, 0, 0, .4);
+}
+.arc-banner.t-funny .arc-ch { color: #ffd21f; animation: arc-jelly .5s ease-in-out infinite alternate; animation-delay: calc(var(--i, 0) * -137ms); }
+.arc-banner.t-funny .arc-ch:nth-child(5n+1) { color: #ff4fa8; }
+.arc-banner.t-funny .arc-ch:nth-child(5n+2) { color: #ffe23d; }
+.arc-banner.t-funny .arc-ch:nth-child(5n+3) { color: #3fd8ff; }
+.arc-banner.t-funny .arc-ch:nth-child(5n+4) { color: #8dff4f; }
+.arc-banner.t-funny .arc-ch:nth-child(5n+5) { color: #ff9a2e; }
+.arc-banner.t-funny .arc-ch:nth-child(2n) { animation-name: arc-jelly-b; }
+.arc-banner.t-funny .arc-banner-glow { inset: -14px -30px; border-radius: 40% 60% 55% 45% / 60% 45% 55% 40%; background: #2a1560; opacity: .9; border: 6px solid #1b0f3a; box-shadow: 10px 12px 0 rgba(0, 0, 0, .35); animation: arc-blob 1.6s ease-in-out infinite alternate; }
+.arc-banner.t-funny .arc-banner-ring {   /* comic sunburst */
+  width: 900px; height: 900px; margin: -450px; border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 79, 168, .5) 0 9deg, rgba(63, 216, 255, .0) 9deg 18deg);
+  -webkit-mask-image: radial-gradient(closest-side, #000 20%, rgba(0, 0, 0, .55) 42%, transparent 60%); mask-image: radial-gradient(closest-side, #000 20%, rgba(0, 0, 0, .55) 42%, transparent 60%);
+  animation: arc-rays 7s linear infinite reverse, arc-fade-in .4s ease-out both; z-index: -3;
+}
+.arc-sticker {
+  position: absolute; top: 50%; font-size: calc(var(--fs) * .82); line-height: 1; margin-top: calc(var(--fs) * -.45);
+  filter: drop-shadow(.05em .07em 0 #1b0f3a);
+}
+.arc-sticker.l { right: 100%; margin-right: -30px; animation: arc-sticker-l 1s cubic-bezier(.2, 1.4, .3, 1) both, arc-bounce .45s ease-in-out 1s infinite alternate; }
+.arc-sticker.r { left: 100%; margin-left: -30px; animation: arc-sticker-r 1s cubic-bezier(.2, 1.4, .3, 1) .12s both, arc-bounce .45s ease-in-out 1.2s infinite alternate-reverse; }
+
+@keyframes arc-slam { 0% { opacity: 0; transform: scale(3.2) rotate(-5deg); } 55% { opacity: 1; transform: scale(.94) rotate(.6deg); } 75% { transform: scale(1.04); } 100% { transform: scale(1) rotate(0); } }
+@keyframes arc-pop { 0% { opacity: 0; transform: scale(.5); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes arc-crash { 0% { opacity: 0; transform: translateY(-260px) scale(1.25); } 70% { opacity: 1; transform: translateY(14px) scale(1.04, .9); } 86% { transform: translateY(-6px) scale(.98, 1.04); } 100% { transform: translateY(0) scale(1); } }
+@keyframes arc-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes arc-shake {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  10% { transform: translate(-8px, 3px) rotate(-1.2deg); } 20% { transform: translate(8px, -4px) rotate(1.2deg); }
+  30% { transform: translate(-6px, 4px) rotate(-.9deg); } 40% { transform: translate(6px, -3px) rotate(.9deg); }
+  50% { transform: translate(-4px, 2px) rotate(-.5deg); } 60% { transform: translate(4px, -2px) rotate(.5deg); }
+  70% { transform: translate(-2px, 1px); } 80% { transform: translate(2px, -1px); } 90% { transform: translate(-1px, 0); }
+}
+@keyframes arc-ripple { from { transform: translateY(0) scale(1); } to { transform: translateY(-.09em) scale(1.06); } }
+@keyframes arc-glow { from { opacity: .7; transform: scale(1); } to { opacity: 1; transform: scale(1.12); } }
+@keyframes arc-rays { to { transform: rotate(360deg); } }
+@keyframes arc-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes arc-shock { 0% { opacity: .95; transform: scale(.3); } 100% { opacity: 0; transform: scale(4.4, 3.4); } }
+@keyframes arc-dust { 0% { opacity: 0; transform: scale(.2, .6); } 25% { opacity: 1; } 100% { opacity: 0; transform: scale(1.8, 1.4) translateY(-8px); } }
+@keyframes arc-boing {
+  0% { opacity: 0; transform: translateX(520px) rotate(28deg) scale(.4); }
+  38% { opacity: 1; transform: translateX(-34px) rotate(-13deg) scale(1.18, .84); }
+  56% { transform: translateX(16px) rotate(-2deg) scale(.9, 1.14); }
+  72% { transform: translateX(-8px) rotate(-8deg) scale(1.06, .95); }
+  86% { transform: translateX(3px) rotate(-5deg) scale(.98, 1.03); }
+  100% { transform: translateX(0) rotate(-6deg) scale(1); }
+}
+@keyframes arc-jelly { from { transform: translateY(.05em) rotate(-7deg) scale(1.04, .94); } to { transform: translateY(-.07em) rotate(6deg) scale(.95, 1.08); } }
+@keyframes arc-jelly-b { from { transform: translateY(-.06em) rotate(6deg) scale(.95, 1.07); } to { transform: translateY(.05em) rotate(-6deg) scale(1.05, .94); } }
+@keyframes arc-blob { from { transform: rotate(-1.5deg) scale(1); } to { transform: rotate(1.5deg) scale(1.04, .97); } }
+@keyframes arc-sticker-l { 0% { opacity: 0; transform: translate(-300px, -200px) rotate(-200deg) scale(.3); } 100% { opacity: 1; transform: rotate(-14deg) scale(1); } }
+@keyframes arc-sticker-r { 0% { opacity: 0; transform: translate(300px, 200px) rotate(200deg) scale(.3); } 100% { opacity: 1; transform: rotate(12deg) scale(1); } }
+@keyframes arc-bounce { from { transform: translateY(0) rotate(-14deg) scale(1, 1); } to { transform: translateY(-.18em) rotate(10deg) scale(1.06, .96); } }
+
+/* what it earned: grade · points · multiplier · coins */
+.arc-sub {
+  display: flex; align-items: center; justify-content: center; gap: 18px; height: 52px; padding: 0 22px; border-radius: 26px;
+  background: rgba(10, 11, 14, .82); border: 2px solid var(--line-hi); box-shadow: var(--shadow); white-space: nowrap;
+}
+.arc-sub.in { animation: arc-sub-in .45s cubic-bezier(.2, 1.5, .3, 1) both; }
+@keyframes arc-sub-in { from { opacity: 0; transform: translateY(-24px) scale(.7); } to { opacity: 1; transform: none; } }
+.arc-stage.t-funny .arc-sub { margin-top: 14px; }
+.arc-grade { font-size: 20px; font-weight: 800; letter-spacing: .16em; padding: 5px 11px; border-radius: 8px; background: #d6d6d0; color: var(--arc-ink); line-height: 1; }
+.arc-grade.g-jackpot, .arc-grade.g-perfect { background: var(--accent); }
+.arc-grade.g-great { background: #3ee28a; }
+.arc-grade.g-miss { background: #ff8a5c; }
+.arc-grade.g-disaster { background: #ff4a32; color: #fff; }
+#arcade .arc-points { font-size: 42px; line-height: 1; color: var(--accent); text-shadow: 0 2px 0 #7a5a00; }
+#arcade .arc-points.neg { color: #ff6a52; text-shadow: 0 2px 0 #5a0f00; }
+.arc-mult { font-size: 28px; line-height: 1; color: #ff9b3d; padding: 3px 9px; border-radius: 8px; background: rgba(255, 155, 61, .16); }
+.arc-coins { display: flex; align-items: center; gap: 5px; font-size: 30px; line-height: 1; color: var(--accent); }
+.arc-coins i { font-style: normal; font-size: 26px; }
+/* why */
+.arc-reasons {
+  display: flex; align-items: center; justify-content: center; gap: 12px; height: 38px; padding: 0 18px; border-radius: 19px;
+  background: rgba(10, 11, 14, .7); font-size: 21px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--text); white-space: nowrap;
+}
+.arc-reasons i { font-style: normal; color: var(--faint); }
+.arc-reasons.in { animation: arc-sub-in .4s cubic-bezier(.2, 1.3, .3, 1) both; }
+.arc-reasons.record { background: linear-gradient(90deg, #ffb300, #ffd21f); color: var(--accent-ink); height: 44px; font-size: 25px; box-shadow: 0 0 30px rgba(255, 210, 31, .6); animation: arc-slam .5s cubic-bezier(.2, 1.5, .3, 1) both; }
+.arc-reasons.record i { color: rgba(21, 19, 10, .5); }
+#arcade .arc-reasons.record b { font-size: 30px; }
+
+/* ---------------------------------------------------------------- one-line flash (armed, ball name) */
+.arc-flash {
+  --c: var(--accent); --ms: 1800ms;
+  position: absolute; left: 50%; top: 178px; transform: translateX(-50%); z-index: 8;
+  padding: 9px 28px; border-radius: 999px; background: var(--panel-solid); border: 3px solid var(--c);
+  box-shadow: 0 0 34px color-mix(in srgb, var(--c) 45%, transparent), var(--shadow);
+  font-family: var(--num); font-weight: 800; font-size: 34px; line-height: 1.1; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; color: var(--c);
+  opacity: 0;
+}
+.arc-flash.in { animation: arc-flash-in var(--ms) cubic-bezier(.2, 1.3, .3, 1) both; }
+.arc-flash.k-armed, .arc-flash.k-ball { background: var(--c); color: var(--arc-ink); border-color: #fff; }
+.arc-flash.k-trick { background: #3a0d16; border-color: #ff3d5a; color: #fff; }
+.arc-flash.k-holed { --c: var(--good); }
+.arc-flash.k-splash { --c: var(--water); }
+@keyframes arc-flash-in {
+  0% { opacity: 0; transform: translate(-50%, -26px) scale(.6); }
+  10% { opacity: 1; transform: translate(-50%, 0) scale(1.1); }
+  18% { transform: translate(-50%, 0) scale(1); }
+  82% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -14px) scale(.96); }
+}
+
+/* ---------------------------------------------------------------- particles */
+.arc-fx { position: absolute; inset: 0; z-index: 9; overflow: hidden; pointer-events: none; }
+.arc-confetti {
+  position: absolute; width: 8px; height: 12px; background: var(--c, var(--accent)); border-radius: 2px;
+  will-change: transform, opacity; animation: arc-confetti var(--d, 1800ms) cubic-bezier(.2, .7, .3, 1) var(--delay, 0ms) both;
+}
+@keyframes arc-confetti {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0) scale(.6); }
+  8% { opacity: 1; transform: translate(calc(var(--dx) * .25), calc(var(--dy) * .1 - 110px)) rotate(calc(var(--rot) * .2)) scale(1.1); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(.9); }
+}
+/* a firework: one element, its sparks are box-shadows on two rings, thrown outward */
+.arc-firework {
+  --c: var(--fc, var(--accent));
+  position: absolute; width: 7px; height: 7px; margin: -3.5px; border-radius: 50%; background: var(--c);
+  box-shadow:
+    0 -150px 0 var(--c), 75px -130px 0 var(--c), 130px -75px 0 var(--c), 150px 0 0 var(--c), 130px 75px 0 var(--c), 75px 130px 0 var(--c),
+    0 150px 0 var(--c), -75px 130px 0 var(--c), -130px 75px 0 var(--c), -150px 0 0 var(--c), -130px -75px 0 var(--c), -75px -130px 0 var(--c),
+    0 -84px 0 -1px #fff, 59px -59px 0 -1px #fff, 84px 0 0 -1px #fff, 59px 59px 0 -1px #fff,
+    0 84px 0 -1px #fff, -59px 59px 0 -1px #fff, -84px 0 0 -1px #fff, -59px -59px 0 -1px #fff;
+  animation: arc-firework 1.3s cubic-bezier(.1, .8, .3, 1) var(--delay, 0ms) both; will-change: transform, opacity;
+}
+@keyframes arc-firework {
+  0% { opacity: 0; transform: rotate(var(--spin, 0deg)) scale(.05); }
+  12% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--spin, 0deg)) translateY(26px) scale(1.5); }
+}
+/* a gold spark: a streak thrown along its own heading */
+.arc-spark {
+  position: absolute; width: 46px; height: 5px; margin: -2.5px -23px; border-radius: 3px;
+  background: linear-gradient(90deg, rgba(255, 210, 31, 0), #ffd21f 60%, #fff);
+  will-change: transform, opacity; animation: arc-spark .75s cubic-bezier(.1, .7, .3, 1) var(--delay, 0ms) both;
+}
+@keyframes arc-spark {
+  0% { opacity: 0; transform: translate(0, 0) rotate(var(--a)) scaleX(.3); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--a)) scaleX(1.5); }
+}
+.arc-coin {
+  position: absolute; font-size: 30px; line-height: 1; margin: -15px; will-change: transform, opacity;
+  animation: arc-coin .9s cubic-bezier(.3, .1, .3, 1) var(--delay, 0ms) both;
+}
+@keyframes arc-coin {
+  0% { opacity: 0; transform: translate(0, 0) scale(.4) rotate(0); }
+  15% { opacity: 1; transform: translate(0, 30px) scale(1.25) rotate(60deg); }
+  100% { opacity: 1; transform: translate(var(--tx), var(--ty)) scale(.55) rotate(720deg); }
+}
+
+/* ---------------------------------------------------------------- a chest of new balls (lower left of centre) */
+.arc-chest {
+  --rar: #c9a25a;
+  position: absolute; left: calc(50% - 560px); bottom: 262px; width: 300px; height: 350px; z-index: 6; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  animation: arc-chest-in .5s cubic-bezier(.3, 1.6, .4, 1) both;
+}
+.arc-chest.r-rare { --rar: #4fb4ff; }
+.arc-chest.r-epic { --rar: #c670ff; }
+.arc-chest.r-legendary { --rar: #ffd21f; }
+.arc-chest.out { animation: arc-fade-out .4s ease-in forwards; }
+@keyframes arc-chest-in { 0% { opacity: 0; transform: translateY(-140px) scale(.7); } 60% { opacity: 1; transform: translateY(8px) scale(1.06, .92); } 100% { transform: none; } }
+.arc-chest-lbl {
+  position: absolute; left: 0; right: 0; top: 0; text-align: center; font: 800 34px/1 var(--num); letter-spacing: .1em; color: #fff;
+  text-shadow: 0 3px 0 rgba(0, 0, 0, .6), 0 0 18px var(--rar); opacity: 0;
+}
+.arc-chest.open .arc-chest-lbl { animation: arc-slam .45s cubic-bezier(.2, 1.5, .3, 1) both; }
+.arc-chest-rays {
+  position: absolute; left: 50%; bottom: 40px; width: 420px; height: 420px; margin-left: -210px; margin-bottom: -170px; border-radius: 50%; opacity: 0;
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--rar) 55%, transparent) 0 10deg, transparent 10deg 22deg);
+  -webkit-mask-image: radial-gradient(closest-side, #000 15%, transparent 70%); mask-image: radial-gradient(closest-side, #000 15%, transparent 70%);
+  transition: opacity .3s;
+}
+.arc-chest.open .arc-chest-rays { opacity: 1; animation: arc-rays 6s linear infinite; }
+.arc-chest-box { position: relative; width: 150px; height: 104px; animation: arc-chest-shake .5s ease-in-out .1s; }
+@keyframes arc-chest-shake { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-7deg); } 40% { transform: rotate(7deg); } 60% { transform: rotate(-5deg); } 80% { transform: rotate(4deg); } }
+.arc-chest-body, .arc-chest-lid { position: absolute; left: 0; right: 0; border: 4px solid #2a1808; }
+.arc-chest-body {
+  bottom: 0; height: 62px; border-radius: 6px 6px 12px 12px;
+  background: linear-gradient(90deg, transparent 12%, var(--rar) 12% 20%, transparent 20% 80%, var(--rar) 80% 88%, transparent 88%), linear-gradient(180deg, #a5672c, #6e3f17);
+}
+.arc-chest-body i { position: absolute; left: 50%; top: -8px; width: 26px; height: 30px; margin-left: -13px; border-radius: 5px; background: var(--rar); border: 3px solid #2a1808; }
+.arc-chest-lid {
+  bottom: 58px; height: 44px; border-radius: 60px 60px 4px 4px; transform-origin: 6% 100%;
+  background: linear-gradient(90deg, transparent 12%, var(--rar) 12% 20%, transparent 20% 80%, var(--rar) 80% 88%, transparent 88%), linear-gradient(180deg, #c98845, #8c5522);
+  transition: transform .28s cubic-bezier(.3, 1.8, .4, 1);
+}
+.arc-chest.open .arc-chest-lid { transform: rotate(-58deg) translate(-6px, -4px); }
+.arc-chest-prize { position: absolute; left: 0; right: 0; bottom: 124px; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 6px; opacity: 0; }
+.arc-chest-prize .arc-tok { --ts: 96px; }
+#arcade .arc-chest-prize > b { font-size: 32px; line-height: 1; letter-spacing: .05em; color: #fff; text-shadow: 0 3px 0 rgba(0, 0, 0, .65), 0 0 16px rgba(0, 0, 0, .8); white-space: nowrap; }
+.arc-chest-prize > b i { font-style: normal; color: var(--accent); }
+.arc-chest-prize > em { font-style: normal; background: rgba(8, 9, 12, .85); }
+.arc-chest-prize.pop { animation: arc-prize 1.2s cubic-bezier(.2, 1.4, .3, 1) both; }
+@keyframes arc-prize {
+  0% { opacity: 0; transform: translateY(110px) scale(.2); }
+  22% { opacity: 1; transform: translateY(-16px) scale(1.14); }
+  34% { transform: translateY(0) scale(1); }
+  84% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translate(260px, 190px) scale(.3); }
+}
+
+/* ---------------------------------------------------------------- level up: a moment, upper half, under three seconds */
+.arc-levelup {
+  position: absolute; inset: 0; z-index: 10; pointer-events: none; overflow: hidden;
+  background: radial-gradient(ellipse 44% 50% at 50% 36%, rgba(8, 9, 11, .88), rgba(8, 9, 11, .5) 60%, rgba(8, 9, 11, 0) 100%);
+  animation: arc-lv-bg 2.7s ease-in-out both;
+}
+@keyframes arc-lv-bg { 0% { opacity: 0; } 9% { opacity: 1; } 84% { opacity: 1; } 100% { opacity: 0; } }
+.arc-lv-rays {
+  position: absolute; left: 50%; top: 36%; width: 1300px; height: 1300px; margin: -650px; border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 210, 31, .3) 0 6deg, rgba(255, 210, 31, 0) 6deg 15deg);
+  -webkit-mask-image: radial-gradient(closest-side, #000 8%, rgba(0, 0, 0, .5) 35%, transparent 62%); mask-image: radial-gradient(closest-side, #000 8%, rgba(0, 0, 0, .5) 35%, transparent 62%);
+  animation: arc-rays 10s linear infinite;
+}
+.arc-lv-inner { position: absolute; left: 0; right: 0; top: 12%; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.arc-lv-title {
+  font: 800 92px/1 var(--num); letter-spacing: .08em; color: #ffd21f;
+  text-shadow: 0 3px 0 #fff6c2, 0 7px 0 #b98200, 0 11px 0 #7a5200, 0 0 30px rgba(255, 210, 31, .85), 0 18px 40px rgba(0, 0, 0, .75);
+  animation: arc-slam .6s cubic-bezier(.2, 1.5, .3, 1) both;
+}
+.arc-lv-badge {
+  position: relative; width: 190px; height: 210px; overflow: hidden;
+  clip-path: polygon(50% 0, 100% 18%, 100% 62%, 50% 100%, 0 62%, 0 18%);
+  background: linear-gradient(160deg, #fff2a8, #ffd21f 35%, #e79a00 100%);
+  animation: arc-badge .7s cubic-bezier(.2, 1.6, .3, 1) .25s both;
+}
+@keyframes arc-badge { 0% { opacity: 0; transform: scale(.2) rotate(-40deg); } 100% { opacity: 1; transform: none; } }
+#arcade .arc-lv-badge b { position: absolute; left: 0; right: 0; top: 34px; text-align: center; font-size: 124px; line-height: 1; color: var(--accent-ink); }
+.arc-lv-badge .old { animation: arc-num-out .45s cubic-bezier(.6, 0, .9, .4) .95s both; }
+.arc-lv-badge .new { animation: arc-num-in .5s cubic-bezier(.2, 1.6, .3, 1) 1.3s both; }
+@keyframes arc-num-out { to { transform: translateY(-190px) rotate(-12deg); opacity: 0; } }
+@keyframes arc-num-in { from { transform: translateY(190px) scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+.arc-lv-sub {
+  font-size: 26px; font-weight: 800; letter-spacing: .2em; color: #fff; padding: 6px 18px; border-radius: 20px; background: rgba(10, 11, 14, .7);
+  animation: arc-sub-in .5s cubic-bezier(.2, 1.3, .3, 1) 1.5s both;
+}
+
+/* ---------------------------------------------------------------- under the HUD panels: slow motion, fire, fog
+   #arcade-cine is its own first child of #hud: over the 3D view, under every HUD panel. Nothing
+   here takes a click. arcade.js only switches it on while effects are on. */
+#hud > #arcade-cine { pointer-events: none; }   /* two ids only here: it must outrank #hud > * */
+#arcade-cine { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+#arcade-cine::before {   /* the slow-motion vignette */
+  content: ''; position: absolute; inset: 0; opacity: 0; transition: opacity .45s ease-out;
+  background: radial-gradient(ellipse 78% 72% at 50% 50%, rgba(0, 0, 0, 0) 55%, rgba(4, 6, 10, .42) 100%);
+}
+#arcade-cine.on::before { opacity: 1; transition-duration: .25s; }
+.arc-cine-bar {
+  position: absolute; left: 0; right: 0; height: 8%; background: rgba(4, 5, 8, .72);
+  transition: transform .45s cubic-bezier(.2, .8, .2, 1);
+}
+.arc-cine-bar.top { top: 0; transform: translateY(-100%); box-shadow: 0 1px 0 rgba(255, 210, 31, .22); }
+.arc-cine-bar.bottom { bottom: 0; transform: translateY(100%); box-shadow: 0 -1px 0 rgba(255, 210, 31, .22); }
+#arcade-cine.on .arc-cine-bar { transform: none; }
+
+.arc-slowmo-tag {
+  position: absolute; left: 50%; top: 248px; transform: translateX(-50%); z-index: 4;
+  display: flex; align-items: center; gap: 10px; padding: 7px 16px 7px 13px; border-radius: 999px;
+  background: rgba(10, 11, 14, .72); border: 1px solid rgba(255, 210, 31, .4);
+  font-size: 16px; font-weight: 800; letter-spacing: .24em; text-transform: uppercase; color: var(--accent); white-space: nowrap;
+  opacity: 0; transition: opacity .3s;
+}
+.arc-slowmo-tag.on { opacity: 1; }
+.arc-slowmo-tag i { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+.arc-slowmo-tag.on i { animation: arc-rec 1s ease-in-out infinite alternate; }
+#arcade .arc-slowmo-tag b { font-size: 17px; letter-spacing: .04em; color: var(--text); }
+.arc-slowmo-tag em { font-style: normal; letter-spacing: .14em; color: var(--dim); }
+.arc-slowmo-tag b:empty, .arc-slowmo-tag em:empty { display: none; }
+@keyframes arc-rec { from { opacity: .35; transform: scale(.8); } to { opacity: 1; transform: scale(1.15); } }
+
+/* ON FIRE: the bottom of the picture burns behind the panels, embers rise */
+.arc-fire-veil {
+  position: absolute; inset: 0; opacity: 0; transition: opacity .8s ease-out;
+  background:
+    radial-gradient(ellipse 70% 30% at 50% 108%, rgba(255, 120, 20, .62), rgba(255, 80, 10, .2) 55%, rgba(255, 80, 10, 0) 75%),
+    radial-gradient(ellipse 26% 46% at -3% 104%, rgba(255, 90, 10, .55), rgba(255, 90, 10, 0) 72%),
+    radial-gradient(ellipse 26% 46% at 103% 104%, rgba(255, 90, 10, .55), rgba(255, 90, 10, 0) 72%);
+}
+#arcade-cine.fire .arc-fire-veil { opacity: 1; animation: arc-fire-breathe 1.3s ease-in-out infinite alternate; }
+#arcade-cine.inferno .arc-fire-veil {
+  animation-duration: .6s;
+  background:
+    radial-gradient(ellipse 80% 40% at 50% 110%, rgba(255, 200, 120, .7), rgba(255, 70, 10, .3) 55%, rgba(255, 60, 10, 0) 78%),
+    radial-gradient(ellipse 30% 70% at -3% 100%, rgba(255, 70, 10, .7), rgba(255, 70, 10, 0) 72%),
+    radial-gradient(ellipse 30% 70% at 103% 100%, rgba(255, 70, 10, .7), rgba(255, 70, 10, 0) 72%);
+}
+@keyframes arc-fire-breathe { from { opacity: .72; } to { opacity: 1; } }
+.arc-fire-veil i {
+  position: absolute; bottom: -12px; width: 9px; height: 9px; border-radius: 50%; background: #ffd27a; box-shadow: 0 0 12px 3px rgba(255, 130, 20, .9);
+  opacity: 0;
+}
+#arcade-cine.fire .arc-fire-veil i { animation: arc-ember 3.2s linear infinite; }
+.arc-fire-veil i:nth-child(1) { left: 6%;  animation-delay: -.2s !important; }
+.arc-fire-veil i:nth-child(2) { left: 19%; animation-delay: -1.7s !important; --sx: 40px; }
+.arc-fire-veil i:nth-child(3) { left: 33%; animation-delay: -2.6s !important; --sx: -30px; }
+.arc-fire-veil i:nth-child(4) { left: 46%; animation-delay: -.9s !important; --sx: 24px; }
+.arc-fire-veil i:nth-child(5) { left: 58%; animation-delay: -2.1s !important; --sx: -44px; }
+.arc-fire-veil i:nth-child(6) { left: 71%; animation-delay: -1.2s !important; --sx: 30px; }
+.arc-fire-veil i:nth-child(7) { left: 84%; animation-delay: -2.9s !important; --sx: -20px; }
+.arc-fire-veil i:nth-child(8) { left: 95%; animation-delay: -.5s !important; --sx: -36px; }
+@keyframes arc-ember {
+  0% { opacity: 0; transform: translate(0, 0) scale(1); }
+  12% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--sx, -24px), -330px) scale(.3); }
+}
+
+/* FOG (the trick): the edges of the picture close in, and every yardage on the HUD is gone */
+.arc-fog-veil {
+  position: absolute; inset: 0; opacity: 0; transition: opacity 1s ease-out;
+  background: radial-gradient(ellipse 62% 56% at 50% 50%, rgba(214, 222, 230, 0) 28%, rgba(214, 222, 230, .5) 66%, rgba(222, 228, 235, .9) 100%);
+}
+#arcade-cine.fog .arc-fog-veil { opacity: 1; }
+.arc-fog-veil i {
+  position: absolute; width: 70%; height: 46%; border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(228, 234, 240, .55), rgba(228, 234, 240, 0) 68%);
+}
+.arc-fog-veil i:nth-child(1) { left: -22%; top: 4%; }
+.arc-fog-veil i:nth-child(2) { right: -24%; bottom: 0; }
+#arcade-cine.fog .arc-fog-veil i:nth-child(1) { animation: arc-fog-drift 13s ease-in-out infinite alternate; }
+#arcade-cine.fog .arc-fog-veil i:nth-child(2) { animation: arc-fog-drift 17s ease-in-out infinite alternate-reverse; }
+@keyframes arc-fog-drift { from { transform: translateX(-6%) scale(1); } to { transform: translateX(16%) scale(1.15); } }
+/* the app's own yardage readouts (public/index.html): shot card, hole card, planner, club
+   picker, last-shot panel. The number goes, "???" stands in its place. Any other stream can
+   opt a readout in with [data-yardage]. */
+#hud.arc-fog #lie-pin, #hud.arc-fog #sc-plays, #hud.arc-fog #hud-len, #hud.arc-fog #mm-topin, #hud.arc-fog #pl-band,
+#hud.arc-fog #pl-carry, #hud.arc-fog #pl-total, #hud.arc-fog #sd-carry, #hud.arc-fog #sd-total,
+#hud.arc-fog [data-yardage] { visibility: hidden; position: relative; }
+#hud.arc-fog #lie-pin::after, #hud.arc-fog #sc-plays::after, #hud.arc-fog #hud-len::after, #hud.arc-fog #mm-topin::after, #hud.arc-fog #pl-band::after,
+#hud.arc-fog #pl-carry::after, #hud.arc-fog #pl-total::after, #hud.arc-fog #sd-carry::after, #hud.arc-fog #sd-total::after,
+#hud.arc-fog [data-yardage]::after {
+  content: '???'; visibility: visible; position: absolute; left: 0; right: 0; top: 0; text-align: inherit; color: #c5ced8; letter-spacing: .04em;
+}
+#hud.arc-fog #sc-fb, #hud.arc-fog #sc-why, #hud.arc-fog #pl-fb, #hud.arc-fog #sd-vs, #hud.arc-fog #cc-carry,
+#hud.arc-fog .fv-stat, #hud.arc-fog .pl-map-hint { visibility: hidden; }
+/* the match header's TO PIN numbers (public/arcade/match.js) */
+#hud.arc-fog .mt-num-d b { visibility: hidden; }
+/* the overhead map and the side view are drawn with their distances: fogged over whole */
+#hud.arc-fog #pl-map, #hud.arc-fog #flightview { position: relative; }
+#hud.arc-fog #pl-map::after, #hud.arc-fog #flightview::after {
+  content: 'FOG'; position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; border-radius: 11px;
+  background: radial-gradient(ellipse at 30% 30%, #dfe5ec, #aab4c0 70%); color: rgba(60, 70, 84, .55);
+  font: 800 44px/1 var(--num); letter-spacing: .3em; pointer-events: none;
+}
+#hud.arc-fog #flightview::after { font-size: 22px; }
+/* the yardage markers in the 3D view (render/scene.js, lineup-fx.js) live outside #hud */
+body:has(#hud.arc-fog) .dist-marker { visibility: hidden !important; }
+
+/* ---------------------------------------------------------------- the picture itself jolts (#scene, transform only) */
+body.arc-quake #scene { animation: arc-quake .6s cubic-bezier(.36, .07, .19, .97) both; }
+body.arc-thud #scene { animation: arc-thud .5s cubic-bezier(.3, 0, .2, 1) both; }
+@keyframes arc-quake {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  8% { transform: translate(-10px, 6px) scale(1.025) rotate(-.3deg); } 20% { transform: translate(10px, -6px) scale(1.025) rotate(.3deg); }
+  32% { transform: translate(-8px, 5px) scale(1.022) rotate(-.2deg); } 44% { transform: translate(7px, -4px) scale(1.02) rotate(.2deg); }
+  56% { transform: translate(-5px, 3px) scale(1.016); } 68% { transform: translate(4px, -2px) scale(1.012); }
+  80% { transform: translate(-2px, 1px) scale(1.008); } 92% { transform: translate(1px, 0) scale(1.003); }
+}
+@keyframes arc-thud {
+  0%, 100% { transform: translateY(0) scale(1); }
+  16% { transform: translateY(13px) scale(1.03); } 36% { transform: translateY(-5px) scale(1.022); }
+  56% { transform: translateY(3px) scale(1.012); } 78% { transform: translateY(-1px) scale(1.005); }
+}
+
+/* ---------------------------------------------------------------- living with the rest of the HUD */
+/* the shot planner owns the right column (372 wide): the upper-centre pieces centre on what is left */
+#hud:has(#planner:not(.hidden)) .arc-stage { right: 80px; }
+#hud:has(#planner:not(.hidden)) .arc-flash,
+#hud:has(#planner:not(.hidden)) .arc-curse,
+#hud:has(#planner:not(.hidden)) .arc-slowmo-tag { left: calc(50% - 40px); }
+/* a panel is open over the course (scorecard, games, leagues ...): the dock and the notes wait */
+body.stage-open #arcade .arc-dock, body.stage-open #arcade .arc-chal, body.stage-open #arcade .arc-curse { opacity: 0; pointer-events: none; }
+
+/* ---------------------------------------------------------------- smaller windows */
+@media (max-width: 1100px) {
+  .arc-xp-wrap { width: 96px; }
+  .arc-combo { min-width: 0; }
+  .arc-combo-side { display: none; }
+  .arc-chal { display: none; }
+  .arc-tok { --ts: 60px; }
+  .arc-dock-bar { gap: 8px; padding: 10px 12px; }
+  .arc-dock-balls, .arc-dock-tricks { gap: 8px; }
+  .arc-tray-grid { grid-template-columns: repeat(8, 86px); gap: 6px; }
+  .arc-tray-sab .arc-tray-grid { grid-template-columns: repeat(3, 86px); }
+}
+@media (max-width: 700px) {
+  #hud:has(#planner:not(.hidden)) .arc-stage { right: 0; }
+  #hud:has(#planner:not(.hidden)) .arc-flash, #hud:has(#planner:not(.hidden)) .arc-curse, #hud:has(#planner:not(.hidden)) .arc-slowmo-tag { left: 50%; }
+  .arc-top { top: 60px; height: 44px; }
+  .arc-stat { padding: 0 10px; gap: 6px; }
+  .arc-stat-coins > b { font-size: 22px; }
+  .arc-xp-wrap { display: none; }
+  #arcade .arc-combo-n { font-size: 26px; }
+  .arc-stage { top: 116px; }
+  .arc-flash { font-size: 20px; top: 110px; }
+  .arc-tok { --ts: 46px; }
+  .arc-tok-count { min-width: 22px; height: 22px; font-size: 15px; line-height: 19px; }
+  .arc-tok-key { display: none; }
+  .arc-dock { bottom: 70px; max-width: calc(100vw - 12px); }
+  .arc-dock-bar { gap: 6px; padding: 8px; border-radius: 16px; overflow-x: auto; }
+  .arc-dock-balls, .arc-dock-tricks { gap: 6px; }
+  .arc-dock-more { width: 54px; height: 46px; }
+  #arcade .arc-dock-armed b, #arcade .arc-dock-who b { font-size: 18px; }
+  .arc-dock-who em, .arc-dock-sab span { display: none; }
+  .arc-tray { left: 6px; right: 6px; transform: none; bottom: 150px; animation: none; padding: 10px; }
+  .arc-tray-grid, .arc-tray-sab .arc-tray-grid { grid-template-columns: repeat(4, 1fr); }
+  .arc-tray-head > span, .arc-tray-foot, .arc-tray-sab-lbl { display: none; }
+  #arcade .arc-detail-text b { font-size: 20px; }
+  .arc-detail-text span { font-size: 14px; }
+  .arc-sub { height: 38px; gap: 10px; padding: 0 12px; }
+  #arcade .arc-points { font-size: 26px; }
+  .arc-reasons { font-size: 13px; height: 28px; }
+  .arc-lv-title { font-size: 48px; }
+  .arc-chest { left: 8px; }
+  .arc-curse { top: 150px; }
+  #arcade .arc-curse-text b { font-size: 20px; }
+  .arc-curse-text span { font-size: 11px; }
+}
+
+/* ---------------------------------------------------------------- reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  #arcade *, #arcade *::before, #arcade *::after { animation-duration: .25s !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; transition-duration: .15s !important; }
+  #arcade .arc-levelup { animation-duration: 1.5s !important; }
+  #arcade .arc-flash.in { animation-duration: 1.4s !important; }
+  #arcade .arc-chest-prize.pop { animation-duration: .9s !important; }
+  #arcade .arc-banner.t-epic, #arcade .arc-banner.t-funny .arc-ch, #arcade .arc-banner-ring, #arcade .arc-sticker,
+  #arcade .arc-lv-rays, #arcade .arc-chest-rays, #arcade .arc-tok.s-armed::after, #arcade .arc-curse-ico { animation: none !important; }
+  #arcade .arc-banner.t-epic .arc-banner-ring, #arcade .arc-banner.t-funny .arc-banner-ring { display: none; }
+  #arcade .arc-sticker { opacity: 1; }
+  #arcade .arc-confetti, #arcade .arc-firework, #arcade .arc-spark { display: none; }
+  #arcade-cine::before, .arc-cine-bar, .arc-fire-veil, .arc-fog-veil { transition-duration: .15s !important; }
+  #arcade-cine .arc-fire-veil, #arcade-cine .arc-fire-veil i, #arcade-cine .arc-fog-veil i { animation: none !important; }
+  body.arc-quake #scene, body.arc-thud #scene { animation: none !important; }
+}
+
+/* ---- v2:playability the rescue drop: DROP ON THE LINE (bottom left, over the lie panel, level with the
+   aim control's column of the HUD), its ghost marker ---- */
+.arc-drop {
+  position: absolute; left: 16px; bottom: 330px; z-index: 6; pointer-events: auto; cursor: pointer;
+  display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 14px 8px 12px;
+  border-radius: 16px; border: 2px solid rgba(255, 255, 255, .5); color: #fff; text-align: left;
+  background: linear-gradient(180deg, rgba(24, 30, 40, .94), rgba(10, 13, 18, .94));
+  box-shadow: 0 8px 26px rgba(0, 0, 0, .5);
+  font: inherit; transition: transform .15s, border-color .2s, background .2s, opacity .25s;
+}
+.arc-drop.hidden, .arc-drop-ghost.hidden { display: none; }
+.arc-drop:hover { transform: translateY(-2px); border-color: #fff; }
+.arc-drop:disabled { opacity: .55; cursor: default; }
+.arc-drop-ico {
+  flex: none; width: 40px; height: 40px; border-radius: 50%; border: 3px dashed currentColor; position: relative; opacity: .95;
+}
+.arc-drop-ico::after {
+  content: ''; position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: currentColor;
+}
+.arc-drop-txt { display: flex; flex-direction: column; gap: 2px; white-space: nowrap; }
+.arc-drop-txt b { font-size: 26px; line-height: 1; letter-spacing: .03em; font-weight: 900; }
+.arc-drop-txt i { font-style: normal; font-size: 14px; letter-spacing: .08em; font-weight: 700; opacity: .85; }
+.arc-drop kbd {
+  flex: none; margin-left: 4px; min-width: 30px; height: 30px; padding: 0 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font: 800 16px/1 inherit; color: #fff; background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .35);
+}
+/* pressed once: the next press costs the stroke */
+.arc-drop.arc-drop-armed { background: linear-gradient(180deg, #ffb300, #ff7a00); border-color: #fff; color: var(--arc-ink); animation: arc-drop-pulse .7s ease-in-out infinite alternate; }
+.arc-drop.arc-drop-armed kbd { color: var(--arc-ink); background: rgba(255, 255, 255, .5); border-color: rgba(0, 0, 0, .3); }
+/* a dead lie: the drop is free, and says so loudly */
+.arc-drop.arc-drop-free {
+  left: 50%; bottom: 250px; transform: translateX(-50%); min-height: 92px; padding: 12px 24px 12px 18px; gap: 16px;
+  background: linear-gradient(180deg, #2bdc7a, #0f9d58); border: 3px solid #fff; color: #062612;
+  box-shadow: 0 0 0 6px rgba(43, 220, 122, .28), 0 14px 40px rgba(0, 0, 0, .55);
+  animation: arc-drop-free .8s ease-in-out infinite alternate;
+}
+.arc-drop.arc-drop-free:hover { transform: translateX(-50%) translateY(-2px); }
+.arc-drop.arc-drop-free .arc-drop-ico { width: 54px; height: 54px; }
+.arc-drop.arc-drop-free .arc-drop-txt b { font-size: 46px; }
+.arc-drop.arc-drop-free .arc-drop-txt i { font-size: 18px; opacity: 1; }
+.arc-drop.arc-drop-free kbd { min-width: 40px; height: 40px; font-size: 22px; color: #062612; background: rgba(255, 255, 255, .55); border-color: rgba(0, 0, 0, .3); }
+@keyframes arc-drop-pulse { from { box-shadow: 0 0 0 0 rgba(255, 179, 0, .6), 0 8px 26px rgba(0, 0, 0, .5); } to { box-shadow: 0 0 0 10px rgba(255, 179, 0, 0), 0 8px 26px rgba(0, 0, 0, .5); } }
+@keyframes arc-drop-free { from { box-shadow: 0 0 0 4px rgba(43, 220, 122, .35), 0 14px 40px rgba(0, 0, 0, .55); } to { box-shadow: 0 0 0 14px rgba(43, 220, 122, .05), 0 14px 40px rgba(0, 0, 0, .55); } }
+#arcade.arc-flying .arc-drop, #arcade.arc-revealing .arc-drop, #arcade.arc-flying .arc-drop-ghost, #arcade.arc-revealing .arc-drop-ghost { opacity: 0; pointer-events: none; }
+/* where the ball would go: a ring on the ground of the 3D view with a small flag over it */
+.arc-drop-ghost { position: absolute; z-index: 2; width: 0; height: 0; pointer-events: none; opacity: .8; }
+.arc-drop-ghost i {
+  position: absolute; left: -17px; top: -9px; width: 34px; height: 18px; border-radius: 50%;
+  border: 3px dashed #fff; box-shadow: 0 0 10px rgba(0, 0, 0, .7); animation: arc-ghost 1.2s ease-in-out infinite alternate;
+}
+.arc-drop-ghost span {
+  position: absolute; left: 0; bottom: 16px; transform: translateX(-50%); padding: 3px 9px; border-radius: 8px; white-space: nowrap;
+  font-weight: 900; font-size: 15px; letter-spacing: .08em; color: #fff; background: rgba(10, 13, 18, .82); border: 1px solid rgba(255, 255, 255, .5);
+}
+.arc-drop-ghost.arc-drop-armed { opacity: 1; }
+.arc-drop-ghost.arc-drop-armed i { border-color: #ffb300; }
+.arc-drop-ghost.arc-drop-armed span { background: #ff9800; color: var(--arc-ink); border-color: #fff; }
+.arc-drop-ghost.arc-drop-free { opacity: 1; }
+.arc-drop-ghost.arc-drop-free i { border-color: #2bdc7a; left: -24px; top: -12px; width: 48px; height: 24px; }
+.arc-drop-ghost.arc-drop-free span { background: #0f9d58; border-color: #fff; font-size: 18px; bottom: 20px; }
+@keyframes arc-ghost { from { transform: scale(.85); } to { transform: scale(1.15); } }
+@media (prefers-reduced-motion: reduce) { .arc-drop, .arc-drop-ghost i { animation: none !important; } }
+@media (max-width: 900px) {
+  .arc-drop { left: 8px; bottom: 230px; min-height: 52px; }
+  .arc-drop-txt b { font-size: 19px; }
+  .arc-drop.arc-drop-free { bottom: 210px; }
+  .arc-drop.arc-drop-free .arc-drop-txt b { font-size: 30px; }
+}

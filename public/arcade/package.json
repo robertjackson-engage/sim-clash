@@ -1,0 +1,4 @@
+{
+  "comment": "Marks the browser arcade modules as ESM for Node tooling (node --test), as public/render/package.json does.",
+  "type": "module"
+}

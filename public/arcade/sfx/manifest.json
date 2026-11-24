@@ -1,0 +1,386 @@
+{
+  "version": 2,
+  "format": {
+    "sampleRate": 44100,
+    "kbps": 128,
+    "lufs": -21,
+    "peakDb": -3
+  },
+  "cues": {
+    "applause": {
+      "files": [
+        "applause.mp3",
+        "applause-2.mp3"
+      ]
+    },
+    "arm-common": {
+      "files": [
+        "arm-common.mp3"
+      ]
+    },
+    "arm-epic": {
+      "files": [
+        "arm-epic.mp3"
+      ]
+    },
+    "arm-rare": {
+      "files": [
+        "arm-rare.mp3"
+      ]
+    },
+    "chest-open": {
+      "files": [
+        "chest-open.mp3"
+      ]
+    },
+    "coin-burst": {
+      "files": [
+        "coin-burst.mp3",
+        "coin-burst-2.mp3"
+      ]
+    },
+    "coin-flip": {
+      "files": [
+        "coin-flip.mp3"
+      ]
+    },
+    "coin-land": {
+      "files": [
+        "coin-land.mp3"
+      ]
+    },
+    "confetti-pop": {
+      "files": [
+        "confetti-pop.mp3"
+      ]
+    },
+    "countdown-beep": {
+      "files": [
+        "countdown-beep.mp3"
+      ],
+      "hard": [
+        "countdown-beep-hard.mp3"
+      ]
+    },
+    "crowd-aww": {
+      "files": [
+        "crowd-aww.mp3",
+        "crowd-aww-2.mp3"
+      ]
+    },
+    "crowd-cheer": {
+      "files": [
+        "crowd-cheer.mp3",
+        "crowd-cheer-2.mp3"
+      ]
+    },
+    "crowd-gasp": {
+      "files": [
+        "crowd-gasp.mp3",
+        "crowd-gasp-2.mp3"
+      ]
+    },
+    "crowd-laugh": {
+      "files": [
+        "crowd-laugh.mp3",
+        "crowd-laugh-2.mp3"
+      ]
+    },
+    "crowd-ohh": {
+      "files": [
+        "crowd-ohh.mp3",
+        "crowd-ohh-2.mp3"
+      ]
+    },
+    "crowd-rise-1s": {
+      "files": [
+        "crowd-rise-1s.mp3",
+        "crowd-rise-1s-2.mp3"
+      ],
+      "peakS": 1.2
+    },
+    "crowd-rise-2s": {
+      "files": [
+        "crowd-rise-2s.mp3",
+        "crowd-rise-2s-2.mp3"
+      ],
+      "peakS": 2
+    },
+    "crowd-rise-3s": {
+      "files": [
+        "crowd-rise-3s.mp3",
+        "crowd-rise-3s-2.mp3"
+      ],
+      "peakS": 3
+    },
+    "crowd-rise-4s": {
+      "files": [
+        "crowd-rise-4s.mp3",
+        "crowd-rise-4s-2.mp3"
+      ],
+      "peakS": 4.5
+    },
+    "crowd-roar": {
+      "files": [
+        "crowd-roar.mp3",
+        "crowd-roar-2.mp3"
+      ]
+    },
+    "cup-drop": {
+      "files": [
+        "cup-drop.mp3"
+      ]
+    },
+    "drawer-close": {
+      "files": [
+        "drawer-close.mp3"
+      ]
+    },
+    "drawer-open": {
+      "files": [
+        "drawer-open.mp3"
+      ]
+    },
+    "drumroll": {
+      "files": [
+        "drumroll.mp3"
+      ]
+    },
+    "fairway-bounce": {
+      "files": [
+        "fairway-bounce.mp3",
+        "fairway-bounce-2.mp3"
+      ]
+    },
+    "fanfare-hole": {
+      "files": [
+        "fanfare-hole.mp3"
+      ]
+    },
+    "fanfare-win": {
+      "files": [
+        "fanfare-win.mp3"
+      ]
+    },
+    "flag-clank": {
+      "files": [
+        "flag-clank.mp3",
+        "flag-clank-2.mp3"
+      ]
+    },
+    "green-thump": {
+      "files": [
+        "green-thump.mp3",
+        "green-thump-2.mp3"
+      ]
+    },
+    "heartbeat-hit": {
+      "files": [
+        "heartbeat-hit.mp3"
+      ]
+    },
+    "ice-skid": {
+      "files": [
+        "ice-skid.mp3"
+      ]
+    },
+    "lava-sizzle": {
+      "files": [
+        "lava-sizzle.mp3"
+      ]
+    },
+    "levelup": {
+      "files": [
+        "levelup.mp3"
+      ]
+    },
+    "lobby-open": {
+      "files": [
+        "lobby-open.mp3"
+      ]
+    },
+    "oooh": {
+      "files": [
+        "oooh.mp3",
+        "oooh-2.mp3"
+      ]
+    },
+    "riser": {
+      "files": [
+        "riser.mp3"
+      ]
+    },
+    "rocket": {
+      "files": [
+        "rocket.mp3",
+        "rocket-2.mp3"
+      ]
+    },
+    "rough-rustle": {
+      "files": [
+        "rough-rustle.mp3",
+        "rough-rustle-2.mp3"
+      ]
+    },
+    "sand-thud": {
+      "files": [
+        "sand-thud.mp3",
+        "sand-thud-2.mp3"
+      ]
+    },
+    "select-format": {
+      "files": [
+        "select-format.mp3"
+      ]
+    },
+    "select-player": {
+      "files": [
+        "select-player.mp3"
+      ]
+    },
+    "select-stage": {
+      "files": [
+        "select-stage.mp3"
+      ]
+    },
+    "stage-sting": {
+      "files": [
+        "stage-sting.mp3"
+      ]
+    },
+    "start-match": {
+      "files": [
+        "start-match.mp3"
+      ]
+    },
+    "sting-fail": {
+      "files": [
+        "sting-fail.mp3"
+      ]
+    },
+    "sting-knockout": {
+      "files": [
+        "sting-knockout.mp3"
+      ]
+    },
+    "streak-break": {
+      "files": [
+        "streak-break.mp3"
+      ]
+    },
+    "streak-up": {
+      "files": [
+        "streak-up.mp3"
+      ]
+    },
+    "strike": {
+      "files": [
+        "strike.mp3",
+        "strike-2.mp3",
+        "strike-3.mp3",
+        "strike-4.mp3"
+      ],
+      "hard": [
+        "strike-hard.mp3",
+        "strike-hard-2.mp3",
+        "strike-hard-3.mp3"
+      ]
+    },
+    "tee-off": {
+      "files": [
+        "tee-off.mp3"
+      ]
+    },
+    "toggle-off": {
+      "files": [
+        "toggle-off.mp3"
+      ]
+    },
+    "toggle-on": {
+      "files": [
+        "toggle-on.mp3"
+      ]
+    },
+    "tree-knock": {
+      "files": [
+        "tree-knock.mp3",
+        "tree-knock-2.mp3"
+      ]
+    },
+    "trick-cast": {
+      "files": [
+        "trick-cast.mp3"
+      ]
+    },
+    "trophy-tick": {
+      "files": [
+        "trophy-tick.mp3"
+      ]
+    },
+    "turn-chime": {
+      "files": [
+        "turn-chime.mp3"
+      ]
+    },
+    "ui-back": {
+      "files": [
+        "ui-back.mp3"
+      ]
+    },
+    "ui-confirm": {
+      "files": [
+        "ui-confirm.mp3"
+      ]
+    },
+    "ui-error": {
+      "files": [
+        "ui-error.mp3"
+      ]
+    },
+    "ui-tick": {
+      "files": [
+        "ui-tick.mp3"
+      ]
+    },
+    "vs-slam": {
+      "files": [
+        "vs-slam.mp3",
+        "vs-slam-2.mp3"
+      ]
+    },
+    "water-plunk": {
+      "files": [
+        "water-plunk.mp3",
+        "water-plunk-2.mp3"
+      ]
+    },
+    "whoosh": {
+      "files": [
+        "whoosh.mp3",
+        "whoosh-2.mp3",
+        "whoosh-3.mp3"
+      ]
+    },
+    "roar": {
+      "files": [
+        "crowd-roar.mp3",
+        "crowd-roar-2.mp3"
+      ],
+      "alias": "crowd-roar"
+    },
+    "gasp": {
+      "files": [
+        "crowd-gasp.mp3",
+        "crowd-gasp-2.mp3"
+      ],
+      "alias": "crowd-gasp"
+    },
+    "splash": {
+      "files": [
+        "water-plunk.mp3",
+        "water-plunk-2.mp3"
+      ],
+      "alias": "water-plunk"
+    }
+  }
+}

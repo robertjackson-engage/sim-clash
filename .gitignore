@@ -42,3 +42,24 @@ npm-debug.log*
 Thumbs.db
 .gstack/
 /reference/
+
+# ---- Sim Clash ----
+# the whole local data dir: courses built by tools/arcade-holes, player profiles, coins,
+# match ledger, sky cache, rendered player-name clips (everything in it regenerates or is
+# personal)
+/data/
+# private test instances and agent / developer scratch (data dirs, screenshots, downloads)
+.scratch/
+.smoke-data/
+# the arcade stage courses bundled into the installer (npm run prepare:arcade-data)
+/build/arcade-data/
+# keys: ELEVENLABS_API_KEY for player-name clips lives in the environment or here
+.env
+.env.*
+!.env.example
+
+# the final installer, its checksum and release notes, copied out of dist/ for the owner (never committed)
+/release/
+
+# launch drafts written for the owner to post himself (kept out of the public repository)
+/docs/dev/outreach/

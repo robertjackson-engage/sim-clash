@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Arcade audio demo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { color-scheme: dark; }
+  body {
+    margin: 0; padding: 24px 16px 48px; background: #0c0e11; color: #e6e8eb;
+    font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  main { max-width: 820px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 4px; color: #ffd21f; letter-spacing: .02em; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .12em; color: #8b93a0; margin: 28px 0 10px; }
+  p.hint { color: #8b93a0; margin: 0 0 16px; }
+  #state { color: #ffd21f; font-weight: 600; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+  button {
+    background: #15181e; color: #e6e8eb; border: 1px solid #262b35; border-radius: 8px;
+    padding: 10px 12px; font: inherit; cursor: pointer; text-align: left;
+  }
+  button:hover { border-color: #ffd21f; }
+  button:active { background: #ffd21f; color: #0c0e11; }
+  button.primary { background: #ffd21f; color: #0c0e11; border-color: #ffd21f; font-weight: 700; }
+  button.primary:disabled { opacity: .5; cursor: default; }
+  .row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-bottom: 10px; }
+  label { display: flex; align-items: center; gap: 8px; color: #b6bcc6; }
+  input[type=range] { accent-color: #ffd21f; width: 180px; }
+  .val { min-width: 3ch; color: #ffd21f; font-variant-numeric: tabular-nums; }
+  #log { margin-top: 10px; color: #8b93a0; font: 12px/1.5 ui-monospace, Consolas, monospace; min-height: 1.5em; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Arcade audio</h1>
+  <p class="hint">Context: <span id="state">locked</span> — click anything to unlock. <span id="samples"></span></p>
+
+  <h2>Mix</h2>
+  <div class="row">
+    <label><input type="checkbox" id="enabled" checked> enabled</label>
+    <label>volume <input type="range" id="volume" min="0" max="1" step="0.01" value="0.8"> <span class="val" id="volume-v">0.80</span></label>
+    <label>cue intensity <input type="range" id="intensity" min="0" max="1" step="0.01" value="0.7"> <span class="val" id="intensity-v">0.70</span></label>
+  </div>
+  <div class="row">
+    <label>crowd <input type="range" id="crowd" min="0" max="1" step="0.01" value="0"> <span class="val" id="crowd-v">0.00</span></label>
+    <label>ramp (s) <input type="range" id="ramp" min="0.05" max="3" step="0.05" value="0.6"> <span class="val" id="ramp-v">0.60</span></label>
+    <button id="duck" title="duck(0.7, 2): pull the crowd bed down 70 % for 2 s">duck crowd 2 s</button>
+  </div>
+
+  <h2>Cues</h2>
+  <div class="grid" id="cues"></div>
+
+  <h2>Sequence</h2>
+  <div class="row">
+    <button class="primary" id="sequence">Play a shot sequence</button>
+    <span class="hint">strike → bounce → oooh (crowd ramps) → roar → perfect → coins → streak</span>
+  </div>
+  <div id="log"></div>
+</main>
+
+<script type="module">
+  import { ArcadeAudio, CUE_NAMES } from './audio.js';
+
+  const $ = (id) => document.getElementById(id);
+  const audio = new ArcadeAudio({ volume: 0.8 });
+  window.arcadeAudio = audio; // poke at it from the console
+
+  const log = (msg) => { $('log').textContent = msg; };
+  const refreshState = () => {
+    $('state').textContent = audio.state;
+    const s = audio.loadedSamples;
+    $('samples').textContent = s.length ? `mp3 overrides: ${s.join(', ')}` : 'no mp3 overrides found (all synth)';
+  };
+  setInterval(refreshState, 500);
+
+  // one button per cue
+  for (const name of CUE_NAMES) {
+    const b = document.createElement('button');
+    b.textContent = name;
+    b.addEventListener('click', () => {
+      const intensity = Number($('intensity').value);
+      audio.cue(name, { intensity });
+      log(`cue('${name}', { intensity: ${intensity.toFixed(2)} })`);
+    });
+    $('cues').appendChild(b);
+  }
+
+  // mix controls
+  const bind = (id, fmt, fn) => {
+    const el = $(id);
+    const show = () => { $(id + '-v').textContent = fmt(Number(el.value)); };
+    el.addEventListener('input', () => { show(); fn(Number(el.value)); });
+    show();
+  };
+  bind('volume', (v) => v.toFixed(2), (v) => audio.setVolume(v));
+  bind('intensity', (v) => v.toFixed(2), () => {});
+  bind('ramp', (v) => v.toFixed(2), () => {});
+  bind('crowd', (v) => v.toFixed(2), (v) => audio.crowd(v, Number($('ramp').value)));
+  $('enabled').addEventListener('change', (e) => audio.setEnabled(e.target.checked));
+  $('duck').addEventListener('click', () => { audio.duck(0.7, 2); log('duck(0.7, 2)'); });
+
+  // scripted shot
+  const setCrowd = (level, ramp) => {
+    audio.crowd(level, ramp);
+    $('crowd').value = level;
+    $('crowd-v').textContent = level.toFixed(2);
+  };
+  $('sequence').addEventListener('click', () => {
+    audio.unlock();
+    const btn = $('sequence');
+    btn.disabled = true;
+    const steps = [
+      [0,    'strike',  0.95, () => setCrowd(0.25, 0.4)],
+      [1900, 'bounce',  0.6],
+      [2450, 'bounce',  0.35],
+      [2900, 'oooh',    0.8,  () => setCrowd(0.7, 1.4)],
+      [4500, 'roar',    0.9,  () => setCrowd(1.0, 0.5)],
+      [5000, 'perfect', 0.9],
+      [5800, 'coins',   0.8],
+      [6600, 'streak',  0.5],
+      [8600, null,      0,    () => setCrowd(0.15, 2.5)],
+      [9400, null,      0,    () => { btn.disabled = false; log('sequence done'); }],
+    ];
+    for (const [ms, name, intensity, extra] of steps) {
+      setTimeout(() => {
+        if (name) { audio.cue(name, { intensity }); log(`sequence: ${name} @ ${intensity}`); }
+        if (extra) extra();
+      }, ms);
+    }
+  });
+
+  refreshState();
+</script>
+</body>
+</html>

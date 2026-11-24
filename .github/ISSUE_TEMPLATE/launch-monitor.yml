@@ -1,0 +1,94 @@
+name: Launch monitor report
+description: Tell us what happened when you connected a launch monitor, whether it worked or not
+title: "[launch monitor] <monitor> via <connector>: <works / no shots / wrong distances>"
+labels: ["launch-monitor"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for trying it. A report that it WORKS is as useful as a report that it does not: both go into the "what has been tried" table in the README.
+  - type: dropdown
+    id: result
+    attributes:
+      label: The short version
+      options:
+        - Shots arrive and play correctly
+        - It connects (the badge says "Monitor connected") but no shots arrive
+        - It never connects (the badge stays on "Monitor waiting")
+        - Shots arrive but the numbers are wrong (too short, too long, wrong direction)
+    validations:
+      required: true
+  - type: input
+    id: monitor
+    attributes:
+      label: Launch monitor
+      description: Make and model, and firmware if you know it
+    validations:
+      required: true
+  - type: input
+    id: connector
+    attributes:
+      label: Connector software and version
+      description: The program that sends shots out (the maker's own app, a GSPro connector, a community connector, or the game's built-in Foresight bridge). A link helps if it is a community one.
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where does the connector run?
+      options:
+        - On the same PC as the game
+        - On another device on the same network
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Game version
+      description: The number in the installer's file name (Sim-Clash-Setup-1.0.0-beta.1.exe), or in Windows Settings > Apps > Sim Clash. From source, the commit.
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How did you get it?
+      options:
+        - The Windows installer
+        - Built from source
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks (each takes a few seconds)
+      options:
+        - label: No other simulator is running. The game listens on TCP port 921, which other simulator software also uses, and only one program can have it. (The log says "another program is using port 921" when this is the problem.)
+        - label: A test swing plays normally (the TEST SWING button at the bottom right, or the T key). If it does not, the problem is not the launch monitor.
+        - label: The connector is pointed at 127.0.0.1 port 921 (or at this PC's address, if it runs on another device).
+        - label: "If the connector runs on another device: Windows Firewall was allowed for the game on private networks when it asked, and both devices are on the same network."
+  - type: textarea
+    id: saw
+    attributes:
+      label: What you saw
+      description: |
+        What the badge at the top right says after the connector started ("Monitor waiting" or "Monitor connected"), and what the connector's own window or log says when you hit a shot.
+        For wrong numbers: one real shot as your launch monitor's own software showed it (ball speed, launch angle, side angle, back spin, side spin or spin axis, carry) and what the game showed for the same shot. If every shot is about 2.2 times too short, say so: that is a units problem (metres per second sent as miles per hour) with a known setting, BIRDIE_SPEED_SCALE.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs, if you can
+      description: |
+        The last 30 lines of the game's log. Installed: %APPDATA%\Sim Clash\logs\game.log (paste that path into File Explorer's address bar). From source: the terminal you started it from.
+        And the connector's own log, if it has one. Please remove anything personal (names, serial numbers, network names) before pasting.
+      render: text
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else
+      description: What you expected, what happened, and whether you are willing to try a test build.

@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Install · Sim Clash</title>
+<meta name="description" content="Install Sim Clash on Windows: the installer from GitHub Releases (and how to get past the SmartScreen warning), or run it from source with Node.js.">
+<meta name="theme-color" content="#07090d">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; base-uri 'self'; form-action 'none'">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Install · Sim Clash">
+<meta property="og:description" content="Install Sim Clash on Windows: the installer from GitHub Releases (and how to get past the SmartScreen warning), or run it from source with Node.js.">
+<meta property="og:image" content="https://robertjackson-engage.github.io/sim-clash/assets/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="index.html"><img src="assets/icon.svg" alt="" width="36" height="36"><b><span class="p1">Sim</span> <span class="p2">Clash</span></b></a>
+    <nav class="nav" aria-label="Site">
+      <a href="index.html">Home</a>
+      <a href="install.html" aria-current="page">Install</a>
+      <a href="connect.html">Connect</a>
+      <a href="play.html">How to play</a>
+      <a href="faq.html">FAQ</a>
+      <a href="contribute.html">Contribute</a>
+    </nav>
+    <a class="btn btn-go btn-sm" data-gh="download" href="install.html"><span>Download</span></a>
+  </div>
+</header>
+
+<main id="main">
+<section class="page-head">
+  <div class="wrap">
+    <p class="kicker">Install</p>
+    <h1>Get it running</h1>
+    <p class="lead">Sim Clash is a Windows desktop game. Most people want the installer; if you would rather see exactly what you are running, start it from source. Both are free.</p>
+  </div>
+</section>
+
+<div class="wrap doc">
+  <nav class="toc" aria-label="On this page">
+    <b>On this page</b>
+    <ol>
+      <li><a href="#installer">The Windows installer</a></li>
+      <li><a href="#smartscreen">The SmartScreen warning</a></li>
+      <li><a href="#source">Run it from source</a></li>
+      <li><a href="#settings">Settings for tinkerers</a></li>
+      <li><a href="#update">Updating and removing</a></li>
+    </ol>
+  </nav>
+
+  <div class="prose">
+    <section id="installer">
+      <h2>The Windows installer</h2>
+      <ol class="steps">
+        <li><p><b>Download the installer</b> from the project's <a data-gh="releases" href="contribute.html">Releases page on GitHub</a>: the file named <code>Sim-Clash-Setup-<em>version</em>.exe</code> under the newest release.</p></li>
+        <li><p><b>Run it.</b> Windows will most likely show a blue "Windows protected your PC" box first. That is expected: see <a href="#smartscreen">the SmartScreen warning</a> below for what it means and how to continue.</p></li>
+        <li><p><b>That is the whole install.</b> It installs for your Windows user only, so there is no administrator prompt. It adds a Start Menu entry and a desktop shortcut, and starts the game when it is done.</p></li>
+        <li><p><b>Connect a launch monitor</b>, or skip that for now and play with <a href="connect.html#no-monitor">test swings</a>. The <a href="connect.html">connection guide</a> has the steps for each setup.</p></li>
+      </ol>
+      <p><a class="btn btn-go" data-gh="download" href="#installer"><span>Go to the download</span></a></p>
+      <div class="note">
+        <p><b>Where it keeps things.</b> The game's own data (players, profiles, settings) lives in your user profile under <code>%APPDATA%\Sim Clash</code>, with a log at <code>%APPDATA%\Sim Clash\logs\game.log</code>. Nothing is written next to the program.</p>
+      </div>
+    </section>
+
+    <section id="smartscreen">
+      <h2>The SmartScreen warning</h2>
+      <p>The installer is <strong>not code-signed</strong>. When you run it, Microsoft Defender SmartScreen says <em>"Windows protected your PC"</em> and names the publisher as unknown.</p>
+      <ol class="steps">
+        <li><p>In the blue box, click <b>More info</b>.</p></li>
+        <li><p>Click <b>Run anyway</b>. Windows asks once per downloaded file.</p></li>
+      </ol>
+      <h3>Why it is unsigned</h3>
+      <p>Signing a Windows program takes a certificate that is paid for every year, and SmartScreen still warns about a new signed program until enough people have downloaded it. Sim Clash is a free project with no company behind it, so there is no certificate. The warning says "Windows does not know this publisher". It does not say anything was found in the file.</p>
+      <h3>How to trust it anyway</h3>
+      <ul>
+        <li>Download only from the project's own <a data-gh="releases" href="contribute.html">Releases page</a>, never from a re-upload.</li>
+        <li>The whole source is public. If you would rather not run a prebuilt program at all, <a href="#source">run it from source</a>: it is the same game.</li>
+      </ul>
+    </section>
+
+    <section id="source">
+      <h2>Run it from source</h2>
+      <p>You need <a href="https://nodejs.org/">Node.js</a> <strong>22 or newer</strong> (the version the project's <code>package.json</code> asks for) and <a href="https://git-scm.com/">Git</a>.</p>
+      <pre><code>git clone <span data-fill="clone-url">(the repository address, from its GitHub page)</span>
+cd <span data-fill="repo-dir">sim-clash</span>
+npm install
+npm start</code></pre>
+      <p><code>npm install</code> fetches the dependencies (including Electron, so it takes a few minutes the first time). <code>npm start</code> builds the stages and opens the game full screen. <kbd>F11</kbd> leaves and re-enters full screen.</p>
+      <div class="note">
+        <p><b>PowerShell note.</b> Run the four lines one at a time. Older Windows PowerShell does not understand <code>&amp;&amp;</code> between commands.</p>
+      </div>
+      <h3>Other ways to start it</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><code>npm start</code></td><td class="wrapok">The desktop game.</td></tr>
+          <tr><td><code>npm run start:server</code></td><td class="wrapok">The game's server with no window: open <code>http://localhost:8222</code> in a browser on the same PC.</td></tr>
+          <tr><td><code>npm test</code></td><td class="wrapok">The test suite.</td></tr>
+          <tr><td><code>npm run dist</code></td><td class="wrapok">Builds the Windows installer yourself, into <code>dist/</code>.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="settings">
+      <h2>Settings for tinkerers</h2>
+      <p>None of these are needed for a normal install. They are environment variables read when the game starts.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Variable</th><th>Default</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><code>BIRDIE_OC_PORT</code></td><td>921</td><td class="wrapok">The port the game listens on for launch-monitor shots (GSPro Open Connect).</td></tr>
+          <tr><td><code>BIRDIE_PORT</code></td><td>8222</td><td class="wrapok">The port of the game's own local web server.</td></tr>
+          <tr><td><code>BIRDIE_HOST</code></td><td>127.0.0.1</td><td class="wrapok">Who can reach that web server. The default is this PC only. <code>0.0.0.0</code> lets a tablet or phone on your network mirror the game; the server has no password, so only do that on a network you trust.</td></tr>
+          <tr><td><code>BIRDIE_SPEED_SCALE</code></td><td>1</td><td class="wrapok">Multiplies incoming ball speed. Set <code>2.23694</code> if your monitor's connector reports metres per second (shots play about 2.2 times too short otherwise).</td></tr>
+          <tr><td><code>BIRDIE_NO_WATCH</code></td><td>unset</td><td class="wrapok">Set to <code>1</code> to stop the game starting its bundled Uneekor VIEW feed (see <a href="connect.html#uneekor">Connect</a>).</td></tr>
+        </tbody>
+      </table></div>
+      <p class="muted">The names start with BIRDIE because the engine underneath is Open-Birdie.</p>
+    </section>
+
+    <section id="update">
+      <h2>Updating and removing</h2>
+      <ul>
+        <li><strong>Updating:</strong> the game does not update itself. Download the newer installer from Releases and run it; it installs over the old version and keeps your players and profiles.</li>
+        <li><strong>From source:</strong> <code>git pull</code>, then <code>npm install</code> and <code>npm start</code> again.</li>
+        <li><strong>Removing:</strong> Windows Settings &gt; Apps &gt; Installed apps &gt; Sim Clash &gt; Uninstall. To remove your saved players as well, delete <code>%APPDATA%\Sim Clash</code>.</li>
+      </ul>
+    </section>
+
+    <div class="next">
+      <a class="btn btn-go" href="connect.html"><span>Next: connect your monitor</span></a>
+      <a class="btn btn-ghost" href="play.html"><span>How to play</span></a>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <div>
+      <h2>Sim Clash</h2>
+      <p>Arcade 1v1 golf for real launch monitors. Free and open source under the MIT licence.</p>
+      <p>Built on Open-Birdie: the original by Rooj Rin (<a href="https://github.com/rroojrooj/Open-Birdie">rroojrooj/Open-Birdie</a>) and the fork by jordan-shilts (<a href="https://github.com/jordan-shilts/Open-Birdie">jordan-shilts/Open-Birdie</a>) that Sim Clash is built on.</p>
+    </div>
+    <nav aria-label="Pages">
+      <h2>Site</h2>
+      <ul>
+        <li><a href="install.html">Install</a></li>
+        <li><a href="connect.html">Connect your launch monitor</a></li>
+        <li><a href="play.html">How to play</a></li>
+        <li><a href="faq.html">FAQ and troubleshooting</a></li>
+        <li><a href="contribute.html">Contribute</a></li>
+      </ul>
+    </nav>
+    <nav aria-label="Project">
+      <h2>Project</h2>
+      <ul>
+        <li><a data-gh="repo" href="contribute.html">GitHub repository</a></li>
+        <li><a data-gh="releases" href="install.html">Releases</a></li>
+        <li><a data-gh="issues" href="contribute.html">Issues</a></li>
+        <li><a data-gh="license" href="contribute.html">MIT licence</a></li>
+        <li><a data-gh="disclaimer" href="contribute.html">Disclaimer</a></li>
+      </ul>
+    </nav>
+    <p class="fine">Sim Clash is an independent open-source project. It is not affiliated with, endorsed by or sponsored by GSPro, Foresight Sports, Uneekor or any other company named on this site; their names are used only to say what the game works with, and all trademarks belong to their owners. The software is provided as is, with no warranty. Hitting golf balls indoors can hurt people and break things: swing at your own risk.</p>
+  </div>
+</footer>
+<script src="config.js"></script>
+<script src="site.js"></script>
+</body>
+</html>

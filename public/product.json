@@ -1,0 +1,16 @@
+{
+  "name": "Sim Clash",
+  "wordmark": ["SIM", "CLASH"],
+  "initials": "SC",
+  "slug": "sim-clash",
+  "tagline": "Arcade 1v1 golf for real launch monitors",
+  "appId": "io.github.simclash.app",
+  "userDataDir": "Sim Clash",
+  "installerName": "Sim-Clash-Setup",
+  "repo": { "owner": "robertjackson-engage", "name": "sim-clash" },
+  "colors": { "p1": "#ff5a36", "p2": "#2e9bff", "gold": "#ffd21f", "ink": "#07090d" },
+  "builtOn": [
+    { "name": "Open-Birdie", "by": "Rooj Rin", "url": "https://github.com/rroojrooj/Open-Birdie", "licence": "MIT" },
+    { "name": "Open-Birdie (fork)", "by": "jordan-shilts", "url": "https://github.com/jordan-shilts/Open-Birdie", "licence": "MIT" }
+  ]
+}

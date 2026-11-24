@@ -1,0 +1,56 @@
+# Publishes the website in site/ to GitHub Pages. Nothing is built: the folder is static
+# HTML, CSS and a little JavaScript, uploaded as it is (minus the developer notes).
+#
+# One-time setup in the repository: Settings > Pages > Build and deployment > Source:
+# "GitHub Actions". The site is then served from https://<owner>.github.io/<repo>/.
+name: Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+# the minimum the official Pages actions need
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# one deployment at a time; a newer push waits for the one in progress instead of cancelling it
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Stage the site
+        # site/dev (the script that refreshes the generated cards) and the README are for
+        # people working on the site, not for visitors
+        run: |
+          mkdir _site
+          cp -r site/. _site/
+          rm -rf _site/dev _site/README.md
+          touch _site/.nojekyll
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload the site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -32,7 +32,7 @@ import { RENDER_CONFIG } from './config.js';
 import { realTreeSize } from './tree-placement.js';
 import { generateTree, thinCards } from './tree-gen.js';
 import { leafAtlas, birchBark, ATLAS_TILE_UV } from './leaf-atlas.js';
-import { treeFade, FADE_NEAR_M, FADE_SHOWN, FADE_AT } from './tree-fade.js';
+import { treeFade, FADE_NEAR_M, FADE_HUG_M, FADE_SHOWN, FADE_AT } from './tree-fade.js';
 
 function rng(seed) {
   let a = seed >>> 0;
@@ -214,8 +214,11 @@ export const BILLBOARD_NORMAL = /* glsl */`
 // instance goes to a fourth bucket drawn with alpha-blended copies of the materials at
 // FADE_SHOWN opacity — a smooth ghost. Depth writes stay on, so only the nearest leaf
 // of the ghost shows in each pixel, not a stack of them. It still casts its shadow.
-function addTreeShader(mat, shared, { flutter = false, foliage = false, ghost = false, key }) {
+// fx (optional, an arcade theme's trees: arcade-look.js trees.fx): { uLeafPaint, uLeafSnow,
+// uLeafUp } uniforms, compiled in only when given (its own program cache key)
+function addTreeShader(mat, shared, { flutter = false, foliage = false, ghost = false, key, fx = null }) {
   mat.onBeforeCompile = (shader) => {
+    if (fx) Object.assign(shader.uniforms, fx);
     shader.uniforms.uTime = shared.uTime;
     shader.uniforms.uWindAmp = shared.uWindAmp;
     shader.uniforms.uTreeH = shared.uTreeH;
@@ -245,13 +248,20 @@ function addTreeShader(mat, shared, { flutter = false, foliage = false, ghost = 
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', `#include <common>
         uniform vec3 uSunView;
+        ${fx ? 'uniform vec4 uLeafPaint; uniform vec4 uLeafSnow; uniform vec4 uLeafUp;' : ''}
         varying float vAO; varying float vTreeT;`)
       .replace('#include <color_fragment>', `#include <color_fragment>
         {
           ${foliage ? `
           // crown volume: dark, cool interior / underside -> bright, warm sunlit top
           float occ = mix(0.38, 1.0, vAO) * mix(0.74, 1.06, vTreeT);
-          diffuseColor.rgb *= occ * mix(vec3(0.86, 0.95, 0.92), vec3(1.05, 1.03, 0.92), vTreeT);` : `
+          diffuseColor.rgb *= occ * mix(vec3(0.86, 0.95, 0.92), vec3(1.05, 1.03, 0.92), vTreeT);
+          ${fx ? `
+          // an arcade theme's leaves: repainted by their own light and dark (blossom), and
+          // snow lying on the top and the outside of the crown
+          float leafLum = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11));
+          diffuseColor.rgb = mix(diffuseColor.rgb, uLeafPaint.rgb * min(1.15, 0.42 + 2.6 * leafLum), uLeafPaint.a);
+          diffuseColor.rgb = mix(diffuseColor.rgb, uLeafSnow.rgb, uLeafSnow.a * smoothstep(0.3, 0.85, vAO) * smoothstep(0.12, 0.55, vTreeT));` : ''}` : `
           // bark under the crown sits in the canopy's shade (not so deep it reads black)
           diffuseColor.rgb *= mix(0.74, 1.0, vAO);`}
         }`)
@@ -280,9 +290,12 @@ function addTreeShader(mat, shared, { flutter = false, foliage = false, ghost = 
           vec3 toCam = normalize(vViewPosition);
           float back = pow(clamp(dot(-toCam, uSunView), 0.0, 1.0), 5.0);
           totalEmissiveRadiance += diffuseColor.rgb * back * 0.55 * vAO;
-        }` : ''}`);
+        }` : ''}
+        ${fx ? `
+        // an arcade theme's trees lit from below (city lamps, a lava lake): warm at the foot, gone by the top
+        totalEmissiveRadiance += diffuseColor.rgb * uLeafUp.rgb * (uLeafUp.a * 2.2 * (1.0 - vTreeT) * (1.0 - vTreeT));` : ''}`);
   };
-  mat.customProgramCacheKey = () => `tree3d-v5-clump-${ghost ? 'ghost-' : ''}${key}`;
+  mat.customProgramCacheKey = () => `tree3d-v5-clump-${ghost ? 'ghost-' : ''}${key}${fx ? '-theme' : ''}`;
 }
 
 // depth material for shadows with the same wind (and alpha for leaf cards)
@@ -338,7 +351,9 @@ function crowdedness(spots) {
 export class TreeField {
   // spots: [{x, y, s, species, h?, r?, edge?}] (sim metres); hAt(x,y) -> ground
   // height; V: sim->three
-  constructor(spots, hAt, V, { nearM = 150, midM = LOD_MID_M, sunDir = null } = {}) {
+  // look (optional, arcade-look.js trees): { leaves: { species: hex }, leafMix, leafGain },
+  // a look's leaf tints in place of LOOK's
+  constructor(spots, hAt, V, { nearM = 150, midM = LOD_MID_M, sunDir = null, look: skin = null } = {}) {
     this.group = new THREE.Group();
     this.group.name = 'treeField';
     this.nearM = nearM;
@@ -378,19 +393,27 @@ export class TreeField {
       const sharedSp = { ...this.shared, uTreeH: { value: models[0].H } };
       // the atlas is already leaf-coloured: tint it toward the species hue, not
       // multiply green by green (which went near-black)
-      const leafCol = new THREE.Color(look.leaf);
+      const leafCol = new THREE.Color(skin?.leaves?.[species] ?? look.leaf);
       const mx = Math.max(leafCol.r, leafCol.g, leafCol.b, 1e-4);
-      const tint = new THREE.Color(1, 1, 1).lerp(new THREE.Color(leafCol.r / mx, leafCol.g / mx, leafCol.b / mx), 0.45).multiplyScalar(0.92);
+      const tint = new THREE.Color(1, 1, 1).lerp(new THREE.Color(leafCol.r / mx, leafCol.g / mx, leafCol.b / mx), skin?.leafMix ?? 0.45).multiplyScalar(skin?.leafGain ?? 0.92);
       const cardMat = new THREE.MeshStandardMaterial({
         color: tint, map: atlas.map, alphaMap: atlas.alphaMap, alphaTest: 0.5, side: THREE.DoubleSide,
         roughness: 0.8, metalness: 0, envMapIntensity: 0.6,
       });
-      addTreeShader(cardMat, sharedSp, { flutter: true, foliage: true, key: `${species}-cards` });
+      // an arcade theme's leaf effects for this species (null: the shader is the one it always was)
+      const tfx = skin?.fx || null;
+      const v4 = (hex, a) => { const c = new THREE.Color(hex || '#000000'); return { value: new THREE.Vector4(c.r, c.g, c.b, hex ? a : 0) }; };
+      const fx = tfx ? {
+        uLeafPaint: v4(tfx.paint?.[species], tfx.paintMix ?? 0.9),
+        uLeafSnow: v4(tfx.snow, tfx.snowAmount ?? 0.7),
+        uLeafUp: v4(tfx.uplight, tfx.uplightGain ?? 0.5),
+      } : null;
+      addTreeShader(cardMat, sharedSp, { flutter: true, foliage: true, key: `${species}-cards`, fx });
       // bark takes a little more of the sky's fill than the default, so a trunk's shaded
       // side (looking toward the sun) keeps its texture
       const barkCol = Array.isArray(look.barkTint) ? new THREE.Color().setRGB(...look.barkTint) : new THREE.Color(look.barkTint);
       const barkMat = new THREE.MeshStandardMaterial({ color: barkCol, map: barkTex(look.bark), roughness: 0.95, metalness: 0, envMapIntensity: 1.6 });
-      addTreeShader(barkMat, sharedSp, { key: `${species}-bark` });
+      addTreeShader(barkMat, sharedSp, { key: `${species}-bark`, fx });
       const depthCards = makeDepthMat(sharedSp, { alpha: true, atlas, flutter: true, key: `${species}-cards` });
       const depthBark = makeDepthMat(sharedSp, { key: `${species}-bark` });
       // the see-through copies: alpha-blended at FADE_SHOWN (the leaf cut-off scaled to
@@ -399,9 +422,9 @@ export class TreeField {
         color: tint, map: atlas.map, alphaMap: atlas.alphaMap, alphaTest: 0.5 * FADE_SHOWN, side: THREE.DoubleSide,
         roughness: 0.8, metalness: 0, envMapIntensity: 0.6, transparent: true, opacity: FADE_SHOWN,
       });
-      addTreeShader(ghostCard, sharedSp, { flutter: true, foliage: true, ghost: true, key: `${species}-cards` });
+      addTreeShader(ghostCard, sharedSp, { flutter: true, foliage: true, ghost: true, key: `${species}-cards`, fx });
       const ghostBark = new THREE.MeshStandardMaterial({ color: barkCol, map: barkTex(look.bark), roughness: 0.95, metalness: 0, envMapIntensity: 1.6, transparent: true, opacity: FADE_SHOWN });
-      addTreeShader(ghostBark, sharedSp, { ghost: true, key: `${species}-bark` });
+      addTreeShader(ghostBark, sharedSp, { ghost: true, key: `${species}-bark`, fx });
       this._disposables.push(cardMat, barkMat, depthCards, depthBark, ghostCard, ghostBark);
 
       // which model each tree gets: woods-grown when crowded, else one of the open forms
@@ -432,6 +455,7 @@ export class TreeField {
         ]);
         // [3]: see-through trees in front of the shot — the near model, blended
         lods.push([mk(lods[0][0].geometry, ghostBark, depthBark, true), mk(lods[0][1].geometry, ghostCard, depthCards, true)]);
+        (this._ghosts ||= []).push(...lods[3]);   // v2:seeover (setFadeLine draws them after the aim line)
         // one shared instance buffer per LOD (uploaded once for all its parts); bark
         // keeps a neutral colour buffer (instance colour multiplies)
         const buffers = lods.map((parts) => {
@@ -483,6 +507,25 @@ export class TreeField {
 
   setNearDistance(m) { this.nearM = m; this._last.t = -1e9; }
 
+  // v2:seeover The arcade's pass-through (scene._frame, at address): the trees that go
+  // see-through are picked along the LINE OF THE SHOT, not across the middle of the view (a
+  // camera craned up and pitched down looks at the ground, and the middle of its view is no
+  // longer where the trunks stand). line: { x, z (the camera, three's ground plane), ux, uz
+  // (the way of the shot), d (camera to ball, m), len (d plus how far past the ball), camY,
+  // ballY, endY (the heights of the camera, the ball and the ground at the far end) }: a
+  // tree standing on that line (within a crown's width of it, a little more with distance),
+  // tall enough to rise into the sight line from the camera, or hugging the camera, is
+  // drawn as a ghost (see-over.js inTheWay is the same rule). null: back to the view's own zone.
+  // Its ghosts are then drawn after the aim line and the markers, so those show through.
+  setFadeLine(line) {
+    const key = line ? [line.x, line.z, line.d, line.len, line.camY].map((v) => Math.round(v * 2)).join(',') + `|${Math.round(Math.atan2(line.ux, line.uz) * 300)}` : '';
+    if (key === this._fadeKey) return;
+    this._fadeKey = key;
+    this.fadeLine = line || null;
+    for (const im of this._ghosts || []) im.renderOrder = line ? 20 : 0;
+    this._last.t = -1e9;
+  }
+
   // Re-bucket instances for this camera (cheap; skipped when the camera is still).
   // Returns true when the per-LOD instance sets were rebuilt (the shadow casters may
   // have changed); false when the camera hasn't moved enough to matter.
@@ -507,6 +550,7 @@ export class TreeField {
     const nearM = this.nearM, midM = this.midM;
     const vm = camera.matrixWorldInverse.elements;
     const fadeOn = this.fadeOn;
+    const fl = fadeOn ? this.fadeLine : null;   // v2:seeover
     let nN = 0, nM = 0, nF = 0, nG = 0;
     for (const sp of this.variants) {
       const { n, mats, cols, centers, buffers, H } = sp;
@@ -526,7 +570,20 @@ export class TreeField {
           if (!vis) continue;
         }
         let lod = d < nearM ? 0 : d < midM ? 1 : 2;
-        if (lod === 0 && fadeOn && d < FADE_NEAR_M + 30) {
+        if (lod === 0 && fl) {
+          // v2:seeover along the line of the shot: from the camera to len past it, wherever the camera looks
+          const o = i * 16, ax = mats[o + 12] - fl.x, az = mats[o + 14] - fl.z;
+          const al = ax * fl.ux + az * fl.uz;
+          if (al > -FADE_HUG_M && al < fl.len + 15) {
+            const treeH = Math.hypot(mats[o + 4], mats[o + 5], mats[o + 6]) * H;
+            const a = Math.min(Math.max(al, 0), fl.len);
+            const sight = a <= fl.d ? fl.camY + (fl.ballY - fl.camY) * (a / Math.max(1e-6, fl.d)) : fl.camY + (fl.endY - fl.camY) * (a / fl.len);
+            // on the line (a crown wide, a little wider with distance), or hugging the camera wherever it looks
+            const lat = Math.abs(ax * fl.uz - az * fl.ux);
+            const near = Math.hypot(ax, az) < FADE_HUG_M * 0.85 && al > -(0.3 * treeH + 1) && mats[o + 13] + treeH > fl.camY - 3;
+            if (near || (al > -1 && al < fl.len && mats[o + 13] + treeH > sight - 0.5 && lat < 0.3 * treeH + 1.2 + 0.03 * al)) lod = 3;
+          }
+        } else if (lod === 0 && fadeOn && d < FADE_NEAR_M + 30) {
           // the tree's foot in view space, and its height from the instance's y scale
           const o = i * 16, fx = mats[o + 12], fy = mats[o + 13], fz = mats[o + 14];
           const vx = vm[0] * fx + vm[4] * fy + vm[8] * fz + vm[12];

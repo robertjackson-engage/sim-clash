@@ -1,5 +1,108 @@
 # Changelog
 
+All notable changes to Sim Clash are documented here. Sim Clash is a fork of Open-Birdie;
+Open-Birdie's own changelog, as it stood when this fork was made, follows below the line.
+
+## [1.0.0-beta.1] - unreleased
+
+The first public build of Sim Clash: an arcade 1v1 golf game for real launch monitors,
+built on Open-Birdie 0.9.2.
+
+### Added
+- **Match play for two players on one bay**: quick match (one hole), best of 3 and a
+  best-of-9 tournament; a coin flip for the honour; knockout the moment a hole is decided;
+  a stroke cap of par + 3; match point; concede; sudden death (closest to the pin) on a tied
+  hole; a match menu with undo, restart hole, restart match and quit (`lib/match.js`,
+  `public/arcade/match.js`, `docs/match.md`).
+- **15 stages**: twelve match holes, each its own themed world with its own sky, wind range
+  and three routes, three of them "rocket holes" of 400 to 700 yards, and three sudden-death
+  arenas (`tools/arcade-holes/`, `docs/arcade-holes.md`).
+- **15 power-up balls and 3 tricks**, shot grading with callout banners, points, coins, XP,
+  streaks and challenges (`lib/arcade.js`, `docs/arcade.md`).
+- **Wind per hole**, rolled inside each stage's own range and the same for both players
+  (`lib/arcade-wind.js`).
+- **Putt assist**: on a green the game reads the putt and pulls the stroke toward the one
+  that goes in (`lib/putt-assist.js`).
+- **The arcade look**: saturated themes, painted skies for night and volcano stages, a
+  glowing ball trail, ball skins for the armed ball, cup effects, and 54 prop models
+  (`public/render/arcade-look.js`, `arcade-sky.js`, `props.js`, `prop-models.js`,
+  `ball-skins.js`, `cup-fx.js`, `public/arcade/props/`).
+- **A ball cam** that flies with the ball and cuts to the pin; slow motion only by the pin
+  (`public/render/flight-camera.js`, `public/arcade/feel.js`).
+- **An announcer and a sound pack**: 104 announcer lines, 66 sound cues, a crowd that rises
+  as the ball tracks at the hole. All one-shots, nothing loops (`public/arcade/audio.js`,
+  `public/arcade/voice/`, `public/arcade/sfx/`, `docs/arcade-voice.md`).
+- **A game shell**: title screen and main menu, with the real-course simulator hidden
+  (`BIRDIE_PRODUCT=open-birdie` brings it back) (`public/arcade/shell.js`,
+  `docs/sim-clash-shell.md`).
+- **Solo and practice**: a tour of 3, 6 or 12 stages or any single stage for a score, with
+  best scores kept per player; free play, closest to the pin, a putting challenge and up and
+  down (`lib/solo.js`, `docs/sim-clash-shell.md`).
+- **Test swings** for playing without a launch monitor: a TEST SWING button and key T, with
+  a smart swing, five presets and sliders (`public/arcade/shell.js`).
+- **Drop on the line** (key R: back on the fairway for a stroke, free out of a dead lie),
+  **view from above** (key V) and softer trees and launch clearance, so no lie is a dead end
+  (`lib/playability.js`, `public/render/see-over.js`).
+- **Putting levels**: easy, assisted and real; a match plays assisted by default, so a
+  must-make putt can be missed (`lib/putt-assist.js`).
+- **Foresight GC launch monitors, experimental**, through a built-in bridge
+  (`lib/foresight-bridge.js`, `docs/foresight-bridge.md`).
+- **A launch-monitor catalogue and a connection wizard**: 30 launch monitors in four honest
+  tiers (tested, expected to work, community, not supported yet), each with its connector,
+  steps and sources; the wizard, `docs/launch-monitors.md`, the README table and the
+  website's Connect page are all generated from it (`lib/launch-monitors.json`,
+  `lib/connect.js`, `public/arcade/connect.js`).
+- **The stages' sky photos ship with the game**: the golden-hour and the morning sky (two
+  CC0 Poly Haven HDRIs, pinned by checksum) are bundled beside the stages and installed into
+  the player's sky cache on the first start, so a fresh install has its real skies with no
+  network (`lib/sky-bundle.js`, `tools/arcade-holes/sky-bundle.mjs`, `npm run prepare:sky`).
+- **A Windows installer that works on a clean PC**: the stages are bundled at build time and
+  installed into the player's data folder on first start, and again when a newer version
+  brings newer stages; players, coins and settings are never touched (`lib/arcade-bundle.js`,
+  `tools/arcade-holes/bundle.mjs`, `docs/dev/packaging.md`).
+- **A game-like start**: the window opens at once on a dark splash with the wordmark (no
+  white flash, no blank wait), full screen on the main display; F11 or Alt+Enter toggles a
+  window and the choice is remembered; a second launch focuses the running game; a busy port
+  is explained on screen (`lib/app-shell.js`, `main.js`).
+- **A one-click installer with nothing left behind**: per-user, no administrator prompt,
+  the game's icon throughout, shortcuts named for the game; uninstall leaves the player's
+  data and removes everything else, including the copy of the installer that
+  electron-builder keeps (`build/installer.nsh`).
+- **Signing readiness**: the build signs when credentials are in the environment (Azure
+  Artifact Signing, a certificate in the Windows store, or a certificate file) and is plainly
+  unsigned when they are not (`build/electron-builder.cjs`, `docs/dev/signing.md`).
+- **A log file for the installed app**: `%APPDATA%\Sim Clash\logs\game.log` (`lib/app-log.js`).
+- `npm run verify:package` checks a built app against the source tree without running it
+  (`tools/release/verify-package.cjs`).
+
+### Changed
+- The product is **Sim Clash**: its own name, icon, installer, shortcuts, install folder,
+  user-data folder and app id, so it installs beside Open-Birdie. The name lives in one file,
+  `public/product.json` (`docs/dev/rename.md`).
+- `npm start` builds the stage bundle before it opens the game; `npm run pack` and
+  `npm run dist` use `build/electron-builder.cjs`, which ships only what the game needs (no
+  real-course art packs).
+- The game makes no network requests of its own (no course search, no downloads, no sky
+  fetch); `Open-Birdie.bat` starts the original simulator (`BIRDIE_PRODUCT=open-birdie`) and
+  `Sim Clash.bat` the game.
+- The menus' backdrop camera plans its orbit round each stage's props instead of flying
+  through them (`backdropOrbit` in `public/arcade/shell-core.js`).
+- The course-art validator is generated with the same bytes whether or not `node_modules`
+  is a link (`tools/course-art/generate-validator.mjs`).
+- The announcer's optional ElevenLabs key is read only from `ELEVENLABS_API_KEY`, the env
+  file named by `BIRDIE_VOICE_ENV`, or a git-ignored `.env` in the repo root (`.env.example`).
+
+### Known issues
+- See "Known issues" in `docs/arcade-v2.md`.
+- The installer is not code-signed: Windows SmartScreen warns on first run.
+- Tested with one launch monitor (a Foresight GCQuad); see `docs/launch-monitors.md`.
+- The installed game's window has not been tested on a second PC yet
+  (`docs/dev/install-test.md`).
+
+---
+
+# Open-Birdie changelog (upstream, at the time of the fork)
+
 All notable changes to Open-Birdie are documented here.
 
 ## [Unreleased]

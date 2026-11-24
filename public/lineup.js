@@ -210,6 +210,7 @@ export class Lineup {
     this.condKey = cond;
     if (!this._dragging) this.aim = s.aimOffset || 0;
     if (newLie) { this.autoSpot = null; this.aimMap.setAuto(null); this._autoAimLie = !s.practice; this.planLayup = null; }
+    this.aimMap.setDrop(s.canDrop && s.drop ? s.drop : null);   // v2:playability the rescue drop's ghost marker
     this.aimMap.setHole({
       ball: s.ball, pin: s.pin, baseAimDeg: base, aimOffset: this.aim,
       line: s.practice ? null : (this.scene.geo?.holes?.[s.hole - 1]?.line || null),
@@ -266,7 +267,8 @@ export class Lineup {
   setAim(offset, { commit = true, auto = null } = {}) {
     const s = this.state;
     if (!s) return;
-    this.aim = Math.max(-30, Math.min(30, Math.round(offset * 2) / 2));
+    const lim = this.aimLimit;   // v2:playability 30 degrees; 90 with the arcade's play assists
+    this.aim = Math.max(-lim, Math.min(lim, Math.round(offset * 2) / 2));
     if (!auto) this._autoAimLie = false;   // moved by hand: the aim stays where it is put
     this.autoSpot = auto;   // where AUTO aims, until the aim is moved by hand
     this.aimMap.setAuto(auto);
@@ -284,6 +286,14 @@ export class Lineup {
     }
   }
 
+  // v2:playability how far the aim turns either side of the flag: 30 degrees, or the game's
+  // own range (90) while the arcade's play assists are on, so a player can turn away from
+  // an obstacle. The slider and the aim map follow it.
+  get aimLimit() {
+    const s = this.state;
+    return s && s.playAssist && s.aimLimitDeg > 30 ? s.aimLimitDeg : 30;
+  }
+
   // The aim control: the slider, and the aim in yards left or right of the pin at the
   // club's carry (the pin's distance for a putt or without a prediction).
   showAim(offset = this.aim) {
@@ -291,6 +301,9 @@ export class Lineup {
     const p = this.pred;
     const dist = p && !p.isPutt && p.carryYd > 0 ? p.carryYd : (s?.distToPinYd || 0);
     const a = aimWords(offset, dist);
+    const lim = this.aimLimit;   // v2:playability
+    if (+$('aim-slider').max !== lim) { $('aim-slider').min = -lim; $('aim-slider').max = lim; }
+    this.aimMap.aimLimit = lim;
     $('aim-slider').value = offset;
     $('aim-val').innerHTML = a.yd ? `${a.yd}<small>yd ${a.side}</small>` : '<small class="aim-on">ON PIN</small>';
     $('aim-val').title = `${Math.abs(offset).toFixed(1)}° ${offset > 0 ? 'right' : offset < 0 ? 'left' : 'straight'}${a.yd ? `: ${a.text} of the pin at ${Math.round(dist)} yd` : ''}`;

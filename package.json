@@ -1,18 +1,27 @@
 {
   "name": "open-birdie",
-  "version": "0.9.2",
-  "description": "Open-data golf simulator: plays real OpenStreetMap courses with any GSPro Open Connect launch monitor (Uneekor VIEW/GSPconnect, etc.)",
+  "version": "1.0.0-beta.1",
+  "description": "Sim Clash: arcade 1v1 golf for real launch monitors. Two players, one bay, real swings. Open source, built on Open-Birdie.",
   "main": "main.js",
-  "author": "Rooj Rin",
+  "author": "Sim Clash contributors",
+  "contributors": [
+    "Rooj Rin (Open-Birdie, https://github.com/rroojrooj/Open-Birdie)",
+    "jordan-shilts (Open-Birdie fork, https://github.com/jordan-shilts/Open-Birdie)"
+  ],
   "type": "commonjs",
   "scripts": {
     "test": "node --test \"test/*.test.js\" \"test/*.test.mjs\"",
-    "start": "npm run prepare:course-art && electron .",
-    "start:server": "npm run prepare:course-art && node server.js",
+    "start": "npm run prepare:course-art && npm run prepare:arcade-data && electron .",
+    "arcade": "npm start",
+    "arcade:holes": "node tools/arcade-holes/build.mjs",
+    "prepare:arcade-data": "node tools/arcade-holes/bundle.mjs && node tools/arcade-holes/sky-bundle.mjs --soft",
+    "prepare:sky": "node tools/arcade-holes/sky-bundle.mjs",
+    "start:server": "npm run prepare:course-art && npm run prepare:arcade-data && node server.js --bundled-arcade",
     "calibrate": "node tools/calibrate.js",
     "shot": "node tools/test-shot.js",
     "watch": "node tools/uneekor-watch.js --speed-scale 2.23694",
     "make-icon": "node tools/make-icon.js",
+    "make-icon:product": "node tools/release/make-icon.cjs",
     "discover:hd-hole": "node tools/hd-course/cli.mjs discover",
     "build:hd-hole": "node tools/hd-course/cli.mjs build",
     "auto-pin:hd-hole": "node tools/hd-course/auto-pin.mjs",
@@ -29,8 +38,9 @@
     "visual:smoke": "node tools/visual-capture/cli.mjs smoke",
     "visual:compare": "node tools/visual-capture/cli.mjs compare",
     "visual:perf": "node tools/visual-capture/cli.mjs perf",
-    "pack": "npm run prepare:course-art && electron-builder --dir",
-    "dist": "npm run prepare:course-art && electron-builder --win"
+    "pack": "npm run prepare:arcade-data && npm run prepare:sky && electron-builder --dir --config build/electron-builder.cjs",
+    "dist": "npm run prepare:arcade-data && npm run prepare:sky && electron-builder --win --config build/electron-builder.cjs && node tools/release/verify-package.cjs",
+    "verify:package": "node tools/release/verify-package.cjs"
   },
   "engines": {
     "node": ">=22"

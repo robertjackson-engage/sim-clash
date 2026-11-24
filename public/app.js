@@ -1,5 +1,6 @@
 // Open-Birdie UI glue: SSE <-> HUD <-> 3D scene.
 import { GolfScene } from './render/scene.js';
+import { restBallLook, shotBallSkin } from './render/ball-skins.js';   // v2:look the ball takes the look of the armed power-up ball
 import { loadHdBundle } from './render/hd-bundle.js';
 import { buildHdAckEvidence, validateHdPolicy, waitForCaptureReady } from './render/capture-readiness.js';
 import { toPar, forwardLabel, verdict } from './scoring.mjs';
@@ -11,6 +12,16 @@ import { LeaguesUI } from './leagues-ui.js';
 import { renderClubPanel } from './club-panel.js';
 import { parseQualitySetting, qualityLabel } from './render/quality.js';
 import { parseSkySetting, SKY_ORDER, SKY_PRESETS } from './render/sky-presets.js';
+// The arcade layer (public/arcade): shot grading banners, crowd, power-up balls, slow motion.
+import { ArcadeUI } from './arcade/arcade.js';
+import { ArcadeAudio } from './arcade/audio.js';
+import { planAnticipation } from './arcade/voice/anticipation.js';   // v2:voice the crowd's swell and its payoff
+import { arcadeShot } from './arcade/feel.js';
+// Match mode (public/arcade/match.js, docs/match.md): a head-to-head on this bay.
+import { MatchUI } from './arcade/match.js';
+import { initShell } from './arcade/shell.js';   // v2:shell the game product's front end: title screen, main menu, solo, the in-game chrome
+import { mountForesightPanel } from './arcade/foresight-panel.js';   // v2:bridge the Foresight bridge's status and switch (docs/foresight-bridge.md)
+import { mountSeeOver } from './arcade/seeover.js';   // v2:seeover the see-over address camera's button and key (V)
 
 const $ = (id) => document.getElementById(id);
 // Readiness nonce handed only to the loopback Electron primary client (absent on LAN mirrors).
@@ -29,10 +40,18 @@ const readSky = () => { try { return localStorage.getItem(SKY_KEY); } catch { re
 let skySetting = parseSkySetting(query.get('sky') || (visualCaptureEnabled ? 'midday' : readSky()));
 // The shot camera: 'follow' flies with the ball (the default), 'tv' covers it from the
 // tee and the landing area (render/flight-camera.js); ?shotcam= overrides the saved one.
-const SHOTCAM_KEY = 'open-birdie.shotcam';
+// v2:camera 'ball' is the ball cam (behind and above the ball all the way, the pin cam for a
+// close finish): the arcade game's default. Its choice is saved under its own key, so a
+// 'follow' saved before the ball cam existed does not hide it.
+const SHOTCAM_KEY = query.get('arcade') !== '0' && !visualCaptureEnabled ? 'open-birdie.shotcam.arcade' : 'open-birdie.shotcam';
+const SHOTCAM_DEFAULT = query.get('arcade') !== '0' && !visualCaptureEnabled ? 'ball' : 'follow';
 const readShotCam = () => { try { return localStorage.getItem(SHOTCAM_KEY); } catch { return null; } };
-let shotCam = (query.get('shotcam') || readShotCam()) === 'tv' ? 'tv' : 'follow';
-const scene = new GolfScene($('scene'), { quality: gfxSetting, autoQuality: !visualCaptureEnabled, sky: skySetting, shotCam });
+const parseShotCam = (v) => (v === 'tv' || v === 'follow' || v === 'ball' ? v : SHOTCAM_DEFAULT);
+let shotCam = parseShotCam(query.get('shotcam') || readShotCam());
+// The look: ?look=real|arcade. The arcade game (on unless ?arcade=0) plays in the arcade look
+// (render/arcade-look.js): saturated turf, turquoise water, a glowing trail; visual capture stays real.
+const lookSetting = query.get('look') || (query.get('arcade') !== '0' && !visualCaptureEnabled ? 'arcade' : 'real');
+const scene = new GolfScene($('scene'), { quality: gfxSetting, autoQuality: !visualCaptureEnabled, sky: skySetting, shotCam, look: lookSetting });
 const flightView = new FlightView($('flightview'));
 const leaguesUI = new LeaguesUI({
   toast: (main, sub) => showToast(main, sub),
@@ -77,8 +96,8 @@ segmented($('seg-gfx'), [['auto', 'Auto'], ['ultra', 'Ultra'], ['high', 'High'],
 });
 scene.onQualityChange = showGfx;
 showGfx(scene.quality);
-segmented($('seg-shotcam'), [['follow', 'Follow the ball'], ['tv', 'TV']], shotCam, (v) => {
-  shotCam = v === 'tv' ? 'tv' : 'follow';
+segmented($('seg-shotcam'), [['ball', 'Ball cam'], ['follow', 'Follow the ball'], ['tv', 'TV']], shotCam, (v) => {   // v2:camera 'Ball cam'
+  shotCam = parseShotCam(v);
   try { localStorage.setItem(SHOTCAM_KEY, shotCam); } catch { /* private mode */ }
   scene.setShotCam(shotCam);
   markSeg($('seg-shotcam'), shotCam);
@@ -231,7 +250,11 @@ function applyState(s) {
 
   // round-over: auto-open the card exactly once (latched on the false->true edge), and
   // lock out further play. Lives here so the pendingState/animation path triggers it too.
-  if (s.over && !prevOver && !pr) { $('scorecard').classList.remove('hidden'); $('practice').classList.add('hidden'); }
+  if (s.over && !prevOver && !pr) {
+    // in the arcade the last shot's grade, points and coins play out first, then the card
+    const showCard = () => { if (simClash) return; /* v2:shell the game has its own result cards */ if (state?.over) { $('scorecard').classList.remove('hidden'); $('practice').classList.add('hidden'); } };
+    if (arcadeOn) setTimeout(showCard, 5500); else showCard();
+  }
   prevOver = s.over;
   $('btn-practice').classList.toggle('hidden', !!s.over && !pr);
   updateMulligan();
@@ -283,6 +306,7 @@ async function loadGeometry() {
   if (visualCaptureEnabled) await scene.compileVisualCaptureShaders();
   lastHoleKey = '';
   if (state) applyState(state);
+  if (arcadeOn) syncBallSkin();   // v2:qa the new course's free ball (a rocket hole) reaches the ball and the dock
   // Acknowledge readiness so the server activates the matching physics. HD courses are
   // held at runtimeReady:false until this; plain courses are already ready. The ack
   // names the FULL advertised bundle set (the server requires the exact active set);
@@ -348,14 +372,146 @@ if (query.get('visualCapture') === '1') {
   });
 }
 
+// ---------- arcade layer ----------
+// ?arcade=0 plays the plain simulator. The server grades every shot either way; this only
+// decides whether the client shows it (and re-times the ball for slow motion).
+const arcadeOn = query.get('arcade') !== '0' && !visualCaptureEnabled;
+// ?sound=0 plays the arcade silently (the banners and effects stay)
+const arcadeAudio = arcadeOn && query.get('sound') !== '0' ? new ArcadeAudio() : null;   // unlocks itself on the first click or key
+const arcade = arcadeOn ? new ArcadeUI({
+  hud: $('hud'), audio: arcadeAudio,
+  fetchJson: (url, opts) => fetch(url, opts).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+  // v2:qa where the ball is on screen (client px): the dock's armed tab lifts clear of it
+  ballScreen: () => {
+    if (animating || !scene.ball || !scene.ball.visible || !scene.geo) return null;
+    const v = scene.ball.position.clone().project(scene.camera);
+    if (!(v.z < 1)) return null;
+    const r = scene.renderer.domElement.getBoundingClientRect();
+    return { x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height };
+  },
+  // v2:playability a spot of the course on screen (client px): the rescue drop's ghost marker
+  worldScreen: (x, y) => {
+    if (animating || !scene.geo || !scene.ball || typeof scene.hAt !== 'function') return null;
+    const v = scene.ball.position.clone().set(x, scene.hAt(x, y) + 0.05, -y).project(scene.camera);
+    if (!(v.z < 1) || v.z < -1) return null;
+    const r = scene.renderer.domElement.getBoundingClientRect();
+    return { x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height };
+  },
+}) : null;
+// v2:seeover the arcade's address camera sees over what hides the target, fades what stands in
+// the way, and flies up to a view from above (by itself when nothing else will do; on the V key
+// and the VIEW FROM ABOVE button any time). ?seeover=0 keeps the plain address camera.
+if (arcadeOn && query.get('seeover') !== '0') {
+  mountSeeOver({
+    scene, host: $('hud'),
+    blocked: () => $('course-modal').style.display !== 'none' || !!$('hud').querySelector('.mt-menu:not(.hidden), .mt-stray:not(.hidden), .mt-screen:not(.hidden)'),
+  });
+}
+// ---------- match mode ----------
+// The server owns the match (lib/match.js); this is its lobby, VS header, ticker and
+// result screen. ?match=1 opens the lobby on load.
+const matchUI = new MatchUI({
+  hud: $('hud'),
+  // error answers carry their reason in the body ({ok: false, error}), so no r.ok test
+  fetchJson: (url, opts) => fetch(url, opts).then((r) => r.json()).catch(() => null),
+  toast: (main, sub) => { showToast(main, sub); $('toast').dataset.from = 'match'; /* v2:qa a match error stays visible over a match screen */ }, audio: arcadeAudio,   // v2:match-ui the announcer and SFX (null with ?sound=0)
+  shotClock: 0,   // no shot clock: nobody wants a countdown while setting up to hit a real ball (was 45)
+});
+// A match state that arrived while a ball was in the air waits for it to stop, so the
+// header never gives the result away (undefined: none waiting; null is "no match").
+let pendingMatch;
+// v2:qa How long the finished shot keeps the screen before the match moves on to the other
+// player's ball (ms; 0: at once). Only when the turn really passes to the other player in
+// the same hole: a decided hole brings its own result screen, the same player's next shot
+// stays on the same ball anyway.
+let resultHold = null;
+const RESULT_HOLD_MS = 2000;
+function matchResultHoldMs(shot, next) {
+  const by = shot && shot.match ? shot.match.playerId : null;
+  if (!arcadeOn || !by || !next || next.aborted) return 0;
+  if (next.phase !== 'play' && next.phase !== 'tiebreak') return 0;
+  if (!next.currentPlayerId || next.currentPlayerId === by) return 0;
+  // an epic banner (DRAINED IT!, HOLE IN ONE!!!) runs longer than the rest
+  return shot.arcade && shot.arcade.callout && shot.arcade.callout.tone === 'epic' ? RESULT_HOLD_MS + 1300 : RESULT_HOLD_MS;
+}
+function flushMatch() {
+  if (pendingMatch === undefined) return;
+  const m = pendingMatch;
+  pendingMatch = undefined;
+  matchUI.onMatch(m);
+  arcade?.setMatch(m);   // v2:arcade-hud the ball dock becomes the loadout of whoever is up (null: back to solo)
+}
+if (query.get('match') === '1') matchUI.openLobby();
+// Sound on or off, remembered (key S). Off silences every arcade sound; the banners stay.
+const SOUND_KEY = 'open-birdie.arcade.sound';
+let arcadeSound = (() => { try { return localStorage.getItem(SOUND_KEY) !== '0'; } catch { return true; } })();
+arcadeAudio?.setEnabled(arcadeSound);
+function toggleArcadeSound() {
+  if (!arcadeAudio) return;
+  arcadeSound = !arcadeSound;
+  arcadeAudio.setEnabled(arcadeSound);
+  try { localStorage.setItem(SOUND_KEY, arcadeSound ? '1' : '0'); } catch { /* private mode */ }
+  showToast(arcadeSound ? 'Sound on' : 'Sound off', 'Press S to switch it back');
+}
+// Unlimited power-up balls (key U): party mode. Every ball is always available and none
+// runs out. A shot still spends the armed ball: arm one again for the next shot.
+async function toggleUnlimitedBalls() {
+  if (!arcadeOn) return;
+  try {
+    const now = await (await fetch('/api/arcade')).json();
+    const r = await postJson('/api/arcade/settings', { unlimited: !now.unlimited });
+    showToast(r.unlimited ? '∞ Unlimited power-ups ON' : 'Unlimited power-ups off',
+      r.unlimited ? 'Every ball, never runs out. Arm one before each shot' : 'Back to the balls you have earned');
+  } catch { showToast('Power-ups', 'The game is not answering'); }
+}
+let slowmoTimers = [];
+// the sound of time slowing, at each slow-motion window of the shot about to play (feel.js)
+function scheduleSlowmoAudio(sim, shot) {
+  slowmoTimers.forEach(clearTimeout);
+  slowmoTimers = [];
+  if (!arcadeAudio) return;
+  // v2:voice anticipation, then payoff: the gallery rises as the ball tracks at the hole and peaks on
+  // the frame the outcome is known (the roar on the drop, the groan on a lip-out, applause for close)
+  for (const step of planAnticipation(sim, shot || {})) {
+    slowmoTimers.push(setTimeout(() => {
+      if (step.do === 'anticipate') arcadeAudio.anticipate?.({ seconds: step.seconds, intensity: 0.9 });
+      else arcadeAudio.resolve?.(step.outcome, { intensity: 1 });
+    }, Math.max(0, step.at * 1000)));
+  }
+  for (const w of sim.slowmo || []) {
+    if (w.reason === 'strike' || w.reason === 'close') continue;   // too short, or too gentle, to announce
+    slowmoTimers.push(setTimeout(() => { arcadeAudio.cue('slowmo-in'); arcadeAudio.duck?.(0.5, w.t1 - w.t0); }, w.t0 * 1000));
+    slowmoTimers.push(setTimeout(() => arcadeAudio.cue('slowmo-out'), w.t1 * 1000));
+  }
+}
+
 // ---------- SSE ----------
 const es = new EventSource('/events');
+// v2:shell The game product (the default; docs/sim-clash-shell.md): a title screen and a main
+// menu in front of everything, solo play, and none of the simulator's chrome. In the
+// simulator (BIRDIE_PRODUCT=open-birdie on the server, or ?sim=1) initShell() returns null
+// and nothing below changes.
+const shell = initShell({
+  query, scene, matchUI, arcade, audio: arcadeAudio, events: es, toast: (main, sub) => showToast(main, sub),
+  getState: () => state, isAnimating: () => animating,
+  sound: { get: () => arcadeSound, toggle: () => toggleArcadeSound() },
+  openSliders: () => $('practice').classList.remove('hidden'),
+});
+const simClash = !!shell;
+// v2:connect the launch-monitor wizard (docs/launch-monitors.md). The game's shell mounts it itself (first run, SETTINGS > LAUNCH MONITOR, ?connect=1); in the simulator ?connect=1 opens it as an overlay
+if (!simClash && query.get('connect') === '1') import('./arcade/connect.js').then((m) => m.ConnectWizard.overlay({ audio: arcadeAudio, events: es })).catch((err) => console.warn('[connect] the wizard did not load', err));
 es.addEventListener('state', (e) => {
   const s = JSON.parse(e.data);
+  arcade?.setGameState(s);
+  matchUI.setGameState?.(s);   // v2:playability the match menu's DROP ON THE LINE
   if (animating) pendingState = s;
   else applyState(s);
 });
-es.addEventListener('course', () => { loadGeometry(); closeCourseModal(); loadLibrary(); });
+es.addEventListener('course', () => {
+  loadGeometry(); closeCourseModal(); loadLibrary();
+  $('scorecard').classList.add('hidden');   // the last course's card does not follow onto the new one
+  $('btn-score').classList.remove('active');
+});
 // Scenery (buildings, real trees, the aerial photo) can arrive after the course is
 // playable. Same activation, so the HD assets and the round stay: re-read the
 // geometry and rebuild the scene in place (deferred by the scene while a shot flies).
@@ -394,18 +550,73 @@ es.addEventListener('course-progress', (e) => {
   el.textContent = text;
   el.classList.remove('hidden');
 });
-es.addEventListener('leagues', (e) => leaguesUI.setData(JSON.parse(e.data)));
+es.addEventListener('leagues', (e) => {
+  const d = JSON.parse(e.data);
+  leaguesUI.setData(d);
+  matchUI.setPlayers(d.players);   // the match lobby follows the roster
+});
 es.addEventListener('league-card', (e) => leaguesUI.cardPosted(JSON.parse(e.data)));
 es.addEventListener('lm', (e) => {
   const lm = JSON.parse(e.data);
   $('lm-status').classList.toggle('connected', lm.connected);
   $('lm-text').textContent = lm.connected ? 'Monitor connected' : 'Monitor offline';
+  if (lm.connected && lm.source === 'foresight') $('lm-text').textContent = 'Monitor connected · Foresight';   // v2:bridge which way the shots come
 });
+// v2:bridge the simulator's menu drawer: Launch monitor (the game's own screens mount the same panel in SETTINGS > LAUNCH MONITOR)
+if ($('foresight-panel')) mountForesightPanel($('foresight-panel'), { events: es });
 let lineupBack = null;   // after a shot lands: back to lining up the next one
 let lastShot = null;     // { shot, plan, savedId, mulled }: the round's latest shot (Save, mulligan)
 let replay = null;       // a saved shot replaying (the round is not touched), or null
+es.addEventListener('arcade', (e) => arcade?.onArcade(JSON.parse(e.data)));
+es.addEventListener('arcade-state', (e) => arcade?.onState(JSON.parse(e.data)));
+// v2:playability a rescue drop was taken (POST /api/drop, /api/match/drop): the last shot's
+// trace goes, the banner says FREE DROP or DROP +1, and the state that follows puts the ball
+// on its new spot and frames it there
+es.addEventListener('drop', (e) => {
+  clearTimeout(lineupBack);
+  scene.clearShot();
+  aimMap.setShot([]);
+  flightView.lineup();
+  lastHoleKey = '';
+  arcade?.onDrop(JSON.parse(e.data));
+});
+// v2:look BALL SKINS: the ball on the grass IS the ball that is armed (render/ball-skins.js).
+// In a match it is the ball of whoever is up (their armed ball, or the stage's free ball on
+// their first stroke; a gust cast on them swirls round it); in solo play the bay's armed
+// ball, or the course's free ball on the hole's first stroke; else plain white. The ball in
+// flight is the one the server says was hit (playShot's ballSkin, below), whatever is armed
+// meanwhile: these listeners only ever change the ball at rest.
+const ballLook = { arcade: null, match: null, game: null };
+function syncBallSkin() {
+  const g = ballLook.game;
+  const r = restBallLook({
+    match: ballLook.match, arcade: ballLook.arcade, courseArcade: scene.geo?.arcade || null,
+    strokes: g?.strokes, practice: !!g?.practice, holed: !!g?.holed,
+  });
+  scene.setBallSkin(r.skin, { curse: r.curse });
+  // v2:qa solo play on a rocket hole: the dock says FREE <BALL> before the tee shot (the
+  // course geometry carries arcade.freeBall; the server plays the first stroke with it)
+  const ca = scene.geo?.arcade || null;
+  arcade?.setFreeBall?.(ca && ca.freeBall && g && g.loaded && !g.practice && !g.holed && !g.over && Number(g.strokes) === 0 ? String(ca.freeBall) : null);
+}
+if (arcadeOn) {
+  es.addEventListener('arcade-state', (e) => { ballLook.arcade = JSON.parse(e.data); syncBallSkin(); });
+  es.addEventListener('arcade', (e) => { const a = JSON.parse(e.data); if (a && a.state) { ballLook.arcade = a.state; syncBallSkin(); } });
+  es.addEventListener('match', (e) => { ballLook.match = JSON.parse(e.data); syncBallSkin(); });
+  es.addEventListener('state', (e) => { ballLook.game = JSON.parse(e.data); syncBallSkin(); });
+  fetch('/api/arcade').then((r) => r.json()).then((a) => { ballLook.arcade = a; syncBallSkin(); }).catch(() => {});
+  fetch('/api/match').then((r) => r.json()).then((m) => { ballLook.match = (m && m.match) || null; syncBallSkin(); }).catch(() => {});
+}
+// 'match' follows 'shot' at once, before the ball has flown: held until it stops
+es.addEventListener('match', (e) => {
+  pendingMatch = JSON.parse(e.data);
+  if (!animating) flushMatch();
+});
 es.addEventListener('shot', (e) => {
-  const shot = JSON.parse(e.data);
+  const raw = JSON.parse(e.data);
+  // the shot as it plays: re-timed for slow motion at the moments that matter (arcade/feel.js).
+  // Where the ball goes is the server's; only the clock is the arcade's.
+  const shot = arcadeOn ? arcadeShot(raw, state, { powerup: raw.arcade?.powerup || null }) : raw;
   if (replay) endReplay();    // a live ball mid-replay: back to the round's hole first
   const plan = lineup.pred;   // what this club was predicted to do, for the comparison
   lastShot = { shot, plan, savedId: null, mulled: false };
@@ -416,18 +627,36 @@ es.addEventListener('shot', (e) => {
   clearTimeout(lineupBack);
   lineup.setFlying(true);
   flightView.startShot(shot);
+  if (arcadeOn) { arcade.onShot(shot, state); scheduleSlowmoAudio(shot.sim, shot); /* v2:voice the result too: holed, distance to the pin */ }
   const treeCallout = treeCalloutFor(shot);
   const pts = shot.sim.points || [];
   let shown = 0;
-  scene.playShot(shot.sim.points, shot.sim.flightTime, () => {
+  clearTimeout(resultHold);   // v2:qa a new ball: the last shot's held result is history
+  const settle = () => {
     animating = false;
     flightView.finish();
     aimMap.setShot(pts);
     lineup.setFlying(false);
     if (pendingState) { applyState(pendingState); pendingState = null; }
+    flushMatch();
     updateMulligan();
-    shotToast(shot);
     lineupBack = setTimeout(() => flightView.lineup(), 4200);
+  };
+  scene.playShot(shot.sim.points, shot.sim.flightTime, () => {
+    // v2:qa In a match the next state belongs to the OTHER player: the camera would cut to
+    // their ball the moment this one stops, with this shot's callout banner landing over
+    // it. Hold the picture on the ball that was just hit while its banner plays; a swing
+    // that arrives meanwhile cuts in as always (the 'shot' handler clears the hold).
+    // (a match shot gets no toast: the header has the strokes and the distance, the last-shot
+    // panel the numbers, the callout banner the story, and the toast's line is the banner's)
+    const inMatch = !!(shot.match && shot.match.playerId);
+    const holdMs = matchResultHoldMs(shot, pendingMatch);
+    // the shot that decided the hole (or the sudden death): the match UI gets its state now
+    // and runs its own banner and result screen; the picture stays on that shot behind them
+    const decided = inMatch && arcadeOn && pendingMatch && !pendingMatch.aborted && (pendingMatch.phase === 'hole-result' || pendingMatch.phase === 'done');
+    if (decided) { flushMatch(); resultHold = setTimeout(settle, RESULT_HOLD_MS + 600); return; }
+    if (!holdMs) { settle(); if (!inMatch) shotToast(shot); return; }
+    resultHold = setTimeout(settle, holdMs);
   }, {
     onProgress: (t) => {
       flightView.setTime(t);
@@ -440,6 +669,9 @@ es.addEventListener('shot', (e) => {
     isPutt: !!shot.sim.isPutt,
     spinRpm: shot.launch?.totalSpin, spinAxisDeg: shot.launch?.spinAxis,
     events: shot.sim.events,   // bounces, water, trees: what the landing throws up (render/impact-fx.js)
+    ballSkin: arcadeOn ? shotBallSkin(raw) : null,   // v2:look the ball that was hit (the server's word), its look kept to the end of the shot
+    // a good shot, or a power-up ball, flies with a burning trail in its own colour (arcade/feel.js shotTrail)
+    ...(shot.trail ? { trail: true, trailColor: shot.trail.color, trailHeat: shot.trail.heat } : {}),
   });
 });
 
@@ -536,20 +768,28 @@ function shotToast(shot) {
 function showToast(main, sub = '', ms = 4200) {
   const t = $('toast');
   t.innerHTML = `${esc(main)}${sub ? `<div class="sub">${esc(sub)}</div>` : ''}`;
+  t.removeAttribute('data-from');   // v2:qa match.css hides the game's own toasts under a full-bleed match screen
   t.classList.remove('hidden');
   t.style.opacity = 1;
+  document.body.classList.add('toast-live');   // v2:qa the match ticker steps aside for it (match.css)
   clearTimeout(t._h);
-  t._h = setTimeout(() => { t.style.opacity = 0; }, ms);
+  t._h = setTimeout(() => { t.style.opacity = 0; document.body.classList.remove('toast-live'); }, ms);
 }
 
 // A hole with a researched name or note introduces itself as it starts.
 function showHoleIntro(s) {
   const note = s.holeNote || s.greenNote;
   if (!s.holeName && !note) return;
-  const title = `Hole ${s.holeRef ?? s.hole}${s.holeName ? ` · ${s.holeName}` : ''}`;
+  const title = simClash ? String(s.holeName || s.courseName || '').split(',')[0]   // v2:shell a stage has a name, not a hole number
+    : `Hole ${s.holeRef ?? s.hole}${s.holeName ? ` · ${s.holeName}` : ''}`;
   const facts = [`Par ${s.par}`, `${s.scorecardYd ?? s.lengthYd} yd${s.playTee ? ` (${s.playTee})` : ''}`,
     s.handicap != null ? `HCP ${s.handicap}` : null].filter(Boolean).join(' · ');
-  showToast(esc(title), esc(note ? `${facts} — ${note}` : facts), 7000);
+  // v2:qa a match stage introduces itself on its own screen: no toast then. Decided a moment
+  // later, because on a page load the 'match' event follows the first 'state' event.
+  setTimeout(() => {
+    if ((matchUI.match && !matchUI.match.aborted) || (pendingMatch && !pendingMatch.aborted)) return;
+    showToast(esc(title), esc(note ? `${facts} — ${note}` : facts), 7000);
+  }, 300);
 }
 
 // "Tree!" the moment the replay reaches the ball's first tree contact (a `tree` sim
@@ -776,7 +1016,7 @@ function renderPracticeBoard(s) {
   });
   $('pb-shots').innerHTML = rows.length
     ? `<tr>${cols.map(([h]) => `<th>${h}</th>`).join('')}</tr>${rows.join('')}`
-    : '<tr><td class="muted">Hit a ball: launch monitor or the Practice shot panel.</td></tr>';
+    : `<tr><td class="muted">${simClash ? 'Hit a ball: your launch monitor, or TEST SWING (key T).' : 'Hit a ball: launch monitor or the Practice shot panel.'}</td></tr>`;   // v2:final the game has no Practice shot panel: its button is TEST SWING
 
   const clubs = pr.clubStats || [];
   $('pb-clubs').innerHTML = clubs.length
@@ -801,6 +1041,23 @@ $('btn-games').onclick = () => {
 document.querySelectorAll('#games-menu .game-card').forEach((card) => {
   card.onclick = () => { $('games-menu').classList.add('hidden'); postPractice({ mode: card.dataset.mode }); };
 });
+// Match mode leads the menu. Its card is added after the loop above, which binds every
+// card it finds to a practice mode.
+{
+  const card = document.createElement('button');
+  card.type = 'button';
+  card.id = 'btn-match';
+  card.className = 'game-card hero';
+  card.innerHTML = '<span class="gc-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 4.5h8v5a4 4 0 0 1-8 0z"/><path d="M8 6.5H4.5a3 3 0 0 0 3.6 3.4M16 6.5h3.5a3 3 0 0 1-3.6 3.4"/><path d="M12 13.5V17M8.5 19.5h7M10 17h4"/></svg></span>'
+    + '<span class="gc-text"><b>Clash Match: head-to-head</b><span>Two players, real swings, a new world every hole: a quick match, best of 3 or the nine-stage tournament. Knockouts, power balls, and a tied hole goes straight to sudden death, closest to the pin.</span></span>'
+    + '<span class="gc-go">Set up a match ▶</span>';
+  card.onclick = () => {
+    $('games-menu').classList.add('hidden');
+    $('btn-games').classList.remove('active');
+    matchUI.openLobby();
+  };
+  $('games-menu').querySelector('.hub-body').prepend(card);
+}
 $('pb-again').onclick = () => {
   const pr = state?.practice;
   if (!pr) return;
@@ -1217,6 +1474,8 @@ window.addEventListener('keydown', (e) => {
     autoAim();
   } else if (k === '0') lineup.setAim(0);
   else if (k.toLowerCase() === 'm' && scene.camMode !== 'free') takeMulligan();
+  else if (k.toLowerCase() === 's' && scene.camMode !== 'free') toggleArcadeSound();
+  else if (k.toLowerCase() === 'u' && scene.camMode !== 'free' && !(matchUI.match && !matchUI.match.aborted)) toggleUnlimitedBalls();   // v2:qa not in a match: U is UNDO on its stray-ball prompt, and the bay's solo shelf is not the match's
 });
 
 $('aim-slider').oninput = (e) => lineup.setAim(+e.target.value);
@@ -1264,6 +1523,7 @@ let libSel = -1;      // the card picked with the keys (index among the visible 
 const libCards = () => [...document.querySelectorAll('#course-lib .cm-card:not(.hidden)')];
 
 function openCourseModal() {
+  if (simClash) return;   // v2:shell the game has no course picker
   $('course-modal').classList.remove('hidden');
   $('course-modal').style.display = 'flex';
   $('course-close').classList.toggle('hidden', !state?.loaded);
@@ -1445,6 +1705,7 @@ $('course-name').onclick = () => openCourseModal();
     loadLibrary();
     if (!s.loaded) openCourseModal();
     else closeCourseModal();
+    if (simClash) closeCourseModal();   // v2:shell never the picker, also with no stage installed (the menu says so)
   } catch (err) {
     console.error('boot failed', err);
   }

@@ -11,7 +11,7 @@ import { TreeField } from './trees.js';
 import { placeCourseTrees, speciesAt, par3LineBlock } from './tree-placement.js';
 import { buildGrounding } from './grounding.js';
 import { buildPineStraw, buildFlowers, vegetationTexturePixelChecksums } from './vegetation.js';
-import { buildRakes } from './props.js';
+import { buildRakes, PropsLayer } from './props.js';
 import { buildGrass } from './grass.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { GrassField } from './grass-field.js';
@@ -29,14 +29,16 @@ import { makeTerrainSampler, smoothGridNormals } from './terrain-grid.js';
 import { repairGridEdges } from './grid-repair.js';
 import { RENDER_CONFIG } from './config.js';
 import { isPlayFraming, ballReadScale, pinReadScale } from './framing.js';
-import { ShotTracer, makeGlow, makeLandingRing, makeBallShadow, makeDropLine, landingRingAlpha } from './shot-fx.js';
+import { ShotTracer, makeGlow, makeLandingRing, makeBallShadow, makeDropLine, landingRingAlpha, rocketSpeedK } from './shot-fx.js';
 import { LineupFx } from './lineup-fx.js';
+import { SeeOverRig } from './see-over-rig.js';   // v2:seeover
 import { ImpactFx, impactSchedule } from './impact-fx.js';
 import { isNearGreen } from '../map-frame.mjs';
 import { makePin, makeTeeMarkers } from './pin-flag.js';
 import { flightMarkers, smoothPointAt } from './flight-profile.js';
 import { ballTurn, makeBallTexture } from './ball.js';
 import { flightCameraPlan, flightCameraAt } from './flight-camera.js';
+import { CupFx } from './cup-fx.js';   // v2:camera the sparkle at the cup when a ball drops
 import { resolveQuality, autoDownshiftVerdict, renderPixelRatio, DYNAMIC_RES, dynamicResolutionStep } from './quality.js';
 import { COLORS, DRY_PALETTE, courseDryFor, blendPalette, floraFor, dormantFor, blendDormant, fescueFor } from './course-character.js';
 import { fillShapesBlurred, paintSurfaceMask, RAW_SURFACE_COLORS } from './surface-mask.js';
@@ -49,9 +51,14 @@ import {
 } from './capture-performance.js';
 import { HoleFlyover, treeCeiling } from './flyover.js';
 import { GoogleTiles } from './google-tiles.js';
+// the switchable look ('real' | 'arcade'): every helper is a no-op in the real look
+import { parseLook, applyLook, lookSkySetting, lookSkyPreset, lookSkyPaint, lookFogColor, lookShadowRadius, lookFlagColors, lookCourse, lookTurf, lookSand, lookWater, lookTrees, lookTreeSpots, lookProps, lookTracer, lookBallHalo, shotTrail, shotRocket } from './arcade-look.js';
+import { paintedSkyEnvironment } from './arcade-sky.js';   // a theme's painted sky (night, dusk, volcano)
+import { BallSkins, ballSkinColor } from './ball-skins.js';   // v2:look the ball takes the look of the armed power-up ball
 
 const V = (x, y, z) => new THREE.Vector3(x, z, -y); // sim -> three
 const _turnAxis = new THREE.Vector3(), _turnQ = new THREE.Quaternion();
+const _rocketBack = new THREE.Vector3();
 // The ball is drawn larger than life (BALL_R, and more at a distance: ballReadScale), so
 // it sits on the turf by its drawn radius, nestled a little into the grass, not by a
 // fixed few centimetres (which left a scaled-up ball half sunk).
@@ -112,11 +119,43 @@ function hexToLinearRGB(hex) {
 // blend + its unit test, no circular import). Per-course dryness picks the actual
 // palette (this._pal) at load — see below.
 
+// v2:look renderer.compileAsync, but tolerant of a material being DISPOSED while the driver
+// is still compiling. three's own wait loop reads `currentProgram.isReady()` on every
+// material it gathered, and a disposed material has no program: it threw "Cannot read
+// properties of undefined (reading 'isReady')" from a timer, uncaught, and the warm-up never
+// finished. That happens whenever a course is loaded while the last load's programs are
+// still compiling: the page's second loadCourse at start-up, a match switching stage, the
+// old course's GLB prop models freed by props.setCourse (which runs after _warmShaders), a
+// theme's new pin. It only showed once the arcade themes added programs slow enough to still
+// be compiling. A material that has gone needs no waiting for; neither does one whose
+// program was freed. Gives up after 30 s rather than poll for ever.
+export function compileSceneAsync(renderer, scene, camera) {
+  const materials = renderer.compile(scene, camera);
+  const started = Date.now();
+  return new Promise((resolve) => {
+    const check = () => {
+      for (const material of [...materials]) {
+        let ready = true;
+        try {
+          const program = renderer.properties.get(material).currentProgram;
+          ready = !program || program.isReady() !== false;
+        } catch { /* its program went with it: nothing to wait for */ }
+        if (ready) materials.delete(material);
+      }
+      if (!materials.size || Date.now() - started > 30000) { resolve(scene); return; }
+      setTimeout(check, 10);
+    };
+    if (renderer.extensions.get('KHR_parallel_shader_compile') !== null) check();
+    else setTimeout(check, 10);
+  });
+}
+
 export class GolfScene {
-  constructor(container, { quality = 'auto', autoQuality = true, sky = 'midday', shotCam = 'follow' } = {}) {
+  constructor(container, { quality = 'auto', autoQuality = true, sky = 'midday', shotCam = 'follow', look = 'real' } = {}) {
     this.container = container;
-    this.shotCam = shotCam === 'tv' ? 'tv' : 'follow';   // the replay camera (flight-camera.js)
-    this.skySetting = parseSkySetting(sky);
+    this.shotCam = shotCam === 'tv' || shotCam === 'ball' ? shotCam : 'follow';   // the replay camera (flight-camera.js)  // v2:camera 'ball': the ball cam
+    this.look = parseLook(look);   // 'real' | 'arcade' (arcade-look.js): the one flag every look hook reads
+    this.skySetting = lookSkySetting(this, parseSkySetting(sky));
     this.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setSize(container.clientWidth, container.clientHeight);
@@ -161,12 +200,14 @@ export class GolfScene {
     // shadow map is what lets the map be cached (a moving caster forced a redraw a frame)
     this.ball.castShadow = false;
     this.scene.add(this.ball);
+    this.ballSkins = new BallSkins({ ball: this.ball, scene: this.scene });   // v2:look (nothing is built until a skin is first put on)
 
     // pin + cloth flag (pin-flag.js) and the current hole's tee markers
-    this._pinFlag = makePin();
+    this._pinFlag = makePin(lookFlagColors(this.look));
     this.pin = this._pinFlag.group;
     this._flagU = this._pinFlag.uTime;
     this.scene.add(this.pin);
+    this._cupSize();   // v2:camera
     this.teeMarkers = makeTeeMarkers();
     this.teeMarkers.hide();
     this.scene.add(this.teeMarkers.group);
@@ -185,6 +226,7 @@ export class GolfScene {
     if (this.impactFx) this.scene.add(this.impactFx.group);
     this._fxLight = new THREE.Color(1, 1, 1);
     this.tracer = null;      // ShotTracer of the current / lingering shot
+    this.rocket = null;      // RocketFx: the exhaust of a shot played with opts.trailHeat (none otherwise)
     this._fx = null;         // { apex3, land3, lingerStart } — marker + fade bookkeeping
 
     this.trail = null;
@@ -241,7 +283,13 @@ export class GolfScene {
     this._resCalm = 0;
     this.setQuality(quality, { rebuild: false });
     this.flyover = new HoleFlyover(this); // hole flyover camera (flyover.js)
+    // v2:seeover the arcade's see-over address camera, pass-through and view from above
+    // (see-over-rig.js): off until scene.seeOver.enable(true); the plain simulator never turns it on
+    this.seeOver = new SeeOverRig(this);
     this.googleTiles = new GoogleTiles(this); // optional Google 3D tiles around the course (google-tiles.js; inert without a key)
+    // GLB set pieces from course.props (props.js); also scene.props.add(...) / clear()
+    this.props = new PropsLayer({ scene: this.scene, hAt: (x, y) => this.hAt(x, y), groundAt: (x, y) => this.drawnGroundAt(x, y), waterAt: (x, y) => this.waterLevelAt(x, y), V, onChange: () => { this._shadowsDirty = true; }, style: () => lookProps(this) });
+    if (this.look !== 'real') applyLook(this, this.look);   // the look's live settings (grade, bloom, pin)
     this._animationLoopLive = true;
     this._captureFixedTime = null;
     this.renderer.setAnimationLoop(this._liveFrame);
@@ -282,7 +330,7 @@ export class GolfScene {
         // every lit material, and the rebuild's warm-up draw failed on each of them
         this.renderer.shadowMap.needsUpdate = true;
       }
-      sh.radius = p.shadowRadius;
+      sh.radius = lookShadowRadius(p.shadowRadius, this);
       this._shadowsDirty = true;
     }
     this.postfx?.setQuality({ gtao: p.gtao, bloom: p.bloom, aoScale: p.aoScale ?? 1, aa: p.aa || 'smaa' });
@@ -293,6 +341,17 @@ export class GolfScene {
     this.onQualityChange?.(q);
     return q;
   }
+
+  // The look ('real' | 'arcade', arcade-look.js): grade, light, sky, turf, water, trees,
+  // pin and shot effects together. Rebuilds the course scenery; resolves when the sky is in.
+  setLook(look, opts) { return applyLook(this, look, opts); }
+
+  // v2:look The ball at rest takes the look of a power-up ball (ball-skins.js): id, a ball of
+  // the arcade catalogue, or null for the plain white ball; opts.curse: a trick cast on the
+  // player who is up ('gust' swirls wind round the ball); opts.pop: false to change it
+  // without the little pop. A shot in flight keeps the ball it was hit with (playShot's
+  // opts.ballSkin) whatever is set meanwhile. Returns the skin id in use (null: plain).
+  setBallSkin(id, opts) { return this.ballSkins.set(id, opts); }
 
   // Rebuild the course scenery in place (same geometry + HD assets), restoring the
   // hole/ball/aim. Deferred while a shot is replaying.
@@ -386,12 +445,15 @@ export class GolfScene {
   }
 
   _applySky(name) {
-    const preset = SKY_PRESETS[name];
+    const preset = lookSkyPreset(SKY_PRESETS[name], this);
+    const paint = lookSkyPaint(this);   // an arcade theme's painted sky in place of the photo (null otherwise)
     const midday = !preset.hdri;
     this.environmentStatus = { state: 'loading', sky: name };
     const opts = midday ? {} : { url: preset.hdri, sunAzimuthDeg: null, sunAltitudeDeg: preset.sunAltitudeDeg };
+    if (this.look !== 'real' && preset.sunAltitudeDeg != null) opts.sunAltitudeDeg = preset.sunAltitudeDeg;   // a look's sun height, on the bundled sky too
     const token = (this._skyToken = (this._skyToken || 0) + 1);
-    return loadHDRIEnvironment(this.renderer, opts).then(({ envTexture, equirect, sunDir, horizonColor, horizonLinear }) => {
+    const load = paint ? Promise.resolve().then(() => paintedSkyEnvironment(this.renderer, paint)) : loadHDRIEnvironment(this.renderer, opts);
+    return load.then(({ envTexture, equirect, sunDir, horizonColor, horizonLinear }) => {
       if (token !== this._skyToken) { envTexture.dispose(); equirect.dispose(); return; } // a newer pick won
       const oldEnv = this.scene.environment, oldSky = this._equirect;
       this.scene.environment = envTexture;
@@ -407,7 +469,7 @@ export class GolfScene {
       this.sun.intensity = preset.sunIntensity;
       this.renderer.toneMappingExposure = preset.exposure;
       // fog + horizon haze in the sky's own (linear) radiance so they meet it exactly
-      const fogCol = horizonLinear ? horizonLinear.clone().multiplyScalar(0.92) : new THREE.Color(horizonColor);
+      const fogCol = lookFogColor(horizonLinear ? horizonLinear.clone().multiplyScalar(0.92) : new THREE.Color(horizonColor), this);
       this._fogDensity = preset.fogDensity;   // scaled by camera height each frame
       if (RENDER_CONFIG.aerialFog) {
         if (this.scene.fog) { this.scene.fog.color.copy(fogCol); this.scene.fog.density = preset.fogDensity; }
@@ -645,6 +707,7 @@ export class GolfScene {
     } else {
       this._macro = null;
     }
+    lookCourse(this);   // arcade look: its palette, a lush character, the aerial tint loosened (no-op in the real look)
     const group = new THREE.Group();
 
     const b = this._bounds(geo);
@@ -717,7 +780,7 @@ export class GolfScene {
     }
     // Crisp bunker meshes (sharp sand edges). Same guard — purely visual.
     if (RENDER_CONFIG.crispBunkers) {
-      try { this._addSurfacePatches(group, ['bunker'], (bb, an) => makeSandMaterial(bb, an, this._turfInputs?.bunkerMask, this.sunDir, this._courseDry || 0)); }
+      try { this._addSurfacePatches(group, ['bunker'], (bb, an) => lookSand(makeSandMaterial(bb, an, this._turfInputs?.bunkerMask, this.sunDir, this._courseDry || 0), this)); }
       catch (e) { console.warn('[render] bunker patches skipped:', e && e.message); }
     }
     // Bunker rakes — iconic human-scale prop. Purely visual, so same load guard.
@@ -733,6 +796,7 @@ export class GolfScene {
     this._shadowsDirty = true;
     this._warmShaders();
     this.googleTiles.setCourse(geo); // re-fit (or drop) Google's surroundings for this course
+    this.props.setCourse(geo);       // the course's GLB set pieces (geo.props; nothing without them)
   }
 
   // Compile every program the course can need before play starts, in parallel where the
@@ -743,7 +807,7 @@ export class GolfScene {
   // next shot — one tracer material kept alive (never drawn) keeps that program cached.
   _warmShaders() {
     if (!this._warmTracer) {
-      this._warmTracer = new ShotTracer([V(0, 0, 0), V(0, 0, 1)], [0, 1]);
+      this._warmTracer = new ShotTracer([V(0, 0, 0), V(0, 0, 1)], [0, 1], lookTracer(this));
       this._warmTracer.mesh.visible = false;
       this.scene.add(this._warmTracer.mesh);
     }
@@ -756,7 +820,7 @@ export class GolfScene {
     // materials synchronously, then waits on the driver.
     const prevTarget = this.renderer.getRenderTarget();
     this.renderer.setRenderTarget(this.postfx?.composer?.readBuffer || null);
-    const done = this.renderer.compileAsync(this.scene, this.camera);
+    const done = compileSceneAsync(this.renderer, this.scene, this.camera);   // v2:look (see compileSceneAsync)
     this.renderer.setRenderTarget(prevTarget);
     fx.forEach((o, i) => { o.visible = was[i]; });
     this._warmTerrain();
@@ -908,6 +972,7 @@ export class GolfScene {
       hq: this.quality?.level !== 'low', // Low graphics skips the rough/first-cut taps
       sunDir: this.sunDir,             // live HDRI sun (bunker-lip shading)
       shore: this._shore,              // sand and rock where the ground meets the sea (sea.js shoreGround)
+      arcade: lookTurf(this),          // the arcade look's turf, in the course's theme (null in the real look)
       // P2a: per-surface palette (linear) so the shader can composite the base colour
       // per-fragment with a crisp fwidth mask, overriding the soft splat/tint/collar.
       pal: {
@@ -1178,7 +1243,7 @@ export class GolfScene {
         : null;
       const b = this.bounds;
       const { meshes, waterMeshes, sea, waterUpdate, setSun, setSky, setSunGlint, updateMirrors, setMirrorSkip, setWind } = buildWater(
-        this._ponds || [], this.sunDir, depth, this._sea, b ? { x: (b.minX + b.maxX) / 2, y: (b.minY + b.maxY) / 2 } : null);
+        this._ponds || [], this.sunDir, depth, this._sea, b ? { x: (b.minX + b.maxX) / 2, y: (b.minY + b.maxY) / 2 } : null, lookWater(this));
       this._waterSetMirrorSkip = setMirrorSkip;
       setSky(this._equirect || null);
       this._waterSetSky = setSky;
@@ -1278,18 +1343,19 @@ export class GolfScene {
   _addTrees(geo, group) {
     if (!RENDER_CONFIG.foliageTrees) return;
     const coreSpots = this._treeSpots(geo); // on-course trees (no horizon band)
-    const spots = coreSpots.slice();
+    let spots = coreSpots.slice();
     // the invented horizon band only stands in for real surroundings; canopy data
     // already places the real trees around the course
     if (RENDER_CONFIG.horizonTrees && !(geo.canopy && geo.canopy.length)) {
       for (const h of this._horizonSpots(geo, this.bounds)) spots.push({ ...h, species: speciesAt(h.x, h.y, this._courseDry || 0, 7, floraFor(geo.name, geo.courseId)) });
     }
     if (!spots.length) return;
+    spots = lookTreeSpots(spots, this);   // an arcade theme's trees: species and size (the same array otherwise)
     this._allTreeSpots = spots;   // every drawn tree (incl. the horizon band) — camera avoidance
     const hAt = (x, y) => this.hAt(x, y);
     if (RENDER_CONFIG.trees3d !== false) {
       // instanced 3D trees with near/mid/far LODs (trees.js)
-      this._treeField = new TreeField(spots, hAt, V, { nearM: RENDER_CONFIG.treeNearM ?? 150, midM: RENDER_CONFIG.treeMidM, sunDir: this.sunDir });
+      this._treeField = new TreeField(spots, hAt, V, { nearM: RENDER_CONFIG.treeNearM ?? 150, midM: RENDER_CONFIG.treeMidM, sunDir: this.sunDir, look: lookTrees(this) });
       group.add(this._treeField.group);
     } else {
       const { meshes, windUpdate } = buildCardTrees(spots, hAt, V);
@@ -1790,10 +1856,11 @@ export class GolfScene {
   // ---------- lining up ----------
   // The predicted shot for the club in hand (lib/predict.js), or null to clear it.
   // the shot-replay camera: 'follow' flies with the ball, 'tv' covers it broadcast-style
-  setShotCam(mode) { this.shotCam = mode === 'tv' ? 'tv' : 'follow'; }
+  setShotCam(mode) { this.shotCam = mode === 'tv' || mode === 'ball' ? mode : 'follow'; this._cupSize(); }   // v2:camera 'ball'
 
   setLineup(pred) {
     this._lineupPred = pred || null;
+    this._lineupAim = this.aimDeg; this.seeOver.onLineup(this._lineupPred);   // v2:seeover the aim this prediction was made for
     // round the green the overlay goes bare and the cup is marked (none in flight)
     const pinM = Math.hypot(this.pinSim.x - this.ballSim.x, this.pinSim.y - this.ballSim.y);
     const near = !!this._lineupPred && isNearGreen(pinM / 0.9144, this._lineupPred.isPutt);
@@ -1933,6 +2000,7 @@ export class GolfScene {
   _clearTrail() {
     if (this.trail) { this.scene.remove(this.trail); this.trail.geometry.dispose(); this.trail = null; }
     if (this.tracer) { this.scene.remove(this.tracer.mesh); this.tracer.dispose(); this.tracer = null; }
+    if (this.rocket) { this.scene.remove(this.rocket.group); this.rocket.dispose(); this.rocket = null; }
     this._fx = null;
     this.headGlow.visible = this.apexGlow.visible = this.dropLine.visible = this.landRing.visible = false;
     for (const l of Object.values(this.shotLabels || {})) l.style.display = 'none';
@@ -1942,18 +2010,24 @@ export class GolfScene {
   // points: server trajectory (sim frame); onDone fires after the ball settles;
   // opts.onProgress(t) is called every frame with the replay's sim time (drives the
   // HUD side view in sync); opts.isPutt keeps the camera still for putts.
+  // opts.realTime === true plays the points at their own timestamps (no fast-forward of a
+  // long replay); opts.trail / opts.trailColor pick the arcade trail and tint it
+  // (arcade-look.js shotTrail); opts.trailHeat > 0 (0..1) makes it a rocket ball, a flame
+  // on the ball and sparks behind it while it flies (shotRocket). All off by default.
   playShot(points, flightTime, onDone, opts = {}) {
     if (!points || points.length < 2) { onDone?.(); return; }
+    this.ballSkins.beginShot(opts.ballSkin);   // v2:look the ball that was hit keeps its look to the end of the shot
     this.ball.visible = true;
     this._clearTrail();
     if (this.aimLine) this.aimLine.visible = false;
+    const seeOverVel = this.seeOver.camVel(); this.seeOver.onShot();   // v2:seeover the address camera's speed at impact; it is the ball cam's from here
     const dur = points[points.length - 1].t;
     const ft = Number.isFinite(flightTime) && flightTime > 0 ? flightTime : dur;
     const isPutt = !!opts.isPutt;
     this.anim = {
       points, i: 0,
       t: 0,
-      speed: dur > 14 ? dur / 14 : 1,
+      speed: opts.realTime === true ? 1 : (dur > 14 ? dur / 14 : 1),
       flightTime: ft,
       dur,
       onDone,
@@ -1991,10 +2065,18 @@ export class GolfScene {
       this._treeTop = trees.length ? treeCeiling(trees, (x, y) => this.hAt(x, y), { marginM: 2 }) : null;
     }
     const l = this.lookCur;
+    // v2:camera the ball cam is told where the cup is and whether the ball goes in; a holed
+    // ball's drop into the cup (arcade/feel.js: the 'cup-drop' event) is played below
+    const evs = Array.isArray(opts.events) ? opts.events : [];
+    const cup = evs.find((e) => e && e.type === 'cup-drop' && Number.isFinite(e.t0) && Number.isFinite(e.tDrop)) || null;
+    this.anim.cup = cup;
+    this._pinOut = false;
     this.anim.plan = flightCameraPlan(points, {
       startCam: { x: c.x, y: -c.z, z: c.y }, startLook: { x: l.x, y: -l.z, z: l.y },
+      startVel: seeOverVel,   // v2:seeover struck mid-glide: the ball cam takes the camera over moving
       flightTime: ft, isPutt, fovDeg: this._baseFov, mode: this.shotCam,
       groundAt: (x, y) => this.hAt(x, y), treeTopAt: this._treeTop, isClear,
+      pin: this.pinSim || null, holed: !!cup || evs.some((e) => e && e.type === 'holed'), cup,   // v2:camera
     });
     this.camMode = 'static';
     // Tracer ribbon over the AIR phase (to first contact), plus apex/landing markers.
@@ -2003,15 +2085,18 @@ export class GolfScene {
       const { apex, landing } = flightMarkers(points, ft);
       if (landing && (!air.length || air[air.length - 1].t < landing.t)) air.push(landing);
       if (air.length >= 2) {
-        this.tracer = new ShotTracer(air.map((p) => V(p.x, p.y, p.z + 0.06)), air.map((p) => p.t));
+        this.tracer = new ShotTracer(air.map((p) => V(p.x, p.y, p.z + 0.06)), air.map((p) => p.t), shotTrail(this, opts));
         this.scene.add(this.tracer.mesh);
       }
       const apexFt = apex ? (apex.z - points[0].z) * 3.28084 : 0;
       const carryYd = landing ? Math.hypot(landing.x - points[0].x, landing.y - points[0].y) / 0.9144 : 0;
+      this.rocket = shotRocket(this, opts, carryYd * 0.9144);   // null unless opts.trailHeat > 0
+      if (this.rocket) this.scene.add(this.rocket.group);
       this._fx = {
         apex: apex && apexFt > 6 ? { t: apex.t, p: V(apex.x, apex.y, apex.z + 0.06), ground: V(apex.x, apex.y, this.hAt(apex.x, apex.y)), ft: apexFt } : null,
         land: landing ? { t: landing.t, p: V(landing.x, landing.y, this.hAt(landing.x, landing.y) + 0.08), yd: carryYd } : null,
         lingerStart: null,
+        pinCam: !!this.anim.plan?.pinCam,   // v2:camera the carry callout steps aside for the pin cam
       };
       if (this._fx.apex) {
         const a = this._fx.apex;
@@ -2038,13 +2123,25 @@ export class GolfScene {
       const im = a.impacts[a.impactI++];
       this.impactFx.spawn(im, this._frameNow ?? 0, im.kind === 'water' ? this.waterLevelAt(im.x, im.y) : this.hAt(im.x, im.y));
       // a ball in the water is gone under it (it sat on the surface till the drop was taken)
-      if (im.kind === 'water') this.ball.visible = false;
+      // (a Skipper ball's skip throws a splash too, and carries on: im.skip)
+      if (im.kind === 'water' && !im.skip) this.ball.visible = false;
     }
     // a smooth curve through the samples in the air, straight lines over the bounces
     const p = a.i >= pts.length - 1 ? pts[pts.length - 1] : smoothPointAt(pts, a.t, a.flightTime);
     this.ballSim = { x: p.x, y: p.y };
     // on the ground it rolls on the turf as drawn (never through it)
     this._ballBase = a.t < a.flightTime && !a.isPutt ? p.z : Math.max(p.z, this.hAt(p.x, p.y));
+    // v2:camera the drop: once the cup has the ball its path runs on over the lip and down
+    // into the hole (z relative to the green at the cup), under the turf and out of sight
+    if (a.cup && a.t >= a.cup.t0) {
+      this._ballBase = this.hAt(p.x, p.y) + (p.z - a.cup.z);
+      if (!a.cupDone && a.t >= a.cup.tDrop) {
+        a.cupDone = true;
+        this.ball.visible = false;
+        this._cupBurst();
+      }
+    }
+    this._pinWatch(a, p);   // v2:camera the flagstick comes out as a ball closes on the cup
     this.ball.position.copy(V(p.x, p.y, this._ballBase));
     this._seatBall();
     this._ballZ = p.z;
@@ -2067,12 +2164,16 @@ export class GolfScene {
       this.camPosT.copy(V(cam.pos.x, cam.pos.y, cam.pos.z));
       this.lookT.copy(V(cam.look.x, cam.look.y, cam.look.z));
       this._flightZoom = cam.zoom ?? 1;
+      this._flightRoll = cam.roll ?? 0;             // v2:camera the ball cam banks into a curving flight...
+      this._flightBallScale = cam.ballScale ?? 1;   // ...and draws the ball bigger high in the air
     }
     a.onProgress?.(Math.min(a.t, a.dur));
 
     if (a.t >= end) {
       const done = a.onDone;
       this.anim = null;
+      this._flightRoll = 0; this._flightBallScale = 1;   // v2:camera
+      this._flightHold = a.plan?.pinCam ? this._flightZoom : 0;   // v2:camera the pin cam's lens holds on the cup until the camera goes back to address
       if (this._fx) this._fx.lingerStart = this.clock.elapsedTime;
       setTimeout(() => {
         this.camMode = 'idle';
@@ -2080,6 +2181,61 @@ export class GolfScene {
         done?.();
       }, Math.max(100, 900 - (a.plan?.tail || 0) * 1000));   // the tail was part of the hold
     }
+  }
+
+  // ---- v2:camera the cup: the drop's sparkle, and the flagstick out of the way ----
+  // Like the ball, the cup is drawn larger than life, and for the ball cam (whose pin cam
+  // films the drop from a couple of metres) large enough that the ball, drawn four times
+  // its size, visibly fits in it: pin-flag.js's liner and hole, the pin group's last two.
+  _cupSize() {
+    const k = this.shotCam === 'ball' ? 1.6 : 1;
+    for (const o of (this.pin?.children || []).slice(3, 5)) o.scale.setScalar(k);
+  }
+
+  // A ball has dropped: rings of light across the green and a burst of sparks (cup-fx.js).
+  _cupBurst() {
+    if (!this._cupFx) { this._cupFx = new CupFx(); this.scene.add(this._cupFx.group); }
+    const z = this.hAt(this.pinSim.x, this.pinSim.y);
+    { const c = ballSkinColor(this.ballSkins.activeId) ?? 0xffe27a; this._cupFx.tint[0].set(c); this._cupFx.rings[0].material.color.set(c); }   // v2:look the burst in the colour of the ball that dropped
+    this._cupFx.burst(V(this.pinSim.x, this.pinSim.y, z), this._frameNow ?? 0);
+  }
+
+  // The flagstick is pulled as a ball closes on the cup, so it never stands between the
+  // camera and the ball at the moment that matters: for any putt once it is rolling, and
+  // for a shot the ball cam has called a close one (flight-camera.js closeOne) once the
+  // ball is down within a few metres. It stays out until the camera goes back to address.
+  _pinWatch(a, p) {
+    if (this._pinOut || !a.plan?.pinCam || !this.pinSim) return;
+    const d = Math.hypot(p.x - this.pinSim.x, p.y - this.pinSim.y);
+    if (a.isPutt ? a.t > 0.05 : (a.t > a.flightTime && d < 2.0)) this._pinOut = true;
+  }
+
+  _pinStep(dt, frameTime) {
+    this._cupFx?.update(frameTime);
+    if (this._cupPin !== this.pin) {   // a new pin (a look change rebuilds it): at rest, at this camera's cup size
+      this._cupPin = this.pin;
+      this._pinRest = null;
+      this._pinLift = 0;
+      this._cupSize();
+    }
+    const want = this._pinOut && this.camMode === 'static' ? 1 : 0;
+    if (!want && this._pinOut && this.camMode !== 'static') this._pinOut = false;
+    const cur = this._pinLift || 0;
+    if (cur === want) return;
+    let v = cur + (want - cur) * (1 - Math.exp(-7 * dt));
+    if (Math.abs(want - v) < 0.004 || dt <= 0) v = want;
+    this._pinLift = v;
+    // the stick, its ferrule and the flag (pin-flag.js makePin: the first three of the group) lift and fade
+    const parts = this.pin.children.slice(0, 3);
+    if (!this._pinRest) this._pinRest = parts.map((o) => o.position.y);
+    parts.forEach((o, i) => {
+      o.position.y = this._pinRest[i] + 2.6 * v * v;
+      o.visible = v < 0.97;
+      o.material.transparent = v > 0;
+      o.material.opacity = 1 - v;
+      o.castShadow = v < 0.5;
+    });
+    this._shadowsDirty = true;
   }
 
   // Per-frame shot FX: tracer head + linger fade, head glow, apex/landing reveal,
@@ -2110,6 +2266,10 @@ export class GolfScene {
       this.headGlow.position.copy(this.ball.position);
       this.headGlow.userData.uniforms.uPxWorld.value = pxWorld;
     }
+    if (this._ballHalo || this.look !== 'real') {
+      lookBallHalo(this, inAir, pxWorld);   // a dark halo behind the ball on a snow theme (nothing otherwise)
+    }
+    if (this.rocket) this._updateRocket(a, inAir, frameTime, viewH);
     if (fx) {
       // callouts belong to the replay: once the camera is back at address they'd sit
       // on top of the ball, so they fade with the replay while the tracer lingers
@@ -2121,7 +2281,9 @@ export class GolfScene {
         this.apexGlow.userData.uniforms.uAlpha.value = alpha;
         this.dropLine.material.opacity = 0.55 * alpha;
       }
-      const landOn = !!(fx.land && head >= fx.land.t) && calloutA > 0;
+      // v2:camera a close finish is filmed from a couple of metres: the landing ring and its label fade out of that picture
+      const pinFade = fx.pinCam && fx.land ? 1 - THREE.MathUtils.smoothstep(head - fx.land.t, 0.9, 1.9) : 1;
+      const landOn = !!(fx.land && head >= fx.land.t) && calloutA > 0 && pinFade > 0.01;
       this.landRing.visible = landOn;
       if (landOn) {
         const d = this.camera.position.distanceTo(fx.land.p);
@@ -2129,12 +2291,28 @@ export class GolfScene {
         this.landRing.scale.set(r * 2, 1, r * 2);
         this.landRing.userData.uniforms.uTime.value = frameTime;
         // bright as the ball comes down, then out of the way of the bounce and the roll
-        this.landRing.userData.uniforms.uAlpha.value = alpha * 0.9 * landingRingAlpha(a ? a.t - fx.land.t : Infinity);
+        this.landRing.userData.uniforms.uAlpha.value = alpha * 0.9 * pinFade * landingRingAlpha(a ? a.t - fx.land.t : Infinity);
       }
       this._placeLabel(this.shotLabels.apex, apexOn ? fx.apex.p : null, calloutA, -18);
-      this._placeLabel(this.shotLabels.land, landOn ? fx.land.p : null, calloutA, -14);
+      this._placeLabel(this.shotLabels.land, landOn ? fx.land.p : null, calloutA * pinFade, -14);
     }
     this._updateBallShadow();
+  }
+
+  // A rocket ball's exhaust (opts.trailHeat; shot-fx.js RocketFx): on the ball while it
+  // flies, a burst of sparks where it first comes down, then gone once they burn out.
+  _updateRocket(a, inAir, frameTime, viewH) {
+    const r = this.rocket;
+    if (inAir) {
+      const pts = a.points, i = Math.min(a.i, pts.length - 2), q0 = pts[i], q1 = pts[i + 1];
+      _rocketBack.set(q0.x - q1.x, q0.z - q1.z, -(q0.y - q1.y));   // sim -> three, back along the flight
+      const flown = Math.hypot(this.ballSim.x - pts[0].x, this.ballSim.y - pts[0].y) / r.carryM;
+      r.update(frameTime, this.ball.position, _rocketBack, rocketSpeedK(flown), this.camera, viewH, this.renderer.getPixelRatio());
+      return;
+    }
+    // down (first contact), or the replay is gone: the flame goes out, with a last burst if it landed
+    if (!r.stopped) r.stop(frameTime, this.ball.position, this.camera, viewH, { burst: !!a });
+    if (!r.tick(frameTime)) { this.scene.remove(r.group); r.dispose(); this.rocket = null; }
   }
 
   _placeLabel(el, world, alpha, dy) {
@@ -2175,7 +2353,7 @@ export class GolfScene {
   // frame instead of the sky; a full shot also tightens the lens to ~46 degrees
   // (_addressZoom), where at 58 a green 350 m off was a pixel deep. Chips and putts keep
   // the wide lens.
-  _idleTargets() {
+  _idleTargets(snap = false) {
     const rad = (this.aimDeg + this.orbit.yaw) * Math.PI / 180;
     const dx = Math.sin(rad), dy = Math.cos(rad);
     const bx = this.ballSim.x, by = this.ballSim.y;
@@ -2189,6 +2367,7 @@ export class GolfScene {
     const pitch = toPin + 0.285 * (toBall - toPin);
     this.lookT.copy(V(cx + dx * 80, cy + dy * 80, cz - Math.tan(pitch) * 80));
     this._addressZoom = 1 + 0.31 * THREE.MathUtils.smoothstep(pinD, 60, 160);
+    this.seeOver.idleTargets(snap);   // v2:seeover (arcade) the pose that SEES the target, when this one does not
   }
 
   // ---- free-roam "course creator" camera ----
@@ -2273,10 +2452,12 @@ export class GolfScene {
     this.camera.position.lerp(this.camPosT, k);
     this.lookCur.lerp(this.lookT, kLook);
     this.camera.lookAt(this.lookCur);
+    if (flying && this._flightRoll) this.camera.rotateZ(-this._flightRoll);   // v2:camera the ball cam's bank (+ = leaning right)
     // lens: the flight camera zooms in on the drop (flight-camera.js); address frames a
     // full shot a little tighter (_idleTargets); everything else flies the base lens.
     // Eased both ways, so the lens never jumps at impact
-    const zoomT = flying ? this._flightZoom : this.camMode === 'idle' ? (this._addressZoom || 1) : 1;
+    const zoomT = flying ? this._flightZoom : this.camMode === 'idle' ? (this._addressZoom || 1)
+      : this.camMode === 'static' && this._flightHold ? this._flightHold : 1;   // v2:camera (the hold)
     if (zoomT !== 1 || this._zoom !== 1) {
       this._zoom += (zoomT - this._zoom) * (capture?.snapCamera ? 1 : 1 - Math.exp(-6 * dt));
       if (Math.abs(this._zoom - 1) < 1e-3 && zoomT === 1) this._zoom = 1;
@@ -2288,8 +2469,10 @@ export class GolfScene {
     // keep ball & pin readable at distance — but ONLY in a play framing, so
     // survey/overview/beauty shots don't get a 26x ball reading as a debug billboard
     const bd = this.camera.position.distanceTo(this.ball.position);
-    this.ball.scale.setScalar(ballReadScale(bd, this.camMode, this.anim));
+    this.ball.scale.setScalar(ballReadScale(bd, this.camMode, this.anim) * (flying ? this._flightBallScale || 1 : 1));   // v2:camera
     this._seatBall();
+    this.ballSkins.update(frameTime, dt, this);   // v2:look the skin's aura, motes and idle motion (one test while the ball is plain)
+    this._pinStep(dt, frameTime);   // v2:camera the flagstick out of / back into the cup, and the cup's sparkle
     const pd = this.camera.position.distanceTo(this.pin.position);
     this.pin.scale.setScalar(pinReadScale(pd, this.camMode, this.anim));
     for (const f of this._practiceFlags || []) {
@@ -2299,6 +2482,7 @@ export class GolfScene {
     // gameplay aim line is an address-view aid — never in non-play framings
     if (this.aimLine) this.aimLine.visible = isPlayFraming(this.camMode, this.anim);
     this.lineupFx?.update(this.camera, this.container, isPlayFraming(this.camMode, this.anim));
+    this.seeOver.frame(dt);   // v2:seeover pass-through, beacons, the off-frame markers
 
     this._updateMarkers();
     this._updateShotFx(frameTime);
@@ -2325,6 +2509,10 @@ export class GolfScene {
     if (this._fairwayGrassWind) this._fairwayGrassWind(frameTime);
     if (this._flagU) this._flagU.value = frameTime;
     if (this._waterUpdate) this._waterUpdate(frameTime);
+    this.props.update(frameTime);   // the procedural props' cheap motion (a uniform; nothing without them)
+    // v2:seeover (was v2:qa's setViewer) one pass-through: a prop on the arcade's line of sight to the ball, a big
+    // prop the camera is inside, or one the ball at rest lies inside, is drawn as a ghost (props.js setSeeThrough)
+    { const cp = this.camera.position; this.props.setSeeThrough(this.seeOver.passLine(), { x: cp.x, y: -cp.z, z: cp.y }, this.anim || !this.ballSim ? null : this.ballSim); }
     // the terrain depth pre-pass (pond shallows) only runs with a pond near enough to show them
     const pondsNear = this._waterMirrors ? this._waterMirrors(this.camera) : 1;
     if (this.waterDepth && this._foamOn && this._terrain && pondsNear) this.waterDepth.prepass(this._terrain, this.camera);

@@ -41,16 +41,18 @@ const LINE_FRAG = /* glsl */`
   uniform float uAlpha;
   uniform vec2 uDash;       // dash, gap (m); x = 0: solid
   uniform float uFadeFrom;  // metres along: fade in over the first few metres
+  uniform float uFadeTo;    // v2:seeover metres along: faded out by here (0: no fade; a beacon thins toward its top)
   varying float vSide;
   varying float vS;
   void main() {
     float e = 1.0 - abs(vSide);
     float a = smoothstep(0.0, 0.5, e) * uAlpha * smoothstep(0.0, uFadeFrom, vS);
+    if (uFadeTo > 0.0) a *= 1.0 - smoothstep(uFadeTo * 0.3, uFadeTo, vS);
     if (uDash.x > 0.0 && mod(vS, uDash.x + uDash.y) > uDash.x) discard;
     gl_FragColor = vec4(uColor * a, a);
   }`;
 
-function lineMesh(points, { color, alpha = 1, px = 3, dash = [0, 0], fadeFrom = 0.001, order = 10, depthTest = true }) {
+function lineMesh(points, { color, alpha = 1, px = 3, dash = [0, 0], fadeFrom = 0.001, order = 10, depthTest = true, fadeTo = 0 }) {
   const n = points.length;
   const pos = new Float32Array(n * 6), dir = new Float32Array(n * 6), side = new Float32Array(n * 2), s = new Float32Array(n * 2);
   const d = new THREE.Vector3();
@@ -81,6 +83,7 @@ function lineMesh(points, { color, alpha = 1, px = 3, dash = [0, 0], fadeFrom = 
     uPxWorld: { value: 0.0015 }, uPx: { value: px },
     uColor: { value: new THREE.Color(color) }, uAlpha: { value: alpha },
     uDash: { value: new THREE.Vector2(dash[0], dash[1]) }, uFadeFrom: { value: fadeFrom },
+    uFadeTo: { value: fadeTo },   // v2:seeover
   };
   const mat = new THREE.ShaderMaterial({
     uniforms, vertexShader: LINE_VERT, fragmentShader: LINE_FRAG,
@@ -118,6 +121,10 @@ export class LineupFx {
     this.pred = new THREE.Group();
     this.cup = new THREE.Group();
     this.root.add(this.arcs, this.pred, this.cup);
+    // v2:seeover the see-over camera's aids (arcade): the line drawn through what hides it, and beacons
+    this.xray = false;
+    this.beacons = new THREE.Group();
+    this.root.add(this.beacons);
     this.labels = [];       // { el, world, kind }
     this._visible = true;
     this.flag = null;
@@ -166,6 +173,30 @@ export class LineupFx {
       const lift = hz.kind === 'water' ? 3 : 1.2;
       const txt = hz.open ? `${Math.round(hz.frontYd)}+` : `${Math.round(hz.frontYd)}<i>–</i>${Math.round(hz.backYd)}`;
       this._label(this.V(x, y, this.hAt(x, y) + lift), txt, `haz ${hz.kind}`, 'haz');
+    }
+  }
+
+  // v2:seeover The x-ray pass (scene.setSeeOver): what of the predicted line and the target's
+  // mark lies behind ground, a wood or a building is drawn through it, dimmer, in the same
+  // dashes (a second copy with the depth test off, drawn first: where the line itself shows
+  // it covers its copy). Takes effect with the next prediction drawn.
+  setXray(on) { this.xray = !!on; }
+
+  // v2:seeover Beacons: a thin column of light standing on a spot, so it reads from far off and
+  // when the ground under it is hidden (its hidden part is drawn through, dimmer). list:
+  // [{ x, y, heightM, color }] (sim metres); [] takes them down.
+  setBeacons(list = []) {
+    const key = JSON.stringify((list || []).map((b) => [Math.round(b.x * 2), Math.round(b.y * 2), Math.round(b.heightM), b.color]));
+    if (key === this._beaconKey) return;
+    this._beaconKey = key;
+    for (const m of [...this.beacons.children]) { this.beacons.remove(m); m.geometry.dispose(); m.material.dispose(); }
+    for (const b of list || []) {
+      const g = this.hAt(b.x, b.y), H = Math.max(8, b.heightM || 40), pts = [];
+      for (let i = 0; i <= 8; i++) pts.push(this.V(b.x, b.y, g + 0.15 + (H * i) / 8));
+      const color = b.color ?? 0xffd23a;
+      this.beacons.add(lineMesh(pts, { color, alpha: 0.34, px: 4, order: 7, depthTest: false, fadeTo: H }));
+      this.beacons.add(lineMesh(pts, { color, alpha: 0.2, px: 16, order: 11, fadeTo: H }));
+      this.beacons.add(lineMesh(pts, { color: 0xffffff, alpha: 0.9, px: 3.2, order: 12, fadeTo: H }));
     }
   }
 
@@ -249,8 +280,10 @@ export class LineupFx {
       const pts = this._drape(flight, 0.24);
       if (!near) this.pred.add(lineMesh(pts, { color: 0xffb81a, alpha: 0.32, px: 8, fadeFrom: 3, order: 11 }));
       this.pred.add(lineMesh(pts, { color: 0xffe27a, alpha: near ? 0.85 : 1, px: near ? 2.2 : 3, dash: near ? [0.9, 0.7] : [3.2, 2.2], fadeFrom: near ? 0.6 : 3, order: 12 }));
+      if (this.xray) this.pred.add(lineMesh(pts, { color: 0xffe27a, alpha: 0.4, px: near ? 2 : 2.6, dash: near ? [0.9, 0.7] : [3.2, 2.2], fadeFrom: near ? 0.6 : 3, order: 7, depthTest: false }));   // v2:seeover
     }
     if (roll.length > 1) this.pred.add(lineMesh(this._drape(roll, 0.18), { color: 0xffd21f, alpha: near ? 0.8 : 0.95, px: near ? 2.4 : 3.2, dash: [0.5, 1.4], order: 12 }));
+    if (this.xray && roll.length > 1) this.pred.add(lineMesh(this._drape(roll, 0.18), { color: 0xffd21f, alpha: 0.38, px: 2.4, dash: [0.5, 1.4], order: 7, depthTest: false }));   // v2:seeover
     // landing zone: a soft gold patch inside the dispersion outline, draped on the ground
     // (not round the green, where it would sit on the cup). Only with yardage details on:
     // a wide one (a long club, a generous band) lay across ponds and banks as an orange
@@ -277,6 +310,7 @@ export class LineupFx {
         ring.push([x + Math.cos(a) * R, y + Math.sin(a) * R]);
       }
       this.pred.add(lineMesh(this._drape(ring, 0.12), { color: 0xffffff, alpha: 0.95, px: 2.6, order: 13 }));
+      if (this.xray) this.pred.add(lineMesh(this._drape(ring, 0.12), { color: 0xffffff, alpha: 0.4, px: 2.2, dash: [0.8, 0.8], order: 7, depthTest: false }));   // v2:seeover
       for (const k of [1, 3, 5, 7]) {
         const a = (k * Math.PI) / 4;
         const tick = [[x + Math.cos(a) * R * 0.45, y + Math.sin(a) * R * 0.45], [x + Math.cos(a) * R * 0.95, y + Math.sin(a) * R * 0.95]];
@@ -341,7 +375,7 @@ export class LineupFx {
     if (visible !== this._visible) { this._visible = visible; this.root.visible = visible; }
     const w = container.clientWidth, h = container.clientHeight;
     const pxWorld = (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2)) / Math.max(1, h);
-    for (const g of [this.arcs, this.pred, this.cup]) for (const m of g.children) if (m.material.uniforms?.uPxWorld) m.material.uniforms.uPxWorld.value = pxWorld;
+    for (const g of [this.arcs, this.pred, this.cup, this.beacons /* v2:seeover */]) for (const m of g.children) if (m.material.uniforms?.uPxWorld) m.material.uniforms.uPxWorld.value = pxWorld;
     const v = new THREE.Vector3();
     const shown = [];
     // the flag on screen: its pole from the cup to the top, with room for the flag either side
@@ -400,6 +434,7 @@ export class LineupFx {
     this._clear(this.cup, 'cup');
     this._dropLabels('haz');
     this._dropLabels('pin');
+    this._beaconKey = null; this.setBeacons([]);   // v2:seeover
     this.root.parent?.remove(this.root);
   }
 }

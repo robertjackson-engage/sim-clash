@@ -1,3 +1,4 @@
 # Auto detect text files and perform LF normalization
 * text=auto
 lib/generated/course-art-pack-validator.js text eol=lf
+lib/generated/course-reference.json text eol=lf

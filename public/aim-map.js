@@ -90,6 +90,14 @@ export class AimMap {
   setYardages(marks) { this.marks = marks; this.draw(); }
   setPlan(plan) { this.plan = plan || null; this.draw(); }
   setDetails(on) { this.details = !!on; this.draw(); }
+  // v2:playability where the rescue drop would put the ball ({ x, y, free }), or null
+  setDrop(spot) {
+    const next = spot && Number.isFinite(spot.x) && Number.isFinite(spot.y) ? { x: spot.x, y: spot.y, free: !!spot.free } : null;
+    const same = (a, b) => (!a && !b) || (a && b && a.x === b.x && a.y === b.y && a.free === b.free);
+    if (same(this.drop, next)) return;
+    this.drop = next;
+    this.draw();
+  }
   // a full shot's yardage details are drawn (menu option, or no plan to stand for them)
   _detailsFor(view) { return this.details || view.near || !this._planFor(view); }
   // the plan drawn for this view: a full shot's, not round the green
@@ -743,6 +751,26 @@ export class AimMap {
     ctx.fillStyle = '#ff5a3c';
     ctx.beginPath(); ctx.moveTo(px, py - 17 * ui); ctx.lineTo(px + 11 * ui, py - 13 * ui); ctx.lineTo(px, py - 9 * ui); ctx.closePath(); ctx.fill();
     const [bx, by] = view.toPx(ball.x, ball.y);
+    // v2:playability the rescue drop's ghost: where DROP ON THE LINE would put the ball (a
+    // dashed ring joined to the ball, green when the drop is free)
+    if (this.drop && Number.isFinite(this.drop.x)) {
+      const [gx, gy] = view.toPx(this.drop.x, this.drop.y);
+      const col = this.drop.free ? '#2bdc7a' : '#ffffff';
+      ctx.save();
+      ctx.setLineDash([4 * ui, 4 * ui]);
+      ctx.strokeStyle = col; ctx.globalAlpha = this.drop.free ? 0.95 : 0.7; ctx.lineWidth = 1.6 * ui;
+      ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(gx, gy); ctx.stroke();
+      ctx.lineWidth = 2.2 * ui;
+      ctx.beginPath(); ctx.arc(gx, gy, 8 * ui, 0, Math.PI * 2); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+      ctx.font = `800 ${Math.round(10 * ui)}px system-ui, sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      const label = this.drop.free ? 'FREE DROP' : 'DROP';
+      ctx.lineWidth = 3 * ui; ctx.strokeStyle = 'rgba(10,13,18,0.9)'; ctx.strokeText(label, gx, gy - 11 * ui);
+      ctx.fillStyle = col; ctx.fillText(label, gx, gy - 11 * ui);
+      ctx.restore();
+    }
     ctx.beginPath(); ctx.arc(bx, by, 5 * ui, 0, Math.PI * 2);
     ctx.fillStyle = '#fff'; ctx.fill();
     ctx.strokeStyle = '#15130a'; ctx.lineWidth = 2 * ui; ctx.stroke();
@@ -817,7 +845,8 @@ export class AimMap {
       const view = this._view(r.width, r.height);
       const x = e.clientX - r.left - view.ox, y = view.oy - (e.clientY - r.top);
       if (y < 4) return null;
-      return clamp(Math.round(Math.atan2(x, y) / DEG * 2) / 2, -30, 30);
+      const lim = this.aimLimit > 0 ? this.aimLimit : 30;   // v2:playability lineup.js sets it (90 in the arcade)
+      return clamp(Math.round(Math.atan2(x, y) / DEG * 2) / 2, -lim, lim);
     };
     this.canvas.addEventListener('pointerdown', (e) => {
       if (this._planDrag) return;

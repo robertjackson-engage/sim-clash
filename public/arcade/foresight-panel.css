@@ -1,0 +1,89 @@
+/* The Foresight bridge's panel (public/arcade/foresight-panel.js, docs/foresight-bridge.md).
+   Every class is prefixed fb-. Sizes are in em: the panel takes the font size of its
+   container (the game's settings screen is read from the hitting mat, the simulator's
+   drawer from a chair). Colours can be set from outside with the --fb-* properties. */
+.fb-panel {
+  --fb-ok: #4ade80;
+  --fb-wait: #ffd23f;
+  --fb-warn: #ff7a59;
+  --fb-off: rgba(255, 255, 255, .38);
+  --fb-dim: rgba(255, 255, 255, .68);
+  --fb-line: rgba(255, 255, 255, .16);
+  --fb-tone: var(--fb-off);
+  display: grid;
+  gap: .7em;
+  color: inherit;
+  font: inherit;
+  line-height: 1.35;
+  text-align: left;
+}
+.fb-panel.fb-tone-ok { --fb-tone: var(--fb-ok); }
+.fb-panel.fb-tone-wait { --fb-tone: var(--fb-wait); }
+.fb-panel.fb-tone-warn { --fb-tone: var(--fb-warn); }
+
+.fb-head { display: flex; align-items: flex-start; gap: .7em; }
+.fb-dot {
+  flex: none;
+  width: .8em; height: .8em; margin-top: .3em;
+  border-radius: 50%;
+  background: var(--fb-tone);
+  box-shadow: 0 0 .7em var(--fb-tone);
+}
+.fb-tone-off .fb-dot { box-shadow: none; }
+.fb-words { display: grid; gap: .15em; min-width: 0; }
+.fb-title { font-size: 1.1em; font-weight: 700; letter-spacing: .02em; color: var(--fb-tone); }
+.fb-tone-off .fb-title { color: inherit; }
+.fb-help { color: var(--fb-dim); }
+
+.fb-row { display: flex; align-items: center; justify-content: space-between; gap: 1em; flex-wrap: wrap; }
+.fb-label { font-weight: 600; }
+.fb-tag {
+  margin-left: .4em; padding: .1em .45em;
+  border: 1px solid var(--fb-line); border-radius: .3em;
+  font-size: .68em; font-style: normal; font-weight: 600; letter-spacing: .1em;
+  color: var(--fb-dim);
+  vertical-align: middle;
+}
+.fb-seg { display: inline-flex; border: 1px solid var(--fb-line); border-radius: .5em; overflow: hidden; }
+.fb-mode {
+  appearance: none;
+  min-width: 4.2em; padding: .5em .9em;
+  border: 0; border-left: 1px solid var(--fb-line);
+  background: transparent; color: inherit;
+  font: inherit; font-weight: 600; letter-spacing: .04em;
+  cursor: pointer;
+}
+.fb-mode:first-child { border-left: 0; }
+.fb-mode:hover { background: rgba(255, 255, 255, .08); }
+.fb-mode:focus-visible { outline: 2px solid var(--fb-wait); outline-offset: -2px; }
+.fb-mode.fb-on { background: rgba(255, 255, 255, .92); color: #0b1118; }
+.fb-mode:disabled { opacity: .6; cursor: default; }
+
+.fb-last { font-variant-numeric: tabular-nums; color: var(--fb-dim); }
+.fb-note { color: var(--fb-wait); font-size: .9em; }
+.fb-last[hidden], .fb-note[hidden] { display: none; }
+
+.fb-more { border-top: 1px solid var(--fb-line); padding-top: .5em; font-size: .88em; }
+.fb-more > summary { cursor: pointer; color: var(--fb-dim); letter-spacing: .06em; }
+.fb-more[open] > summary { margin-bottom: .5em; }
+.fb-facts { display: grid; gap: .25em; margin-bottom: .7em; }
+.fb-fact { display: grid; grid-template-columns: 11em 1fr; gap: .8em; }
+.fb-k { color: var(--fb-dim); }
+.fb-v { overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.fb-path { display: grid; gap: .3em; }
+.fb-path > span { color: var(--fb-dim); }
+.fb-path-line { display: flex; gap: .5em; }
+.fb-input {
+  flex: 1; min-width: 0; padding: .45em .6em;
+  border: 1px solid var(--fb-line); border-radius: .4em;
+  background: rgba(0, 0, 0, .35); color: inherit;
+  font: inherit;
+}
+.fb-save {
+  appearance: none; padding: .45em 1em;
+  border: 1px solid var(--fb-line); border-radius: .4em;
+  background: rgba(255, 255, 255, .1); color: inherit;
+  font: inherit; font-weight: 600; cursor: pointer;
+}
+.fb-save:hover { background: rgba(255, 255, 255, .18); }
+.fb-legal { margin: .7em 0 0; color: var(--fb-dim); font-size: .92em; }

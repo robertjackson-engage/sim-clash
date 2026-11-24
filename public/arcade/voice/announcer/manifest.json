@@ -1,0 +1,756 @@
+{
+  "pack": "announcer",
+  "voice": {
+    "id": "e2a2d2e6-9ed2-59cd-82af-feaa27f8a678",
+    "name": "Grady",
+    "model": "elevenlabs_v4",
+    "provider": "higgsfield",
+    "settings": {}
+  },
+  "names": {
+    "delivery": "[shouting] {NAME}!"
+  },
+  "format": {
+    "sampleRate": 44100,
+    "channels": 1,
+    "kbps": 96,
+    "lufs": -15,
+    "peakDb": -2
+  },
+  "lines": {
+    "hole-in-one": {
+      "text": "HOLE IN ONE!!!",
+      "files": [
+        "hole-in-one-1.mp3",
+        "hole-in-one-2.mp3"
+      ]
+    },
+    "holed-out": {
+      "text": "HOLED OUT!",
+      "files": [
+        "holed-out-1.mp3",
+        "holed-out-2.mp3"
+      ]
+    },
+    "chip-in": {
+      "text": "CHIP IN!",
+      "files": [
+        "chip-in-1.mp3",
+        "chip-in-2.mp3"
+      ]
+    },
+    "drained": {
+      "text": "DRAINED IT!",
+      "files": [
+        "drained-1.mp3",
+        "drained-2.mp3"
+      ]
+    },
+    "in-the-hole": {
+      "text": "IN THE HOLE!",
+      "files": [
+        "in-the-hole-1.mp3",
+        "in-the-hole-2.mp3"
+      ]
+    },
+    "pin-seeker": {
+      "text": "PIN SEEKER!",
+      "files": [
+        "pin-seeker-1.mp3",
+        "pin-seeker-2.mp3"
+      ]
+    },
+    "dart": {
+      "text": "DART!",
+      "files": [
+        "dart-1.mp3",
+        "dart-2.mp3"
+      ]
+    },
+    "dance-floor": {
+      "text": "ON THE DANCE FLOOR!",
+      "files": [
+        "dance-floor-1.mp3",
+        "dance-floor-2.mp3"
+      ]
+    },
+    "bomb": {
+      "text": "ABSOLUTE BOMB!",
+      "files": [
+        "bomb-1.mp3",
+        "bomb-2.mp3"
+      ]
+    },
+    "striped": {
+      "text": "STRIPED IT!",
+      "files": [
+        "striped-1.mp3",
+        "striped-2.mp3"
+      ]
+    },
+    "perfect": {
+      "text": "PERFECT SHOT!",
+      "files": [
+        "perfect-1.mp3",
+        "perfect-2.mp3",
+        "perfect-3.mp3"
+      ]
+    },
+    "great-shot": {
+      "text": "GREAT SHOT!",
+      "files": [
+        "great-shot-1.mp3",
+        "great-shot-2.mp3",
+        "great-shot-3.mp3"
+      ]
+    },
+    "nice-shot": {
+      "text": "NICE SHOT!",
+      "files": [
+        "nice-shot-1.mp3",
+        "nice-shot-2.mp3",
+        "nice-shot-3.mp3"
+      ]
+    },
+    "blast-off": {
+      "text": "BLAST OFF!",
+      "files": [
+        "blast-off-1.mp3",
+        "blast-off-2.mp3"
+      ]
+    },
+    "robbed": {
+      "text": "ROBBED!",
+      "files": [
+        "robbed-1.mp3",
+        "robbed-2.mp3"
+      ]
+    },
+    "so-close": {
+      "text": "SO CLOSE!",
+      "files": [
+        "so-close-1.mp3",
+        "so-close-2.mp3"
+      ]
+    },
+    "terrible": {
+      "text": "TERRIBLE!",
+      "files": [
+        "terrible-1.mp3",
+        "terrible-2.mp3",
+        "terrible-3.mp3"
+      ]
+    },
+    "slice-house": {
+      "text": "SLICE HOUSE!",
+      "files": [
+        "slice-house-1.mp3",
+        "slice-house-2.mp3"
+      ]
+    },
+    "hook-city": {
+      "text": "HOOK CITY!",
+      "files": [
+        "hook-city-1.mp3",
+        "hook-city-2.mp3"
+      ]
+    },
+    "shank": {
+      "text": "SHANK-A-POTAMUS!",
+      "files": [
+        "shank-1.mp3",
+        "shank-2.mp3"
+      ]
+    },
+    "worm-burner": {
+      "text": "WORM BURNER!",
+      "files": [
+        "worm-burner-1.mp3",
+        "worm-burner-2.mp3"
+      ]
+    },
+    "sky-ball": {
+      "text": "SKY BALL!",
+      "files": [
+        "sky-ball-1.mp3",
+        "sky-ball-2.mp3"
+      ]
+    },
+    "chunk": {
+      "text": "CHUNK CITY!",
+      "files": [
+        "chunk-1.mp3",
+        "chunk-2.mp3"
+      ]
+    },
+    "splash": {
+      "text": "IN THE DRINK!",
+      "files": [
+        "splash-1.mp3",
+        "splash-2.mp3"
+      ]
+    },
+    "lava": {
+      "text": "MELTED!",
+      "files": [
+        "lava-1.mp3",
+        "lava-2.mp3"
+      ]
+    },
+    "ob": {
+      "text": "SEE YA!",
+      "files": [
+        "ob-1.mp3",
+        "ob-2.mp3"
+      ]
+    },
+    "beach": {
+      "text": "BEACH DAY!",
+      "files": [
+        "beach-1.mp3",
+        "beach-2.mp3"
+      ]
+    },
+    "timber": {
+      "text": "TIMBER!",
+      "files": [
+        "timber-1.mp3",
+        "timber-2.mp3"
+      ]
+    },
+    "on-fire": {
+      "text": "YOU'RE ON FIRE!",
+      "files": [
+        "on-fire-1.mp3",
+        "on-fire-2.mp3"
+      ]
+    },
+    "unstoppable": {
+      "text": "UNSTOPPABLE!",
+      "files": [
+        "unstoppable-1.mp3",
+        "unstoppable-2.mp3"
+      ]
+    },
+    "m-versus": {
+      "text": "VERSUS!",
+      "files": [
+        "m-versus-1.mp3",
+        "m-versus-2.mp3"
+      ]
+    },
+    "m-player-1": {
+      "text": "PLAYER ONE",
+      "files": [
+        "m-player-1-1.mp3",
+        "m-player-1-2.mp3"
+      ]
+    },
+    "m-player-2": {
+      "text": "PLAYER TWO",
+      "files": [
+        "m-player-2-1.mp3",
+        "m-player-2-2.mp3"
+      ]
+    },
+    "m-get-ready": {
+      "text": "GET READY!",
+      "files": [
+        "m-get-ready-1.mp3",
+        "m-get-ready-2.mp3"
+      ]
+    },
+    "m-tee-off": {
+      "text": "TEE OFF!",
+      "files": [
+        "m-tee-off-1.mp3",
+        "m-tee-off-2.mp3"
+      ]
+    },
+    "m-youre-up": {
+      "text": "YOU'RE UP!",
+      "files": [
+        "m-youre-up-1.mp3",
+        "m-youre-up-2.mp3",
+        "m-youre-up-3.mp3"
+      ]
+    },
+    "m-wins-the-hole": {
+      "text": "WINS THE HOLE!",
+      "files": [
+        "m-wins-the-hole-1.mp3",
+        "m-wins-the-hole-2.mp3"
+      ]
+    },
+    "m-wins-the-match": {
+      "text": "WINS THE MATCH!",
+      "files": [
+        "m-wins-the-match-1.mp3",
+        "m-wins-the-match-2.mp3"
+      ]
+    },
+    "m-player-1-wins": {
+      "text": "PLAYER ONE WINS!",
+      "files": [
+        "m-player-1-wins-1.mp3",
+        "m-player-1-wins-2.mp3"
+      ]
+    },
+    "m-player-2-wins": {
+      "text": "PLAYER TWO WINS!",
+      "files": [
+        "m-player-2-wins-1.mp3",
+        "m-player-2-wins-2.mp3"
+      ]
+    },
+    "m-knockout": {
+      "text": "KNOCKOUT!",
+      "files": [
+        "m-knockout-1.mp3",
+        "m-knockout-2.mp3"
+      ]
+    },
+    "m-must-hole": {
+      "text": "MUST MAKE THIS!",
+      "files": [
+        "m-must-hole-1.mp3",
+        "m-must-hole-2.mp3"
+      ]
+    },
+    "m-sudden-death": {
+      "text": "SUDDEN DEATH!",
+      "files": [
+        "m-sudden-death-1.mp3",
+        "m-sudden-death-2.mp3"
+      ]
+    },
+    "m-closest-to-the-pin": {
+      "text": "CLOSEST TO THE PIN!",
+      "files": [
+        "m-closest-to-the-pin-1.mp3",
+        "m-closest-to-the-pin-2.mp3"
+      ]
+    },
+    "m-all-square": {
+      "text": "ALL SQUARE!",
+      "files": [
+        "m-all-square-1.mp3",
+        "m-all-square-2.mp3"
+      ]
+    },
+    "m-match-point": {
+      "text": "MATCH POINT!",
+      "files": [
+        "m-match-point-1.mp3",
+        "m-match-point-2.mp3"
+      ]
+    },
+    "m-final-hole": {
+      "text": "FINAL HOLE!",
+      "files": [
+        "m-final-hole-1.mp3",
+        "m-final-hole-2.mp3"
+      ]
+    },
+    "m-flawless": {
+      "text": "FLAWLESS VICTORY!",
+      "files": [
+        "m-flawless-1.mp3",
+        "m-flawless-2.mp3"
+      ]
+    },
+    "m-comeback": {
+      "text": "WHAT A COMEBACK!",
+      "files": [
+        "m-comeback-1.mp3",
+        "m-comeback-2.mp3"
+      ]
+    },
+    "m-champion": {
+      "text": "CHAMPION!",
+      "files": [
+        "m-champion-1.mp3",
+        "m-champion-2.mp3"
+      ]
+    },
+    "m-quick-match": {
+      "text": "QUICK MATCH",
+      "files": [
+        "m-quick-match-1.mp3",
+        "m-quick-match-2.mp3"
+      ]
+    },
+    "m-best-of-3": {
+      "text": "BEST OF THREE",
+      "files": [
+        "m-best-of-3-1.mp3",
+        "m-best-of-3-2.mp3"
+      ]
+    },
+    "m-best-of-9": {
+      "text": "BEST OF NINE",
+      "files": [
+        "m-best-of-9-1.mp3",
+        "m-best-of-9-2.mp3"
+      ]
+    },
+    "m-hole-1": {
+      "text": "HOLE ONE",
+      "files": [
+        "m-hole-1-1.mp3",
+        "m-hole-1-2.mp3"
+      ]
+    },
+    "m-hole-2": {
+      "text": "HOLE TWO",
+      "files": [
+        "m-hole-2-1.mp3",
+        "m-hole-2-2.mp3"
+      ]
+    },
+    "m-hole-3": {
+      "text": "HOLE THREE",
+      "files": [
+        "m-hole-3-1.mp3",
+        "m-hole-3-2.mp3"
+      ]
+    },
+    "m-hole-4": {
+      "text": "HOLE FOUR",
+      "files": [
+        "m-hole-4-1.mp3",
+        "m-hole-4-2.mp3"
+      ]
+    },
+    "m-hole-5": {
+      "text": "HOLE FIVE",
+      "files": [
+        "m-hole-5-1.mp3",
+        "m-hole-5-2.mp3"
+      ]
+    },
+    "m-hole-6": {
+      "text": "HOLE SIX",
+      "files": [
+        "m-hole-6-1.mp3",
+        "m-hole-6-2.mp3"
+      ]
+    },
+    "m-hole-7": {
+      "text": "HOLE SEVEN",
+      "files": [
+        "m-hole-7-1.mp3",
+        "m-hole-7-2.mp3"
+      ]
+    },
+    "m-hole-8": {
+      "text": "HOLE EIGHT",
+      "files": [
+        "m-hole-8-1.mp3",
+        "m-hole-8-2.mp3"
+      ]
+    },
+    "m-hole-9": {
+      "text": "HOLE NINE",
+      "files": [
+        "m-hole-9-1.mp3",
+        "m-hole-9-2.mp3"
+      ]
+    },
+    "m-takes-the-lead": {
+      "text": "TAKES THE LEAD!",
+      "files": [
+        "m-takes-the-lead-1.mp3",
+        "m-takes-the-lead-2.mp3"
+      ]
+    },
+    "m-sabotage": {
+      "text": "SABOTAGE!",
+      "files": [
+        "m-sabotage-1.mp3",
+        "m-sabotage-2.mp3"
+      ]
+    },
+    "m-new-record": {
+      "text": "NEW RECORD!",
+      "files": [
+        "m-new-record-1.mp3",
+        "m-new-record-2.mp3"
+      ]
+    },
+    "m-for-the-win": {
+      "text": "FOR THE WIN!",
+      "files": [
+        "m-for-the-win-1.mp3",
+        "m-for-the-win-2.mp3",
+        "m-for-the-win-3.mp3"
+      ]
+    },
+    "m-to-tie": {
+      "text": "TO TIE!",
+      "files": [
+        "m-to-tie-1.mp3",
+        "m-to-tie-2.mp3"
+      ]
+    },
+    "m-putt-in-to-win": {
+      "text": "PUTT IN TO WIN!",
+      "files": [
+        "m-putt-in-to-win-1.mp3",
+        "m-putt-in-to-win-2.mp3"
+      ]
+    },
+    "m-chip-in-to-win": {
+      "text": "CHIP IN TO WIN!",
+      "files": [
+        "m-chip-in-to-win-1.mp3",
+        "m-chip-in-to-win-2.mp3"
+      ]
+    },
+    "m-putt-in-to-tie": {
+      "text": "PUTT IN TO TIE!",
+      "files": [
+        "m-putt-in-to-tie-1.mp3",
+        "m-putt-in-to-tie-2.mp3"
+      ]
+    },
+    "m-chip-in-to-tie": {
+      "text": "CHIP IN TO TIE!",
+      "files": [
+        "m-chip-in-to-tie-1.mp3",
+        "m-chip-in-to-tie-2.mp3"
+      ]
+    },
+    "stage-lagoon-island": {
+      "text": "LAGOON ISLAND",
+      "files": [
+        "stage-lagoon-island-1.mp3",
+        "stage-lagoon-island-2.mp3"
+      ]
+    },
+    "stage-canyon-run": {
+      "text": "CANYON RUN",
+      "files": [
+        "stage-canyon-run-1.mp3",
+        "stage-canyon-run-2.mp3"
+      ]
+    },
+    "stage-lighthouse-point": {
+      "text": "LIGHTHOUSE POINT",
+      "files": [
+        "stage-lighthouse-point-1.mp3",
+        "stage-lighthouse-point-2.mp3"
+      ]
+    },
+    "stage-volcano-drop": {
+      "text": "VOLCANO DROP",
+      "files": [
+        "stage-volcano-drop-1.mp3",
+        "stage-volcano-drop-2.mp3"
+      ]
+    },
+    "stage-frostbite-ridge": {
+      "text": "FROSTBITE RIDGE",
+      "files": [
+        "stage-frostbite-ridge-1.mp3",
+        "stage-frostbite-ridge-2.mp3"
+      ]
+    },
+    "stage-sakura-garden": {
+      "text": "SAKURA GARDEN",
+      "files": [
+        "stage-sakura-garden-1.mp3",
+        "stage-sakura-garden-2.mp3"
+      ]
+    },
+    "stage-temple-run": {
+      "text": "TEMPLE RUN",
+      "files": [
+        "stage-temple-run-1.mp3",
+        "stage-temple-run-2.mp3"
+      ]
+    },
+    "stage-pharaohs-gate": {
+      "text": "PHARAOH'S GATE",
+      "files": [
+        "stage-pharaohs-gate-1.mp3",
+        "stage-pharaohs-gate-2.mp3"
+      ]
+    },
+    "stage-midnight-mile": {
+      "text": "MIDNIGHT MILE",
+      "files": [
+        "stage-midnight-mile-1.mp3",
+        "stage-midnight-mile-2.mp3"
+      ]
+    },
+    "stage-bullseye-bay": {
+      "text": "BULLSEYE BAY",
+      "files": [
+        "stage-bullseye-bay-1.mp3",
+        "stage-bullseye-bay-2.mp3"
+      ]
+    },
+    "stage-thunder-dome": {
+      "text": "THUNDER DOME",
+      "files": [
+        "stage-thunder-dome-1.mp3",
+        "stage-thunder-dome-2.mp3"
+      ]
+    },
+    "stage-ice-pick": {
+      "text": "ICE PICK",
+      "files": [
+        "stage-ice-pick-1.mp3",
+        "stage-ice-pick-2.mp3"
+      ]
+    },
+    "stage-dragons-spine": {
+      "text": "DRAGON'S SPINE",
+      "files": [
+        "stage-dragons-spine-1.mp3",
+        "stage-dragons-spine-2.mp3"
+      ]
+    },
+    "stage-sky-fortress": {
+      "text": "SKY FORTRESS",
+      "files": [
+        "stage-sky-fortress-1.mp3",
+        "stage-sky-fortress-2.mp3"
+      ]
+    },
+    "stage-summit-express": {
+      "text": "SUMMIT EXPRESS",
+      "files": [
+        "stage-summit-express-1.mp3",
+        "stage-summit-express-2.mp3"
+      ]
+    },
+    "pu-rocket": {
+      "text": "ROCKET BALL!",
+      "files": [
+        "pu-rocket-1.mp3",
+        "pu-rocket-2.mp3"
+      ]
+    },
+    "pu-sticky": {
+      "text": "STICKY BALL!",
+      "files": [
+        "pu-sticky-1.mp3",
+        "pu-sticky-2.mp3"
+      ]
+    },
+    "pu-magnet": {
+      "text": "MAGNET BALL!",
+      "files": [
+        "pu-magnet-1.mp3",
+        "pu-magnet-2.mp3"
+      ]
+    },
+    "pu-windcutter": {
+      "text": "WIND CUTTER!",
+      "files": [
+        "pu-windcutter-1.mp3",
+        "pu-windcutter-2.mp3"
+      ]
+    },
+    "pu-laser": {
+      "text": "LASER BALL!",
+      "files": [
+        "pu-laser-1.mp3",
+        "pu-laser-2.mp3"
+      ]
+    },
+    "pu-moonball": {
+      "text": "MOON BALL!",
+      "files": [
+        "pu-moonball-1.mp3",
+        "pu-moonball-2.mp3"
+      ]
+    },
+    "pu-bouncy": {
+      "text": "BOUNCY BALL!",
+      "files": [
+        "pu-bouncy-1.mp3",
+        "pu-bouncy-2.mp3"
+      ]
+    },
+    "pu-fireball": {
+      "text": "FIREBALL!",
+      "files": [
+        "pu-fireball-1.mp3",
+        "pu-fireball-2.mp3"
+      ]
+    },
+    "pu-ghost": {
+      "text": "GHOST BALL!",
+      "files": [
+        "pu-ghost-1.mp3",
+        "pu-ghost-2.mp3"
+      ]
+    },
+    "pu-skipper": {
+      "text": "SKIPPER!",
+      "files": [
+        "pu-skipper-1.mp3",
+        "pu-skipper-2.mp3"
+      ]
+    },
+    "pu-yoyo": {
+      "text": "YO-YO BALL!",
+      "files": [
+        "pu-yoyo-1.mp3",
+        "pu-yoyo-2.mp3"
+      ]
+    },
+    "pu-homing": {
+      "text": "HOMING BALL!",
+      "files": [
+        "pu-homing-1.mp3",
+        "pu-homing-2.mp3"
+      ]
+    },
+    "pu-titan": {
+      "text": "TITAN BALL!",
+      "files": [
+        "pu-titan-1.mp3",
+        "pu-titan-2.mp3"
+      ]
+    },
+    "pu-feather": {
+      "text": "FEATHER BALL!",
+      "files": [
+        "pu-feather-1.mp3",
+        "pu-feather-2.mp3"
+      ]
+    },
+    "pu-gold": {
+      "text": "GOLDEN BALL!",
+      "files": [
+        "pu-gold-1.mp3",
+        "pu-gold-2.mp3"
+      ]
+    },
+    "pu-gust": {
+      "text": "GUST!",
+      "files": [
+        "pu-gust-1.mp3",
+        "pu-gust-2.mp3"
+      ]
+    },
+    "pu-tiny-cup": {
+      "text": "TINY CUP!",
+      "files": [
+        "pu-tiny-cup-1.mp3",
+        "pu-tiny-cup-2.mp3"
+      ]
+    },
+    "pu-fog": {
+      "text": "FOG!",
+      "files": [
+        "pu-fog-1.mp3",
+        "pu-fog-2.mp3"
+      ]
+    }
+  }
+}

@@ -73,6 +73,9 @@ const CAS_SHADER = {
     }`,
 };
 
+// The bloom's (strength, radius, threshold): see the note where the pass is built.
+const BLOOM_DEFAULT = Object.freeze({ strength: 0.06, radius: 0.4, threshold: 1.6 });
+
 export class PostFX {
   constructor(renderer, scene, camera) {
     this.renderer = renderer;
@@ -143,7 +146,7 @@ export class PostFX {
     // linear 1.0, so a 1.0 threshold haloed the greens into glowing blobs at the
     // overview camera. Raise the threshold to 1.6 so only true speculars (sun glint
     // on water, the brightest sand) bloom, and keep strength low. (strength, radius, threshold).
-    this.bloom = new UnrealBloomPass(new THREE.Vector2(size.x, size.y), 0.06, 0.4, 1.6);
+    this.bloom = new UnrealBloomPass(new THREE.Vector2(size.x, size.y), BLOOM_DEFAULT.strength, BLOOM_DEFAULT.radius, BLOOM_DEFAULT.threshold);
     this.composer.addPass(this.bloom);
 
     // OutputPass applies renderer.toneMapping + toneMappingExposure and converts
@@ -152,6 +155,7 @@ export class PostFX {
     const output = new OutputPass();
     if (RENDER_CONFIG.colorGrade) gradeInto(output);
     this.composer.addPass(output);
+    this.output = output;
 
     // Composer render targets carry no MSAA; SMAA antialiases the final image.
     // (The last pass renders to the default framebuffer, so preserveDrawingBuffer
@@ -174,6 +178,13 @@ export class PostFX {
     if (this.bloom) this.bloom.enabled = !!bloom;
     this.smaa.enabled = aa !== 'fxaa';
     this.fxaa.enabled = aa === 'fxaa';
+  }
+
+  // A look's grade and bloom (arcade-look.js), live. No argument = this file's own numbers.
+  setLook({ contrast = GRADE_UNIFORMS.uContrast, saturation = GRADE_UNIFORMS.uSaturation, vignette = GRADE_UNIFORMS.uVignette, bloom = BLOOM_DEFAULT } = {}) {
+    const u = this.output.material.uniforms;
+    if (u.uContrast) { u.uContrast.value = contrast; u.uSaturation.value = saturation; u.uVignette.value = vignette; }
+    this.bloom.strength = bloom.strength; this.bloom.radius = bloom.radius; this.bloom.threshold = bloom.threshold;
   }
 
   setSize(w, h) {

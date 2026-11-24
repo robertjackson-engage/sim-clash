@@ -1,0 +1,1962 @@
+{
+  "version": 1,
+  "updated": "2026-11-23",
+  "port": 921,
+  "about": "Which launch monitors can feed the game, and how. The game listens on TCP 921 and speaks GSPro Open Connect v1 (the role GSPro's Open API plays), so a connector that sends shots to GSPro's Open API can send them here when GSPro is closed. Foresight GC units come in through the built-in Foresight bridge instead. Read by the game (GET /api/launch-monitors, the connection wizard), by tools/arcade-dev/launch-monitors-doc.mjs (docs/launch-monitors.md), the README and the website. Every claim has a source; 'confirmed' means official documentation or source code that was read, anything else is a report.",
+  "tiers": [
+    {
+      "id": "tested",
+      "label": "TESTED",
+      "name": "Tested",
+      "blurb": "Works on a real rig."
+    },
+    {
+      "id": "expected",
+      "label": "EXPECTED TO WORK",
+      "name": "Expected to work",
+      "blurb": "Its own connector is documented to send Open Connect, or it is the same connector as a tested unit. Nobody has tried it with this game yet."
+    },
+    {
+      "id": "community",
+      "label": "COMMUNITY",
+      "name": "Community / unofficial",
+      "blurb": "Needs an unofficial helper program between the launch monitor and the game. Untested here."
+    },
+    {
+      "id": "unsupported",
+      "label": "NOT SUPPORTED YET",
+      "name": "Not supported yet",
+      "blurb": "No way in that we know of. You can still play with test swings."
+    }
+  ],
+  "brands": [
+    {
+      "id": "foresight",
+      "name": "Foresight"
+    },
+    {
+      "id": "bushnell",
+      "name": "Bushnell"
+    },
+    {
+      "id": "uneekor",
+      "name": "Uneekor"
+    },
+    {
+      "id": "garmin",
+      "name": "Garmin"
+    },
+    {
+      "id": "flightscope",
+      "name": "FlightScope"
+    },
+    {
+      "id": "skytrak",
+      "name": "SkyTrak"
+    },
+    {
+      "id": "rapsodo",
+      "name": "Rapsodo"
+    },
+    {
+      "id": "square",
+      "name": "Square Golf"
+    },
+    {
+      "id": "fullswing",
+      "name": "Full Swing"
+    },
+    {
+      "id": "trackman",
+      "name": "TrackMan"
+    },
+    {
+      "id": "protee",
+      "name": "ProTee"
+    },
+    {
+      "id": "voicecaddie",
+      "name": "Voice Caddie"
+    },
+    {
+      "id": "trugolf",
+      "name": "TruGolf"
+    },
+    {
+      "id": "nvisage",
+      "name": "NVisage"
+    },
+    {
+      "id": "bullseye",
+      "name": "Bullseye"
+    },
+    {
+      "id": "golfin",
+      "name": "GolfIn"
+    },
+    {
+      "id": "openlaunch",
+      "name": "OpenLaunch"
+    },
+    {
+      "id": "pitrac",
+      "name": "PiTrac"
+    },
+    {
+      "id": "openflight",
+      "name": "OpenFlight"
+    },
+    {
+      "id": "optishot",
+      "name": "OptiShot"
+    },
+    {
+      "id": "golfzon",
+      "name": "Golfzon"
+    },
+    {
+      "id": "golfjoy",
+      "name": "GolfJoy"
+    },
+    {
+      "id": "vtrack",
+      "name": "VTrack"
+    },
+    {
+      "id": "bluetees",
+      "name": "Bluetees"
+    },
+    {
+      "id": "ernest",
+      "name": "Ernest Sports"
+    }
+  ],
+  "devices": [
+    {
+      "id": "foresight-gcquad",
+      "brand": "foresight",
+      "name": "GCQuad",
+      "models": [
+        "GCQuad"
+      ],
+      "tier": "tested",
+      "route": "foresight-bridge",
+      "address": null,
+      "connector": {
+        "name": "GSPconnect (the connector inside your own GSPro installation)",
+        "url": "https://gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/foresight-sports-and-bushnell-launch-pro-guide.md",
+        "license": "GSPro's own: not included with the game",
+        "openSource": false
+      },
+      "alternatives": [],
+      "needs": [
+        "Your own GSPro installation and licence (Foresight type)",
+        "FSX 2020 or FSX Play, as GSPro asks of every GC unit"
+      ],
+      "steps": [
+        "Close GSPro if it is open.",
+        "Open GSPconnect from your GSPro folder.",
+        "Connect the GCQuad in it, as you do for GSPro.",
+        "Leave GSPconnect open and hit a ball."
+      ],
+      "settings": [],
+      "notes": [
+        "Experimental. Tested on one GCQuad rig, the developer's own.",
+        "The game's built-in Foresight bridge holds the connector's local port (9050) and reads its shot log: docs/foresight-bridge.md.",
+        "Ball data only: the connector's log has no club data.",
+        "GSPconnect is normally in C:\\GSProV1\\Core\\GSPC. Elsewhere: set the folder in SETTINGS > LAUNCH MONITOR."
+      ],
+      "sources": [
+        {
+          "url": "docs/foresight-bridge.md",
+          "note": "How the bridge works and what is known about the connector",
+          "confirmed": true
+        },
+        {
+          "url": "https://gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/foresight-sports-and-bushnell-launch-pro-guide.md",
+          "note": "GSPro's guide: the Foresight option of GSPro Connect, connection types",
+          "confirmed": true
+        },
+        {
+          "url": "https://gsprogolf.com/foresight-bushnell.html",
+          "note": "All GC users must have FSX 2020 or FSX Play",
+          "confirmed": true
+        }
+      ]
+    },
+    {
+      "id": "foresight-gc3-gchawk",
+      "brand": "foresight",
+      "name": "GC3 / GCHawk / QuadMAX / Falcon",
+      "models": [
+        "GC3",
+        "GCHawk",
+        "GCQuad MAX (QuadMAX)",
+        "Falcon"
+      ],
+      "tier": "expected",
+      "route": "foresight-bridge",
+      "address": null,
+      "connector": {
+        "name": "GSPconnect (the connector inside your own GSPro installation)",
+        "url": "https://gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/foresight-sports-and-bushnell-launch-pro-guide.md",
+        "license": "GSPro's own: not included with the game",
+        "openSource": false
+      },
+      "alternatives": [],
+      "needs": [
+        "Your own GSPro installation and licence (Foresight type)",
+        "FSX 2020 or FSX Play, as GSPro asks of every GC unit"
+      ],
+      "steps": [
+        "Close GSPro if it is open.",
+        "Open GSPconnect from your GSPro folder.",
+        "Connect your launch monitor in it, as for GSPro.",
+        "Leave GSPconnect open and hit a ball."
+      ],
+      "settings": [],
+      "notes": [
+        "Not tested on these units. They use the same GSPro connector as the GCQuad, which is the tested one.",
+        "The bridge reads the connector's shot log. Whether every model writes it in the same format is not known.",
+        "Ball data only."
+      ],
+      "sources": [
+        {
+          "url": "https://gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/foresight-sports-and-bushnell-launch-pro-guide.md",
+          "note": "One connection app for GC3, GCQuad, GCHawk, Falcon and the Launch Pro",
+          "confirmed": true
+        },
+        {
+          "url": "docs/foresight-bridge.md",
+          "note": "Known and not known about the connector's log",
+          "confirmed": true
+        },
+        {
+          "url": "https://gsprogolf.com/",
+          "note": "GSPro's list of supported Foresight units",
+          "confirmed": true
+        }
+      ]
+    },
+    {
+      "id": "bushnell-launch-pro",
+      "brand": "bushnell",
+      "name": "Launch Pro",
+      "models": [
+        "Launch Pro"
+      ],
+      "tier": "expected",
+      "route": "foresight-bridge",
+      "address": null,
+      "connector": {
+        "name": "GSPconnect (the connector inside your own GSPro installation)",
+        "url": "https://gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/foresight-sports-and-bushnell-launch-pro-guide.md",
+        "license": "GSPro's own: not included with the game",
+        "openSource": false
+      },
+      "alternatives": [],
+      "needs": [
+        "Your own GSPro installation and licence (Foresight type)",
+        "A paid Bushnell Gold subscription (a Gold trial is not accepted by GSPro)"
+      ],
+      "steps": [
+        "Close GSPro if it is open.",
+        "Open GSPconnect from your GSPro folder.",
+        "Connect the Launch Pro in it, as you do for GSPro.",
+        "Leave GSPconnect open and hit a ball."
+      ],
+      "settings": [],
+      "notes": [
+        "Not tested on a Launch Pro. It uses the same GSPro connector as the GCQuad, which is the tested one.",
+        "Ball data only."
+      ],
+      "sources": [
+        {
+          "url": "https://gsprogolf.com/foresight-bushnell.html",
+          "note": "Launch Pro needs paid Gold; trials are not valid",
+          "confirmed": true
+        },
+        {
+          "url": "https://gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/foresight-sports-and-bushnell-launch-pro-guide.md",
+          "note": "Same connection app as the GC units",
+          "confirmed": true
+        }
+      ]
+    },
+    {
+      "id": "foresight-gc2",
+      "brand": "foresight",
+      "name": "GC2",
+      "models": [
+        "GC2",
+        "GC2 + HMT"
+      ],
+      "tier": "community",
+      "route": "open-connect",
+      "address": "local",
+      "connector": {
+        "name": "gspro-gc2-connector",
+        "url": "https://github.com/matthew-johnston/gspro-gc2-connector",
+        "license": "no licence file",
+        "openSource": true,
+        "by": "matthew-johnston"
+      },
+      "alternatives": [
+        {
+          "name": "GSPro-gc2-API-Interface",
+          "url": "https://github.com/ParnoldAlmer/GSPro-gc2-API-Interface",
+          "license": "no licence file",
+          "note": "Python, GC2 over USB or Bluetooth. The address comes from its Config.txt (default localhost); the port is fixed at 921."
+        }
+      ],
+      "needs": [
+        "A GC2 paired to this PC over Bluetooth (a COM port)"
+      ],
+      "steps": [
+        "Pair the GC2 with this PC over Bluetooth.",
+        "Download gspro-gc2-connector and open a terminal there.",
+        "Start it with the address and port shown here.",
+        "Hit a ball."
+      ],
+      "settings": [
+        {
+          "label": "--gs-pro-ip",
+          "value": "{address}"
+        },
+        {
+          "label": "--gs-pro-port",
+          "value": "{port}"
+        }
+      ],
+      "notes": [
+        "Untested here. GSPro's own Foresight integration does not support the GC2, so this is the only way in.",
+        "A command-line tool: its options are --gs-pro-ip and --gs-pro-port."
+      ],
+      "sources": [
+        {
+          "url": "https://github.com/matthew-johnston/gspro-gc2-connector",
+          "note": "Source (main.rs, gs_pro.rs): Open Connect client with --gs-pro-ip and --gs-pro-port",
+          "confirmed": true
+        },
+        {
+          "url": "https://github.com/ParnoldAlmer/GSPro-gc2-API-Interface",
+          "note": "Source (OpenAPI.py, gc2USB.py): IP from Config.txt, port 921",
+          "confirmed": true
+        },
+        {
+          "url": "https://support.foresightsports.com/support/software/gspro-integration",
+          "note": "The official integration does not support the GC2",
+          "confirmed": true
+        }
+      ]
+    },
+    {
+      "id": "uneekor-view",
+      "brand": "uneekor",
+      "name": "EYE XO / XO2 / EYE MINI / QED",
+      "models": [
+        "EYE XO",
+        "EYE XO2",
+        "EYE MINI",
+        "EYE MINI LITE",
+        "QED"
+      ],
+      "tier": "community",
+      "route": "open-connect",
+      "address": "local",
+      "connector": {
+        "name": "Uneekor VIEW watcher (tools/uneekor-watch.js, part of this project)",
+        "url": "https://github.com/jordan-shilts/Open-Birdie/blob/main/tools/uneekor-watch.js",
+        "license": "MIT",
+        "openSource": true,
+        "by": "Open-Birdie"
+      },
+      "alternatives": [
+        {
+          "name": "MLM2PRO-GSPro-Connector (reads the VIEW window off the screen)",
+          "url": "https://github.com/springbok/MLM2PRO-GSPro-Connector/wiki/Uneekor",
+          "license": "GPL-3.0",
+          "note": "EYE MINI and EYE MINI LITE. Enter this PC's network address, not 127.0.0.1 (see the Rapsodo entry for why)."
+        }
+      ],
+      "needs": [
+        "Uneekor VIEW running on this PC"
+      ],
+      "steps": [
+        "Open Uneekor VIEW and get your unit ready in it.",
+        "Start the game: it starts its VIEW watcher by itself.",
+        "Hit a ball in VIEW: the watcher sends it to the game."
+      ],
+      "settings": [
+        {
+          "label": "BIRDIE_OC_HOST",
+          "value": "{address}"
+        },
+        {
+          "label": "BIRDIE_OC_PORT",
+          "value": "{port}"
+        }
+      ],
+      "notes": [
+        "Not tested by this project. The watcher comes from Open-Birdie, which this game is built on; it reads the shot files VIEW writes.",
+        "The desktop game (installed, or npm start) starts the watcher by itself when it finds VIEW's ShotData folder on this PC; BIRDIE_NO_WATCH=1 switches that off. Only the game server without its window (npm run start:server) needs the watcher started by hand: npm run watch, with Node.js.",
+        "VIEW reports ball speed in metres per second: the watcher converts it (--speed-scale 2.23694).",
+        "GSPro's own Uneekor connection is private to GSPro and cannot be pointed at this game.",
+        "There is no status line for the watcher in the game yet: the launch monitor light turns on when it has connected."
+      ],
+      "sources": [
+        {
+          "url": "https://github.com/jordan-shilts/Open-Birdie/blob/main/tools/uneekor-watch.js",
+          "note": "The watcher's source: reads VIEW's ShotData folder, sends Open Connect to BIRDIE_OC_HOST:BIRDIE_OC_PORT",
+          "confirmed": true
+        },
+        {
+          "url": "https://github.com/springbok/MLM2PRO-GSPro-Connector/wiki/Uneekor",
+          "note": "The screen-reading route for the EYE MINI family",
+          "confirmed": true
+        },
+        {
+          "url": "https://gspro.gitbook.io/gspro-knowledge-base/troubleshooting-and-support/how-to-clear-gspro-connect-settings.md",
+          "note": "Uneekor is its own interface inside GSPro Connect, not Open API",
+          "confirmed": true
+        },
+        {
+          "url": "https://uneekor.com/golf-simulator-software/third-party",
+          "note": "Uneekor's third-party software terms and memberships",
+          "confirmed": true
+        }
+      ]
+    },
+    {
+      "id": "garmin-r10",
+      "brand": "garmin",
+      "name": "Approach R10",
+      "models": [
+        "Approach R10"
+      ],
+      "tier": "community",
+      "route": "open-connect",
+      "address": "local",
+      "connector": {
+        "name": "gsp-r10-adapter",
+        "url": "https://github.com/mholow/gsp-r10-adapter",
+        "license": "MIT",
+        "openSource": true,
+        "by": "mholow"
+      },
+      "alternatives": [
+        {
+          "name": "flighthook",
+          "url": "https://github.com/divotmaker/flighthook",
+          "license": "MIT / Apache-2.0",
+          "note": "R10 over Bluetooth. Set address = \"127.0.0.1:921\" under [openconnect_client.0] in %APPDATA%\\flighthook\\config.toml."
+        },
+        {
+          "name": "gspro-garmin-connect-v2",
+          "url": "https://github.com/travislang/gspro-garmin-connect-v2",
+          "license": "MIT (per its package.json)",
+          "note": "Uses the Garmin Golf app's E6 Connect setting. Its target is fixed at 127.0.0.1:921: this PC only, default port only."
+        }
+      ],
+      "needs": [
+        "Bluetooth on this PC (or the Garmin Golf app for the E6 Connect route)"
+      ],
+      "steps": [
+        "Download gsp-r10-adapter and unzip it.",
+        "Open its settings.json: check the address and port.",
+        "Turn the R10 on and start the adapter.",
+        "Wait for it to say it is connected, then hit a ball."
+      ],
+      "settings": [
+        {
+          "label": "openConnect ip",
+          "value": "{address}"
+        },
+        {
+          "label": "openConnect port",
+          "value": "{port}"
+        }
+      ],
+      "notes": [
+        "Untested here. The adapter's defaults are already 127.0.0.1 and 921, so on this PC it should need no change.",
+        "The R10 does not read putts. The adapter can take putts from a webcam (cam-putting-py)."
+      ],
+      "sources": [
+        {
+          "url": "https://github.com/mholow/gsp-r10-adapter",
+          "note": "Source and settings.json: openConnect ip 127.0.0.1, port 921; MIT licence file",
+          "confirmed": true
+        },
+        {
+          "url": "https://github.com/divotmaker/flighthook",
+          "note": "README: R10 over BLE, Open Connect client address in config.toml",
+          "confirmed": true
+        },
+        {
+          "url": "https://github.com/travislang/gspro-garmin-connect-v2",
+          "note": "Source (src/env.js): fixed 127.0.0.1:921",
+          "confirmed": true
+        },
+        {
+          "url": "https://gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/garmin-approach-r10-connection-guide.md",
+          "note": "GSPro's own R10 connection is Bluetooth inside GSPro Connect, not Open API",
+          "confirmed": true
+        }
+      ]
+    },
+    {
+      "id": "garmin-r50",
+      "brand": "garmin",
+      "name": "Approach R50",
+      "models": [
+        "Approach R50"
+      ],
+      "tier": "community",
+      "route": "open-connect",
+      "address": "lan",
+      "connector": {
+        "name": "MLM2PRO-GSPro-Connector (device: Garmin R50)",
+        "url": "https://github.com/springbok/MLM2PRO-GSPro-Connector",
+        "license": "GPL-3.0",
+        "openSource": true,
+        "by": "springbok"
+      },
+      "alternatives": [],
+      "needs": [],
+      "steps": [
+        "Download MLM2PRO-GSPro-Connector and start it.",
+        "In Settings choose the device: Garmin R50.",
+        "Type the IP address and port shown here.",
+        "Press Connect, then hit a ball."
+      ],
+      "settings": [
+        {
+          "label": "IP Address",
+          "value": "{address}"
+        },
+        {
+          "label": "Port",
+          "value": "{port}"
+        }
+      ],
+      "notes": [
+        "Untested, and the weakest entry in this tier: the connector lists a Garmin R50 device, but how it reads the R50 was not checked.",
+        "Use this PC's network address, not 127.0.0.1: with a local address the connector first looks for GSPro's own window and stops without it.",
+        "The R50's own GSPro connection is encrypted and private to GSPro Connect."
+      ],
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/springbok/MLM2PRO-GSPro-Connector/main/src/settings.py",
+          "note": "Source: the device list includes Garmin R50; ip_address and port settings",
+          "confirmed": true
+        },
+        {
+          "url": "https://raw.githubusercontent.com/springbok/MLM2PRO-GSPro-Connector/main/src/gspro_connection.py",
+          "note": "Source: the GSPro window check applies to 127.0.0.1 / localhost only",
+          "confirmed": true
+        },
+        {
+          "url": "https://gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/garmin-approach-r50-connection-guide.md",
+          "note": "GSPro's own R50 connection: found automatically by GSPro Connect",
+          "confirmed": true
+        },
+        {
+          "url": "https://forums.garmin.com/outdoor-recreation/golf/f/approach-r50/401156/approach-r50-and-gspro-on-mac-crossover/2020877",
+          "note": "Forum report: the R50 link is encrypted, with partner credentials",
+          "confirmed": false
+        }
+      ]
+    },
+    {
+      "id": "flightscope-mevo-plus",
+      "brand": "flightscope",
+      "name": "Mevo+ / Mevo Gen2 / Xi",
+      "models": [
+        "Mevo+",
+        "Mevo Gen2",
+        "Xi"
+      ],
+      "tier": "community",
+      "route": "open-connect",
+      "address": "local",
+      "connector": {
+        "name": "flighthook",
+        "url": "https://github.com/divotmaker/flighthook",
+        "license": "MIT / Apache-2.0",
+        "openSource": true,
+        "by": "divotmaker"
+      },
+      "alternatives": [
+        {
+          "name": "MLM2PRO-GSPro-Connector (reads the FS Golf PC window off the screen)",
+          "url": "https://github.com/springbok/MLM2PRO-GSPro-Connector/wiki/Mevo+",
+          "license": "GPL-3.0",
+          "note": "Needs FS Golf PC 2.0 (FlightScope's Pro Package). Enter this PC's network address, not 127.0.0.1."
+        }
+      ],
+      "needs": [
+        "This PC joined to the Mevo's own Wi-Fi network"
+      ],
+      "steps": [
+        "Join this PC to the Mevo's Wi-Fi (the network named FS ...).",
+        "Download flighthook and start it once.",
+        "In its config.toml set the Open Connect address.",
+        "Start flighthook again and hit a ball."
+      ],
+      "settings": [
+        {
+          "label": "[openconnect_client.0] address",
+          "value": "{address}:{port}"
+        }
+      ],
+      "notes": [
+        "Untested here. flighthook is a beta; it talks to the Mevo directly and forwards shots as an Open Connect client.",
+        "Its config file is %APPDATA%\\flighthook\\config.toml; the default address is already 127.0.0.1:921.",
+        "GSPro's own FlightScope connection is private to GSPro Connect."
+      ],
+      "sources": [
+        {
+          "url": "https://github.com/divotmaker/flighthook",
+          "note": "README: Mevo+, Mevo Gen2 and Xi over TCP 5100; Open Connect client address in config.toml",
+          "confirmed": true
+        },
+        {
+          "url": "https://github.com/springbok/MLM2PRO-GSPro-Connector/wiki/Mevo+",
+          "note": "The screen-reading route",
+          "confirmed": true
+        },
+        {
+          "url": "https://gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/flightscope-guide",
+          "note": "GSPro's own FlightScope connection (device 192.168.2.1, port 5100)",
+          "confirmed": true
+        }
+      ]
+    },
+    {
+      "id": "flightscope-x3",
+      "brand": "flightscope",
+      "name": "X3 / X2 / Mevo (original)",
+      "models": [
+        "X3",
+        "X3C",
+        "X2",
+        "Mevo (original)"
+      ],
+      "tier": "unsupported",
+      "route": "none",
+      "address": null,
+      "connector": null,
+      "alternatives": [],
+      "needs": [],
+      "steps": [
+        "No way to connect these yet.",
+        "You can try the game with test swings."
+      ],
+      "settings": [],
+      "why": "No connector was found that sends these units' shots as Open Connect. GSPro reaches the X2 and X3 through its own private FlightScope connection; FlightScope says the original Mevo does not support simulator courses, and opens the X3C to approved integrators only.",
+      "notes": [],
+      "sources": [
+        {
+          "url": "https://flightscope.com/faqs/main",
+          "note": "FlightScope FAQ: original Mevo and simulation; X3C and third-party software",
+          "confirmed": true
+        },
+        {
+          "url": "https://gsprogolf.com/",
+          "note": "GSPro's supported list (X2, X3 through its own integration)",
+          "confirmed": true
+        }
+      ]
+    },
+    {
+      "id": "skytrak",
+      "brand": "skytrak",
+      "name": "SkyTrak / SkyTrak+",
+      "models": [
+        "SkyTrak+",
+        "SkyTrak (original)"
+      ],
+      "tier": "community",
+      "route": "open-connect",
+      "address": "local",
+      "connector": {
+        "name": "OpenSkyPlus2 (with its GSPro plugin)",
+        "url": "https://openskyplus2.github.io/OpenSkyPlus2/README-OpenSkyPlus2.html",
+        "license": "closed source, free to use",
+        "openSource": false,
+        "by": "OpenSkyPlus2"
+      },
+      "alternatives": [
+        {
+          "name": "OpenSkyPlus + GSPro4OSP (the older version)",
+          "url": "https://github.com/OpenSkyPlus/GSPro4OSP",
+          "license": "custom licence: personal use only, not open source",
+          "note": "Host and port in pluginsettings.json (default 127.0.0.1 and 921)."
+        }
+      ],
+      "needs": [
+        "The SkyTrak PC app (versions 5.4 to 5.8 are the ones OpenSkyPlus2 names)",
+        "A SkyTrak plan that allows the PC app"
+      ],
+      "steps": [
+        "Install OpenSkyPlus2 into the SkyTrak PC app (its guide).",
+        "Leave its GSPro address at 127.0.0.1 and port at 921.",
+        "Start the SkyTrak app and connect your SkyTrak.",
+        "Hit a ball."
+      ],
+      "settings": [
+        {
+          "label": "Hostname",
+          "value": "{address}"
+        },
+        {
+          "label": "Port",
+          "value": "{port}"
+        }
+      ],
+      "notes": [
+        "Untested here. SkyTrak does not support GSPro officially, so this is a community plug-in that loads inside the SkyTrak app; a SkyTrak update can break it.",
+        "The port is set in BepInEx\\config\\GsPro4Osp.cfg.",
+        "SkyTrak+ is the unit it targets; the original SkyTrak is reported to work."
+      ],
+      "sources": [
+        {
+          "url": "https://openskyplus2.github.io/OpenSkyPlus2/README-OpenSkyPlus2.html",
+          "note": "Project documentation: Open API at 127.0.0.1:921, port configurable",
+          "confirmed": true
+        },
+        {
+          "url": "https://openskyplus2.github.io/OpenSkyPlus2/FAQs-OpenSkyPlus2.html",
+          "note": "Not open source yet",
+          "confirmed": true
+        },
+        {
+          "url": "https://github.com/OpenSkyPlus/GSPro4OSP",
+          "note": "pluginsettings.json: Hostname 127.0.0.1, Port 921; its licence",
+          "confirmed": true
+        },
+        {
+          "url": "https://golfsimulatorforum.com/forum/skytrak/417077-skytrak-plus-gspro-connector",
+          "note": "Forum: GSPro is not officially supported by SkyTrak",
+          "confirmed": false
+        }
+      ]
+    },
+    {
+      "id": "rapsodo-mlm2pro",
+      "brand": "rapsodo",
+      "name": "MLM2PRO",
+      "models": [
+        "MLM2PRO"
+      ],
+      "tier": "community",
+      "route": "open-connect",
+      "address": "lan",
+      "connector": {
+        "name": "MLM2PRO-GSPro-Connector",
+        "url": "https://github.com/springbok/MLM2PRO-GSPro-Connector",
+        "license": "GPL-3.0",
+        "openSource": true,
+        "by": "springbok"
+      },
+      "alternatives": [
+        {
+          "name": "MLM2PRO-BT-APP",
+          "url": "https://github.com/Duwaynef/MLM2PRO-BT-APP",
+          "license": "MIT",
+          "note": "A beta. Direct Bluetooth; GSPro address and port in its settings (default 127.0.0.1 and 921)."
+        }
+      ],
+      "needs": [
+        "A Rapsodo membership that allows third-party apps",
+        "Third-party access authorised in the Rapsodo app (it expires, so repeat it when asked)"
+      ],
+      "steps": [
+        "Download MLM2PRO-GSPro-Connector and start it.",
+        "In Settings type the IP address and port shown here.",
+        "In the Rapsodo app authorise third-party apps.",
+        "Press Connect, then hit a ball."
+      ],
+      "settings": [
+        {
+          "label": "IP Address",
+          "value": "{address}"
+        },
+        {
+          "label": "Port",
+          "value": "{port}"
+        }
+      ],
+      "notes": [
+        "Untested here.",
+        "Use this PC's network address, not 127.0.0.1: with a local address the connector first looks for GSPro's own window (\"APIv1 Connect\") and stops without it.",
+        "Its Bluetooth mode needs Rapsodo's online authorisation; its other mode reads the Rapsodo app off a mirrored phone screen.",
+        "Rapsodo's official GSPro connection is private to GSPro Connect."
+      ],
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/springbok/MLM2PRO-GSPro-Connector/main/src/settings.py",
+          "note": "Source: ip_address 127.0.0.1, port 921, gspro_api_window_name",
+          "confirmed": true
+        },
+        {
+          "url": "https://raw.githubusercontent.com/springbok/MLM2PRO-GSPro-Connector/main/src/gspro_connection.py",
+          "note": "Source: the GSPro window check for a local address",
+          "confirmed": true
+        },
+        {
+          "url": "https://github.com/springbok/MLM2PRO-GSPro-Connector/wiki/Settings",
+          "note": "The IP Address and Port fields",
+          "confirmed": true
+        },
+        {
+          "url": "https://raw.githubusercontent.com/springbok/MLM2PRO-GSPro-Connector/main/src/bluetooth/mlm2pro_device.py",
+          "note": "Source: the Rapsodo web API token in Bluetooth mode",
+          "confirmed": true
+        },
+        {
+          "url": "https://github.com/Duwaynef/MLM2PRO-BT-APP",
+          "note": "The alternative connector",
+          "confirmed": true
+        },
+        {
+          "url": "https://gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/rapsodo-mlm2pro-connection-guide.md",
+          "note": "The official path: Bluetooth inside GSPro Connect",
+          "confirmed": true
+        }
+      ]
+    },
+    {
+      "id": "square-home",
+      "brand": "square",
+      "name": "Square Golf (Home)",
+      "models": [
+        "Square Golf launch monitor (Home)"
+      ],
+      "tier": "expected",
+      "route": "open-connect",
+      "address": "local",
+      "connector": {
+        "name": "SQG GSPro Connect (Square's own)",
+        "url": "https://squaregolf.com/pages/software-3ps-gspro",
+        "license": "Square's own",
+        "openSource": false,
+        "by": "Square Golf"
+      },
+      "alternatives": [],
+      "needs": [],
+      "steps": [
+        "Close GSPro if it is open.",
+        "Turn the launch monitor on.",
+        "Start SQG GSPro Connect.",
+        "Press Connect for the device, then Connect for GSPro.",
+        "Hit a ball."
+      ],
+      "settings": [],
+      "notes": [
+        "Untested here. Square documents SQG GSPro Connect as an Open API client, which is what this game listens for on this PC.",
+        "Not known: whether it lets you change the address or port, and whether it looks for GSPro itself before connecting.",
+        "GSPro has since added Square as a built-in connection; the Open API connector may no longer be the one Square recommends."
+      ],
+      "sources": [
+        {
+          "url": "https://squaregolf.com/pages/software-3ps-gspro",
+          "note": "Square's steps: select Open API in GSPro, then SQG GSPro Connect",
+          "confirmed": true
+        },
+        {
+          "url": "https://gsprogolf.com/GSProConnectV1.html",
+          "note": "The Open API address: 127.0.0.1, port 921",
+          "confirmed": true
+        },
+        {
+          "url": "https://www.playbetter.com/blogs/golf-simulator-software/what-golf-simulators-work-with-gspro",
+          "note": "Retailer: Square now connects natively",
+          "confirmed": false
+        }
+      ]
+    },
+    {
+      "id": "square-omni",
+      "brand": "square",
+      "name": "Omni",
+      "models": [
+        "Square Omni"
+      ],
+      "tier": "community",
+      "route": "open-connect",
+      "address": "local",
+      "connector": {
+        "name": "flighthook",
+        "url": "https://github.com/divotmaker/flighthook",
+        "license": "MIT / Apache-2.0",
+        "openSource": true,
+        "by": "divotmaker"
+      },
+      "alternatives": [],
+      "needs": [
+        "Bluetooth on this PC"
+      ],
+      "steps": [
+        "Download flighthook and start it once.",
+        "In its config.toml set the Open Connect address.",
+        "Turn the Omni on and start flighthook again.",
+        "Hit a ball."
+      ],
+      "settings": [
+        {
+          "label": "[openconnect_client.0] address",
+          "value": "{address}:{port}"
+        }
+      ],
+      "notes": [
+        "Untested here. flighthook is a beta; it talks to the Omni over Bluetooth and forwards shots as an Open Connect client.",
+        "Its config file is %APPDATA%\\flighthook\\config.toml; the default address is already 127.0.0.1:921."
+      ],
+      "sources": [
+        {
+          "url": "https://github.com/divotmaker/flighthook",
+          "note": "README: Square Omni over BLE; Open Connect client address",
+          "confirmed": true
+        },
+        {
+          "url": "https://github.com/divotmaker/allsquare",
+          "note": "The Omni protocol library flighthook uses",
+          "confirmed": true
+        }
+      ]
+    },
+    {
+      "id": "fullswing-kit",
+      "brand": "fullswing",
+      "name": "KIT",
+      "models": [
+        "Full Swing KIT"
+      ],
+      "tier": "community",
+      "route": "open-connect",
+      "address": "lan",
+      "connector": {
+        "name": "MLM2PRO-GSPro-Connector (device: Fullswing Kit)",
+        "url": "https://github.com/springbok/MLM2PRO-GSPro-Connector",
+        "license": "GPL-3.0",
+        "openSource": true,
+        "by": "springbok"
+      },
+      "alternatives": [],
+      "needs": [
+        "The Full Swing app showing its numbers on this PC's screen (a mirrored phone or tablet)"
+      ],
+      "steps": [
+        "Mirror the Full Swing app onto this PC's screen.",
+        "Start MLM2PRO-GSPro-Connector: device Fullswing Kit.",
+        "In Settings type the IP address and port shown here.",
+        "Mark the numbers on screen as its guide shows.",
+        "Press Connect, then hit a ball."
+      ],
+      "settings": [
+        {
+          "label": "IP Address",
+          "value": "{address}"
+        },
+        {
+          "label": "Port",
+          "value": "{port}"
+        }
+      ],
+      "notes": [
+        "Untested here. The connector reads the numbers off the screen, so it is only as good as that picture.",
+        "Use this PC's network address, not 127.0.0.1 (see the Rapsodo entry for why).",
+        "The KIT's own GSPro connection is private to GSPro Connect."
+      ],
+      "sources": [
+        {
+          "url": "https://github.com/springbok/MLM2PRO-GSPro-Connector/releases",
+          "note": "Release notes: the Fullswing Kit device",
+          "confirmed": true
+        },
+        {
+          "url": "https://raw.githubusercontent.com/springbok/MLM2PRO-GSPro-Connector/main/src/settings.py",
+          "note": "Source: device list, ip_address and port",
+          "confirmed": true
+        },
+        {
+          "url": "https://gspro.gitbook.io/gspro-knowledge-base/troubleshooting-and-support/how-to-clear-gspro-connect-settings.md",
+          "note": "Full Swing KIT is its own interface inside GSPro Connect",
+          "confirmed": true
+        }
+      ]
+    },
+    {
+      "id": "trackman",
+      "brand": "trackman",
+      "name": "TrackMan",
+      "models": [
+        "TrackMan 4",
+        "TrackMan iO"
+      ],
+      "tier": "community",
+      "route": "open-connect",
+      "address": "lan",
+      "connector": {
+        "name": "MLM2PRO-GSPro-Connector (device: Trackman)",
+        "url": "https://github.com/springbok/MLM2PRO-GSPro-Connector",
+        "license": "GPL-3.0",
+        "openSource": true,
+        "by": "springbok"
+      },
+      "alternatives": [],
+      "needs": [
+        "TrackMan's own software showing its numbers on this PC's screen"
+      ],
+      "steps": [
+        "Open TrackMan's software with its numbers on screen.",
+        "Start MLM2PRO-GSPro-Connector: device Trackman.",
+        "In Settings type the IP address and port shown here.",
+        "Mark the numbers on screen as its guide shows.",
+        "Press Connect, then hit a ball."
+      ],
+      "settings": [
+        {
+          "label": "IP Address",
+          "value": "{address}"
+        },
+        {
+          "label": "Port",
+          "value": "{port}"
+        }
+      ],
+      "notes": [
+        "Untested here. The connector reads the numbers off the screen; which TrackMan screen it reads, and whether it works with the iO, was not checked.",
+        "Use this PC's network address, not 127.0.0.1 (see the Rapsodo entry for why).",
+        "TrackMan has no connection to GSPro of its own."
+      ],
+      "sources": [
+        {
+          "url": "https://github.com/springbok/MLM2PRO-GSPro-Connector/releases",
+          "note": "Release notes: the Trackman device",
+          "confirmed": true
+        },
+        {
+          "url": "https://gsprogolf.com/",
+          "note": "TrackMan is not on GSPro's supported list",
+          "confirmed": true
+        }
+      ]
+    },
+    {
+      "id": "voicecaddie-sc4",
+      "brand": "voicecaddie",
+      "name": "Swing Caddie SC4 / SC4 Pro",
+      "models": [
+        "Swing Caddie SC4",
+        "Swing Caddie SC4 Pro"
+      ],
+      "tier": "community",
+      "route": "open-connect",
+      "address": "lan",
+      "connector": {
+        "name": "MLM2PRO-GSPro-Connector (device: Voice Caddie SC4)",
+        "url": "https://github.com/springbok/MLM2PRO-GSPro-Connector",
+        "license": "GPL-3.0",
+        "openSource": true,
+        "by": "springbok"
+      },
+      "alternatives": [],
+      "needs": [
+        "The Voice Caddie app showing its numbers on this PC's screen (a mirrored phone or tablet)"
+      ],
+      "steps": [
+        "Mirror the Voice Caddie app onto this PC's screen.",
+        "Start MLM2PRO-GSPro-Connector: device Voice Caddie SC4.",
+        "In Settings type the IP address and port shown here.",
+        "Mark the numbers on screen as its guide shows.",
+        "Press Connect, then hit a ball."
+      ],
+      "settings": [
+        {
+          "label": "IP Address",
+          "value": "{address}"
+        },
+        {
+          "label": "Port",
+          "value": "{port}"
+        }
+      ],
+      "notes": [
+        "Untested here. The connector names the SC4; whether it reads the SC4 Pro's app as well is not known.",
+        "Use this PC's network address, not 127.0.0.1 (see the Rapsodo entry for why).",
+        "Voice Caddie has no connection to GSPro of its own."
+      ],
+      "sources": [
+        {
+          "url": "https://github.com/springbok/MLM2PRO-GSPro-Connector/releases",
+          "note": "Release notes: the Voice Caddie SC4 device",
+          "confirmed": true
+        },
+        {
+          "url": "https://gsprogolf.com/",
+          "note": "Voice Caddie is not on GSPro's supported list",
+          "confirmed": true
+        }
+      ]
+    },
+    {
+      "id": "trugolf-apogee",
+      "brand": "trugolf",
+      "name": "Apogee",
+      "models": [
+        "TruGolf Apogee"
+      ],
+      "tier": "community",
+      "route": "open-connect",
+      "address": "lan",
+      "connector": {
+        "name": "MLM2PRO-GSPro-Connector (device: TruGolf Apogee Apex)",
+        "url": "https://github.com/springbok/MLM2PRO-GSPro-Connector",
+        "license": "GPL-3.0",
+        "openSource": true,
+        "by": "springbok"
+      },
+      "alternatives": [],
+      "needs": [
+        "TruGolf's own software showing its numbers on this PC's screen"
+      ],
+      "steps": [
+        "Open TruGolf's software with its numbers on screen.",
+        "Start MLM2PRO-GSPro-Connector: device TruGolf Apogee.",
+        "In Settings type the IP address and port shown here.",
+        "Mark the numbers on screen as its guide shows.",
+        "Press Connect, then hit a ball."
+      ],
+      "settings": [
+        {
+          "label": "IP Address",
+          "value": "{address}"
+        },
+        {
+          "label": "Port",
+          "value": "{port}"
+        }
+      ],
+      "notes": [
+        "Untested here. The connector reads the numbers off the screen.",
+        "Use this PC's network address, not 127.0.0.1 (see the Rapsodo entry for why)."
+      ],
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/springbok/MLM2PRO-GSPro-Connector/main/src/settings.py",
+          "note": "Source: the TruGolf Apogee device entries",
+          "confirmed": true
+        },
+        {
+          "url": "https://gsprogolf.com/",
+          "note": "TruGolf Apogee is not on GSPro's supported list",
+          "confirmed": true
+        }
+      ]
+    },
+    {
+      "id": "nvisage-n1",
+      "brand": "nvisage",
+      "name": "N1",
+      "models": [
+        "NVisage N1"
+      ],
+      "tier": "expected",
+      "route": "open-connect",
+      "address": "local",
+      "connector": {
+        "name": "N-Connect (NVisage's own)",
+        "url": "https://nvisagetech.com/n1-launch-monitor-guide/",
+        "license": "NVisage's own",
+        "openSource": false,
+        "by": "NVisage"
+      },
+      "alternatives": [],
+      "needs": [],
+      "steps": [
+        "Close GSPro if it is open.",
+        "Open N-Connect.",
+        "Press SELECT GAME, then START.",
+        "Select the N1 and press CONNECT.",
+        "Hit a ball."
+      ],
+      "settings": [],
+      "notes": [
+        "Untested here. GSPro lists NVisage as an Open API integration, which is what this game listens for on this PC.",
+        "Not known: whether N-Connect lets you change the address or port, and whether it looks for GSPro itself before connecting.",
+        "N-Connect is normally at C:\\Program Files\\NVISAGE\\Pio\\Tools\\N-CONNECT.exe (from NVisage's guide, as reported)."
+      ],
+      "sources": [
+        {
+          "url": "https://gsprogolf.com/",
+          "note": "GSPro lists NVisage (OpenAPI)",
+          "confirmed": true
+        },
+        {
+          "url": "https://gsprogolf.com/GSProConnectV1.html",
+          "note": "The Open API address: 127.0.0.1, port 921",
+          "confirmed": true
+        },
+        {
+          "url": "https://nvisagetech.com/n1-launch-monitor-guide/",
+          "note": "NVisage's guide: the N-Connect steps (read through a search extract)",
+          "confirmed": false
+        }
+      ]
+    },
+    {
+      "id": "bullseye-lm",
+      "brand": "bullseye",
+      "name": "Bullseye LM",
+      "models": [
+        "Bullseye LM"
+      ],
+      "tier": "expected",
+      "route": "open-connect",
+      "address": "local",
+      "connector": {
+        "name": "Bullseye's own software (its GSPro / Open API connection)",
+        "url": "https://bullseyegolfsims.com/us/product/bullseye-lm/",
+        "license": "Bullseye's own",
+        "openSource": false,
+        "by": "Bullseye"
+      },
+      "alternatives": [],
+      "needs": [],
+      "steps": [
+        "Close GSPro if it is open.",
+        "Start the Bullseye software.",
+        "Choose its GSPro (Open API) connection.",
+        "Hit a ball."
+      ],
+      "settings": [],
+      "notes": [
+        "Untested here. GSPro lists Bullseye as an Open API integration, which is what this game listens for on this PC.",
+        "Not known: the exact steps in Bullseye's software, whether the address or port can be changed, and whether it looks for GSPro itself."
+      ],
+      "sources": [
+        {
+          "url": "https://gsprogolf.com/",
+          "note": "GSPro lists Bullseye (OpenAPI)",
+          "confirmed": true
+        },
+        {
+          "url": "https://gsprogolf.com/GSProConnectV1.html",
+          "note": "The Open API address: 127.0.0.1, port 921",
+          "confirmed": true
+        },
+        {
+          "url": "https://bullseyegolfsims.com/us/product/bullseye-lm/",
+          "note": "Bullseye: official integrator with PurePlay and GSPro",
+          "confirmed": true
+        }
+      ]
+    },
+    {
+      "id": "golfin-idra",
+      "brand": "golfin",
+      "name": "Idra",
+      "models": [
+        "GolfIn Idra"
+      ],
+      "tier": "expected",
+      "route": "open-connect",
+      "address": "local",
+      "connector": {
+        "name": "GolfIn's own software (its GSPro / Open API connection)",
+        "url": "https://gsprogolf.com/",
+        "license": "GolfIn's own",
+        "openSource": false,
+        "by": "GolfIn"
+      },
+      "alternatives": [],
+      "needs": [],
+      "steps": [
+        "Close GSPro if it is open.",
+        "Start the GolfIn software.",
+        "Choose its GSPro (Open API) connection.",
+        "Hit a ball."
+      ],
+      "settings": [],
+      "notes": [
+        "Untested here. GSPro lists the GolfIn Idra as an Open API integration, which is what this game listens for on this PC.",
+        "Not known: the exact steps in GolfIn's software, whether the address or port can be changed, and whether it looks for GSPro itself."
+      ],
+      "sources": [
+        {
+          "url": "https://gsprogolf.com/",
+          "note": "GSPro lists GolfIn Idra (OpenAPI)",
+          "confirmed": true
+        },
+        {
+          "url": "https://gsprogolf.com/GSProConnectV1.html",
+          "note": "The Open API address: 127.0.0.1, port 921",
+          "confirmed": true
+        }
+      ]
+    },
+    {
+      "id": "pitrac",
+      "brand": "pitrac",
+      "name": "PiTrac",
+      "models": [
+        "PiTrac (open-source, build it yourself)"
+      ],
+      "tier": "expected",
+      "route": "open-connect",
+      "address": "lan",
+      "connector": {
+        "name": "PiTrac's own GSPro interface",
+        "url": "https://docs.pitrac.org/software/simulator-integration/",
+        "license": "GPL-2.0",
+        "openSource": true,
+        "by": "PiTrac"
+      },
+      "alternatives": [],
+      "needs": [
+        "PiTrac and this PC on the same network"
+      ],
+      "steps": [
+        "Open PiTrac's web page: http://(the Pi's address):8080",
+        "Go to Configuration, Simulators, GSPro.",
+        "Type the host address and port shown here.",
+        "Start this game first, then the PiTrac launch monitor.",
+        "Hit a ball."
+      ],
+      "settings": [
+        {
+          "label": "kGSProHostAddress",
+          "value": "{address}"
+        },
+        {
+          "label": "kGSProPort",
+          "value": "{port}"
+        }
+      ],
+      "notes": [
+        "Untested here. PiTrac sends Open Connect to whatever address you type, so nothing about it is tied to GSPro.",
+        "It connects from the Raspberry Pi, across your network: Windows Firewall must let this game accept connections on the port."
+      ],
+      "sources": [
+        {
+          "url": "https://docs.pitrac.org/software/simulator-integration/",
+          "note": "PiTrac documentation: kGSProHostAddress, kGSProPort 921, allow inbound 921, start the simulator first",
+          "confirmed": true
+        },
+        {
+          "url": "https://github.com/PiTracLM/PiTrac",
+          "note": "Source (Software/web-server/sims/gspro_sim.py) and GPL-2.0 licence",
+          "confirmed": true
+        }
+      ]
+    },
+    {
+      "id": "openflight",
+      "brand": "openflight",
+      "name": "OpenFlight",
+      "models": [
+        "OpenFlight (open-source, build it yourself)"
+      ],
+      "tier": "expected",
+      "route": "open-connect",
+      "address": "lan",
+      "connector": {
+        "name": "OpenFlight's own GSPro (OpenConnectV1) connector",
+        "url": "https://github.com/open-flight/openflight/blob/main/docs/using/simulator/gspro.md",
+        "license": "AGPL-3.0-or-later",
+        "openSource": true,
+        "by": "OpenFlight"
+      },
+      "alternatives": [],
+      "needs": [
+        "OpenFlight and this PC on the same network"
+      ],
+      "steps": [
+        "On OpenFlight copy config/sim.example.json to sim.json.",
+        "Add a gspro connector with the host and port shown here.",
+        "Start OpenFlight with: scripts/start-kiosk.sh --sim",
+        "Hit a ball."
+      ],
+      "settings": [
+        {
+          "label": "host",
+          "value": "{address}"
+        },
+        {
+          "label": "port",
+          "value": "{port}"
+        }
+      ],
+      "notes": [
+        "Not tested by this project. Open-Birdie, which this game is built on, was written with OpenFlight in mind: replies name the simulator, and a shot OpenFlight sends twice is played once.",
+        "OpenFlight sends no putts.",
+        "It connects across your network: Windows Firewall must let this game accept connections on the port."
+      ],
+      "sources": [
+        {
+          "url": "https://github.com/open-flight/openflight/blob/main/docs/using/simulator/gspro.md",
+          "note": "OpenFlight documentation: the gspro connector's host, port, device_id, heartbeat",
+          "confirmed": true
+        },
+        {
+          "url": "https://raw.githubusercontent.com/open-flight/openflight/main/src/openflight/sim/config.py",
+          "note": "Source: defaults host 127.0.0.1, port 921",
+          "confirmed": true
+        },
+        {
+          "url": "https://raw.githubusercontent.com/open-flight/openflight/main/LICENSE",
+          "note": "AGPL-3.0-or-later",
+          "confirmed": true
+        }
+      ]
+    },
+    {
+      "id": "protee-vx",
+      "brand": "protee",
+      "name": "VX",
+      "models": [
+        "ProTee VX"
+      ],
+      "tier": "unsupported",
+      "route": "none",
+      "address": null,
+      "connector": null,
+      "alternatives": [],
+      "needs": [],
+      "steps": [
+        "No way to connect it yet.",
+        "You can try the game with test swings."
+      ],
+      "settings": [],
+      "why": "ProTee Labs used to connect to GSPro through the Open API, which would have reached this game. Since ProTee Labs 1.8.14 it uses GSPro's own built-in connection, and a user has reported the Open API route as no longer supported. If your ProTee Labs still has a GSPro CONNECT button under Game Options, it may be worth a try with GSPro closed: nobody has confirmed either way.",
+      "notes": [],
+      "sources": [
+        {
+          "url": "https://golfsimulatorforum.com/forum/protee-golf-simulator/protee-launch-monitors/399370-protee-vx-and-gspro?p=419004",
+          "note": "Forum: ProTee's own post on the Open API route, and a later report that it is no longer supported",
+          "confirmed": false
+        },
+        {
+          "url": "https://gspro.gitbook.io/gspro-knowledge-base/troubleshooting-and-support/how-to-clear-gspro-connect-settings.md",
+          "note": "ProTee VX is its own interface inside GSPro Connect",
+          "confirmed": true
+        }
+      ]
+    },
+    {
+      "id": "openlaunch-nova",
+      "brand": "openlaunch",
+      "name": "NOVA",
+      "models": [
+        "OpenLaunch NOVA"
+      ],
+      "tier": "unsupported",
+      "route": "none",
+      "address": null,
+      "connector": null,
+      "alternatives": [],
+      "needs": [],
+      "steps": [
+        "No way to connect it yet.",
+        "You can try the game with test swings."
+      ],
+      "settings": [],
+      "why": "The NOVA reaches GSPro through GSPro's own built-in connection, which cannot be pointed at this game. It is the best candidate for a direct connection, though: OpenLaunch publishes a local API (JSON over TCP and WebSocket, found on the network automatically) with an Apache-2.0 developer guide. See the roadmap.",
+      "notes": [],
+      "sources": [
+        {
+          "url": "https://github.com/OpenLaunchLabs/nova-developer-guide",
+          "note": "OpenLaunch's developer guide: the local API",
+          "confirmed": true
+        },
+        {
+          "url": "https://gspro.gitbook.io/gspro-knowledge-base/troubleshooting-and-support/how-to-clear-gspro-connect-settings.md",
+          "note": "Nova Open Launch is its own interface inside GSPro Connect",
+          "confirmed": true
+        }
+      ]
+    },
+    {
+      "id": "optishot",
+      "brand": "optishot",
+      "name": "Nova / BallFlight / Orbit",
+      "models": [
+        "OptiShot Nova",
+        "OptiShot BallFlight",
+        "OptiShot Orbit"
+      ],
+      "tier": "unsupported",
+      "route": "none",
+      "address": null,
+      "connector": null,
+      "alternatives": [],
+      "needs": [],
+      "steps": [
+        "No way to connect these yet.",
+        "You can try the game with test swings."
+      ],
+      "settings": [],
+      "why": "OptiShot's units run OptiShot's own Orion software. No connector was found that sends their shots to GSPro or as Open Connect, and they are not on GSPro's supported list. (The Nova on GSPro's list is OpenLaunch's, a different product.)",
+      "notes": [],
+      "sources": [
+        {
+          "url": "https://prnewswire.com/news-releases/optishot-golf-unveils-nova-the-ultimate-made-in-america-golf-simulator-302124765.html",
+          "note": "OptiShot's announcement: Nova runs Orion; no third-party software named",
+          "confirmed": true
+        },
+        {
+          "url": "https://gsprogolf.com/",
+          "note": "No OptiShot product on GSPro's supported list",
+          "confirmed": true
+        }
+      ]
+    },
+    {
+      "id": "golfzon-wave",
+      "brand": "golfzon",
+      "name": "WAVE",
+      "models": [
+        "Golfzon WAVE"
+      ],
+      "tier": "unsupported",
+      "route": "none",
+      "address": null,
+      "connector": null,
+      "alternatives": [],
+      "needs": [],
+      "steps": [
+        "No way to connect it yet.",
+        "You can try the game with test swings."
+      ],
+      "settings": [],
+      "why": "No connector was found that sends the WAVE's shots to GSPro or as Open Connect, and it is not on GSPro's supported list.",
+      "notes": [],
+      "sources": [
+        {
+          "url": "https://gsprogolf.com/",
+          "note": "Golfzon is not on GSPro's supported list",
+          "confirmed": true
+        },
+        {
+          "url": "https://thegolfwire.com/trugolf-golfzon",
+          "note": "The WAVE works with E6 Connect (not Open Connect)",
+          "confirmed": false
+        }
+      ]
+    },
+    {
+      "id": "golfjoy",
+      "brand": "golfjoy",
+      "name": "GDS / GR / Spica",
+      "models": [
+        "GolfJoy GDS Pro (GDS Plus)",
+        "GolfJoy GR2",
+        "GolfJoy GR3",
+        "GolfJoy GR3 Pro",
+        "GolfJoy Spica 3"
+      ],
+      "tier": "unsupported",
+      "route": "none",
+      "address": null,
+      "connector": null,
+      "alternatives": [],
+      "needs": [],
+      "steps": [
+        "No way to connect these yet.",
+        "You can try the game with test swings."
+      ],
+      "settings": [],
+      "why": "GolfJoy units reach GSPro through GSPro's own built-in connection over a fixed private network link, which cannot be pointed at this game. GolfJoy had an Open API route before that; whether it still works is not known.",
+      "notes": [],
+      "sources": [
+        {
+          "url": "https://www.golfjoy.com/pages/gspro-native-support-for-golfjoy-launch-monitors",
+          "note": "GolfJoy's guide to the native GSPro connection",
+          "confirmed": true
+        },
+        {
+          "url": "https://gspro.gitbook.io/gspro-knowledge-base/troubleshooting-and-support/how-to-clear-gspro-connect-settings.md",
+          "note": "GolfJoy is its own interface inside GSPro Connect",
+          "confirmed": true
+        }
+      ]
+    },
+    {
+      "id": "vtrack",
+      "brand": "vtrack",
+      "name": "VTrack",
+      "models": [
+        "VTrack"
+      ],
+      "tier": "unsupported",
+      "route": "none",
+      "address": null,
+      "connector": null,
+      "alternatives": [],
+      "needs": [],
+      "steps": [
+        "No way to connect it yet.",
+        "You can try the game with test swings."
+      ],
+      "settings": [],
+      "why": "VTrack reaches GSPro through GSPro's own built-in connection, started from VTrack's toolkit. How its shots travel is not documented, and no connector was found that sends them as Open Connect.",
+      "notes": [],
+      "sources": [
+        {
+          "url": "https://swingcraft.golf/vtrack-setup/",
+          "note": "The VTrack setup guide: launches GSPro from VTrackToolkit",
+          "confirmed": true
+        },
+        {
+          "url": "https://gspro.gitbook.io/gspro-knowledge-base/troubleshooting-and-support/how-to-clear-gspro-connect-settings.md",
+          "note": "VTrack is its own interface inside GSPro Connect",
+          "confirmed": true
+        }
+      ]
+    },
+    {
+      "id": "bluetees-rainmaker",
+      "brand": "bluetees",
+      "name": "RAINMAKER",
+      "models": [
+        "Bluetees RAINMAKER"
+      ],
+      "tier": "unsupported",
+      "route": "none",
+      "address": null,
+      "connector": null,
+      "alternatives": [],
+      "needs": [],
+      "steps": [
+        "No way to connect it yet.",
+        "You can try the game with test swings."
+      ],
+      "settings": [],
+      "why": "The RAINMAKER reaches GSPro through GSPro's own built-in connection (paired with a PIN), which cannot be pointed at this game.",
+      "notes": [],
+      "sources": [
+        {
+          "url": "https://gspro.gitbook.io/gspro-knowledge-base/setup-and-installation/bluetees-rainmaker-connection-guide.md",
+          "note": "GSPro's Rainmaker connection guide",
+          "confirmed": true
+        }
+      ]
+    },
+    {
+      "id": "ernest-sports",
+      "brand": "ernest",
+      "name": "ES16 / ES Tour Plus",
+      "models": [
+        "Ernest Sports ES16",
+        "Ernest Sports ES Tour Plus"
+      ],
+      "tier": "unsupported",
+      "route": "none",
+      "address": null,
+      "connector": null,
+      "alternatives": [],
+      "needs": [],
+      "steps": [
+        "No way to connect these yet.",
+        "You can try the game with test swings."
+      ],
+      "settings": [],
+      "why": "No connector was found that sends these units' shots to GSPro or as Open Connect, and they are not on GSPro's supported list.",
+      "notes": [],
+      "sources": [
+        {
+          "url": "https://gsprogolf.com/",
+          "note": "Ernest Sports is not on GSPro's supported list",
+          "confirmed": true
+        }
+      ]
+    }
+  ],
+  "generic": {
+    "id": "other",
+    "name": "Any Open Connect connector",
+    "steps": [
+      "Close GSPro if it is open: both use the same port.",
+      "Start your launch monitor's GSPro connector.",
+      "Look for its GSPro or Open API address setting.",
+      "Type the address and port shown here.",
+      "Connect, then hit a ball."
+    ],
+    "settings": [
+      {
+        "label": "IP address",
+        "value": "{address}"
+      },
+      {
+        "label": "Port",
+        "value": "{port}"
+      }
+    ],
+    "notes": [
+      "This game answers on the port GSPro's Open API uses. A connector that sends shots to GSPro's Open API, and has no other tie to GSPro, can send them here.",
+      "Connector on this PC: the address is 127.0.0.1. Connector on another device: use this PC's network address, and let the game through Windows Firewall.",
+      "Connections that live inside GSPro itself (its built-in Uneekor, FlightScope, Garmin, Rapsodo, Full Swing and similar modes) do not use the Open API and cannot be pointed here."
+    ],
+    "sources": [
+      {
+        "url": "https://gsprogolf.com/GSProConnectV1.html",
+        "note": "GSPro Open Connect v1: TCP, port 921, 127.0.0.1, no authentication",
+        "confirmed": true
+      }
+    ]
+  },
+  "conformance": {
+    "spec": "https://gsprogolf.com/GSProConnectV1.html",
+    "connectors": [
+      {
+        "name": "MLM2PRO-GSPro-Connector",
+        "url": "https://github.com/springbok/MLM2PRO-GSPro-Connector",
+        "license": "GPL-3.0",
+        "facts": "No heartbeat. Waits 2 s for any reply to a shot, sends the same payload once more, then disconnects. Reads Player.Club of every 201. Spells BackSpin \"Backspin\". Looks for GSPro's window when the address is local."
+      },
+      {
+        "name": "gsp-r10-adapter",
+        "url": "https://github.com/mholow/gsp-r10-adapter",
+        "license": "MIT",
+        "facts": "One heartbeat on connect with \"APIVersion\", ShotNumber 0 and null BallData. Strict reply parsing: Code a number, Club from a fixed list, Handed RH or LH. Two replies in one read must be back to back with nothing between."
+      },
+      {
+        "name": "gspro-garmin-connect-v2",
+        "url": "https://github.com/travislang/gspro-garmin-connect-v2",
+        "license": "MIT (package.json)",
+        "facts": "No Units key. One reply object per read. Target fixed at 127.0.0.1:921."
+      },
+      {
+        "name": "PiTrac",
+        "url": "https://github.com/PiTracLM/PiTrac",
+        "license": "GPL-2.0",
+        "facts": "Pretty-printed objects with a newline after each. A heartbeat (ShotNumber 0, ready, ball detected) on connect and on change. Putter mode on Club PT."
+      },
+      {
+        "name": "OpenFlight",
+        "url": "https://github.com/open-flight/openflight",
+        "license": "AGPL-3.0-or-later",
+        "facts": "A heartbeat every 5 s when idle, with zeroed ball data present. Applies the Club of every 201. Resends a shot after a dropped link."
+      },
+      {
+        "name": "squaregolf-connector (read through a fork)",
+        "url": "https://github.com/patrickhult/squaregolf-connector",
+        "license": "MIT",
+        "facts": "Newline after each object. A ready status after connecting, with false flags left out. Ball data and club data of one shot as two messages. Acts on the exact Message text \"GSPro Player Information\"."
+      },
+      {
+        "name": "MLM2PRO-BT-APP",
+        "url": "https://github.com/Duwaynef/MLM2PRO-BT-APP",
+        "license": "MIT",
+        "facts": "Keys spelled DeviceId, ApiVersion, Hla, Vla. Reads replies split on newlines only: two objects in one read are both lost. Arms the launch monitor on a 201 unless its DistanceToTarget is 0. Sends misreads with a speed of 0."
+      },
+      {
+        "name": "GSPro4OSP",
+        "url": "https://github.com/OpenSkyPlus/GSPro4OSP",
+        "license": "custom, not open source (facts only)",
+        "facts": "Arms the launch monitor only on a 201 whose DistanceToTarget is not 0."
+      },
+      {
+        "name": "golfsim-connect",
+        "url": "https://github.com/chgl42/golfsim-connect",
+        "license": "MIT or Apache-2.0",
+        "facts": "Waits up to 1.5 s for a reply to everything it sends. A reply whose Message contains \"heartbeat\" is not counted as a shot's."
+      }
+    ],
+    "fixed": [
+      {
+        "gap": "Keys were matched exactly, so \"Hla\" / \"Vla\" / \"Backspin\" / \"DeviceId\" / \"APIVersion\" were not read: a shot from such a connector arrived with no launch angles.",
+        "fix": "Every key of the specification is matched without regard to case; numbers sent as strings are read as numbers."
+      },
+      {
+        "gap": "A real shot that also carried IsHeartBeat: true was thrown away as a heartbeat.",
+        "fix": "Ball data with a speed is a shot, whatever else is flagged."
+      },
+      {
+        "gap": "A \"shot\" with a speed of 0 (a misread) was passed on to the game.",
+        "fix": "Acknowledged with a 200, never played (event: ignored)."
+      },
+      {
+        "gap": "Club data sent on its own after the ball data was treated as a status message, which switched the ready light off.",
+        "fix": "Acknowledged, reported as its own event (club), and the ready state is left alone."
+      },
+      {
+        "gap": "The ready and ball-detected flags were read from status messages only; most connectors send them on heartbeats.",
+        "fix": "Read from heartbeats as well."
+      },
+      {
+        "gap": "After the greeting, a 201 carried only what had changed, so most had no Club. One connector reads Player.Club of every 201; others treat a missing club as a change of club.",
+        "fix": "Every 201 is the whole player (Handed, Club, DistanceToTarget). OpenFlight, which applies every Club it is sent, still gets only what changed."
+      },
+      {
+        "gap": "A 201 could carry DistanceToTarget 0 (the greeting always did). Two connectors read that as \"GSPro is in its menus\" and do not arm the launch monitor.",
+        "fix": "DistanceToTarget is always a whole number of at least 1."
+      },
+      {
+        "gap": "A club the game could not express as a GSPro code went out as typed; connectors with a fixed list of codes drop the whole message.",
+        "fix": "Anything off GSPro's list goes to its nearest code (AW to GW, a loft to its wedge, a 1-wood to DR)."
+      },
+      {
+        "gap": "Two replies could leave in the same instant (the greeting and the first distance update, an acknowledgement and a player update). Connectors that read one object per packet lose both.",
+        "fix": "One object per write, at least 75 ms apart; player updates waiting in line are merged."
+      },
+      {
+        "gap": "A stray closing brace or other noise between objects wedged the stream until 64 KB had gone by.",
+        "fix": "Anything between objects is skipped."
+      },
+      {
+        "gap": "After \"port in use\" the server could not be started again without restarting the game.",
+        "fix": "start() can be called again; the game retries by itself every 3 seconds and reports the state."
+      }
+    ],
+    "open": [
+      "The exact Message text of GSPro's 200 reply is not in the specification. The game sends \"Shot received successfully\" (the specification's description of code 200); two connectors' sources suggest GSPro says \"Ball Data received\". No connector that was read depends on it.",
+      "Whether GSPro answers heartbeats is disputed. The game does (\"Heartbeat OK\"); no connector that was read is harmed by it.",
+      "Codes 202 (\"GSPro ready\") and 203 (\"GSPro round ended\") are not in the specification and are not sent.",
+      "The game sends Club PT only when the player picks the putter. Connectors that switch a launch monitor into a putting mode on PT (Square, PiTrac, the MLM2PRO connector's webcam putting) are therefore never told that the ball is on the green.",
+      "Units \"Meters\" is not handled: ball speed is taken as mph whatever Units says. BIRDIE_SPEED_SCALE corrects a connector that sends metres per second.",
+      "The game accepts more than one connector at a time; GSPro reportedly accepts one."
+    ]
+  },
+  "roadmap": {
+    "answer": "Yes, in part. GSPro Connect is a set of device drivers: for each launch monitor it knows how to find the unit and read its shots. An open-source project can do the same for units whose protocol is published or already has an open-source implementation, and for the open-source launch monitors. It cannot for units that sit behind a maker's SDK licence, an NDA or encryption. Two things are worth knowing first. One: an open-source tool of this kind already exists. flighthook (MIT / Apache-2.0) talks to the Mevo+ family, the Garmin R10 and the Square Omni directly and forwards their shots as an Open Connect client to any address, so working with it is cheaper than rebuilding it. Two: the game's Foresight bridge already is a direct connection of the modest kind, built from what the maker's own connector does in the open.",
+    "items": [
+      {
+        "rank": 1,
+        "family": "Uneekor (EYE XO, XO2, EYE MINI, EYE MINI LITE, QED)",
+        "realistic": "yes",
+        "approach": "The VIEW watcher that already ships with the game: test it, then show its status in the game",
+        "what": "The code exists in this project (tools/uneekor-watch.js, MIT): it follows VIEW's ShotData folder, and the desktop game starts it when that folder is on the PC. No protocol work, no SDK. Missing: one Uneekor owner to confirm units and left/right, and a status panel in SETTINGS > LAUNCH MONITOR like the Foresight bridge has.",
+        "sources": [
+          "https://github.com/jordan-shilts/Open-Birdie/blob/main/tools/uneekor-watch.js"
+        ]
+      },
+      {
+        "rank": 2,
+        "family": "PiTrac and OpenFlight (open-source launch monitors)",
+        "realistic": "yes",
+        "approach": "Nothing to build: test and document",
+        "what": "Both already send Open Connect to a typed address. The work is a test on real hardware with their communities, which moves them to Tested.",
+        "sources": [
+          "https://docs.pitrac.org/software/simulator-integration/",
+          "https://github.com/open-flight/openflight/blob/main/docs/using/simulator/gspro.md"
+        ]
+      },
+      {
+        "rank": 3,
+        "family": "OpenLaunch NOVA",
+        "realistic": "yes",
+        "approach": "A built-in reader of its published local API",
+        "what": "OpenLaunch documents a receive-only local API: JSON over TCP and WebSocket, found by mDNS. The developer guide and examples are Apache-2.0. Port numbers and the message schema still have to be read from the guide.",
+        "sources": [
+          "https://github.com/OpenLaunchLabs/nova-developer-guide"
+        ]
+      },
+      {
+        "rank": 4,
+        "family": "Garmin Approach R10",
+        "realistic": "yes",
+        "approach": "A local listener for the Garmin Golf app's E6 Connect setting (TCP 2483), later Bluetooth",
+        "what": "Two open-source connectors (gsp-r10-adapter, MIT; gspro-garmin-connect-v2, MIT per its package.json) accept the Garmin Golf app's E6 Connect stream on TCP 2483: a network listener, no Bluetooth code. Direct Bluetooth is also implemented in the open (gsp-r10-adapter, flighthook) but needs a Bluetooth stack in the game.",
+        "sources": [
+          "https://github.com/mholow/gsp-r10-adapter",
+          "https://github.com/travislang/gspro-garmin-connect-v2",
+          "https://github.com/divotmaker/flighthook"
+        ]
+      },
+      {
+        "rank": 5,
+        "family": "Webcam putting",
+        "realistic": "yes",
+        "approach": "A local HTTP listener for cam-putting-py (port 8888)",
+        "what": "cam-putting-py (GPL-3.0; protocol facts only) posts each putt as JSON to http://127.0.0.1:8888/putting. Accepting that gives every launch monitor that cannot read putts a putter.",
+        "sources": [
+          "https://github.com/alleexx/cam-putting-py"
+        ]
+      },
+      {
+        "rank": 6,
+        "family": "Foresight GC2",
+        "realistic": "maybe",
+        "approach": "Read the GC2's text protocol over USB or a Bluetooth serial port",
+        "what": "The GC2 sends plain KEY=value text (SHOT_ID, SPEED_MPH, ELEVATION_DEG, AZIMUTH_DEG, SPIN_RPM, BACK_RPM, SIDE_RPM). Two open projects show it, neither with a licence file, so a reader has to be written from the protocol facts. Needs serial or USB access from the game and a GC2 owner to test.",
+        "sources": [
+          "https://github.com/ParnoldAlmer/GSPro-gc2-API-Interface",
+          "https://github.com/matthew-johnston/gspro-gc2-connector"
+        ]
+      },
+      {
+        "rank": 7,
+        "family": "FlightScope Mevo+ / Mevo Gen2 / Xi",
+        "realistic": "maybe",
+        "approach": "Use flighthook; a built-in driver only if it proves necessary",
+        "what": "The protocol (binary, TCP 5100 on the Mevo's own Wi-Fi) is reverse-engineered in ironsight (Rust, MIT or Apache-2.0, pre-1.0) and used by flighthook. A port to this game is possible but fragile against firmware updates; neither project may be used to unlock paid features.",
+        "sources": [
+          "https://github.com/Apollo66666/ironsight",
+          "https://github.com/divotmaker/flighthook"
+        ]
+      },
+      {
+        "rank": 8,
+        "family": "Square Omni",
+        "realistic": "maybe",
+        "approach": "Use flighthook; a built-in Bluetooth driver later",
+        "what": "The Omni's Bluetooth protocol is implemented in allsquare (Rust, MIT or Apache-2.0). Needs a Bluetooth stack in the game. The older Square Home connector's repository was taken down after a copyright claim: do not build on it.",
+        "sources": [
+          "https://github.com/divotmaker/allsquare",
+          "https://github.com/github/dmca/blob/master/2026/09/2026-09-03-source-code.md"
+        ]
+      },
+      {
+        "rank": 9,
+        "family": "Rapsodo MLM2PRO",
+        "realistic": "no",
+        "approach": "Stay with the community connectors",
+        "what": "Open implementations exist (GPL-3.0 and MIT), but each needs a token from Rapsodo's online service and third-party access switched on in Rapsodo's app. A built-in driver would depend on that service and its terms.",
+        "sources": [
+          "https://raw.githubusercontent.com/springbok/MLM2PRO-GSPro-Connector/main/src/bluetooth/mlm2pro_device.py",
+          "https://github.com/Duwaynef/MLM2PRO-BT-APP"
+        ]
+      },
+      {
+        "rank": 10,
+        "family": "SkyTrak / SkyTrak+",
+        "realistic": "no",
+        "approach": "Stay with OpenSkyPlus",
+        "what": "No SDK and no open implementation of the wire protocol. The only route is a closed-source plug-in that loads inside SkyTrak's own app.",
+        "sources": [
+          "https://openskyplus2.github.io/OpenSkyPlus2/FAQs-OpenSkyPlus2.html"
+        ]
+      },
+      {
+        "rank": 11,
+        "family": "Foresight GC3 / GCQuad / GCHawk / Bushnell Launch Pro (direct)",
+        "realistic": "no",
+        "approach": "Stay with the Foresight bridge",
+        "what": "No public SDK and no open protocol. Foresight's SDK is licensed to partners. The bridge, which uses the owner's own GSPro connector, is the way in.",
+        "sources": [
+          "https://gsprogolf.com/terms-of-service.html",
+          "docs/foresight-bridge.md"
+        ]
+      },
+      {
+        "rank": 12,
+        "family": "Garmin R50, Full Swing KIT, TrackMan, ProTee VX, GolfJoy, VTrack, TruGolf, Uneekor (direct to the unit)",
+        "realistic": "no",
+        "approach": "None",
+        "what": "Private links to GSPro Connect, partner credentials or encryption (R50, as reported), SDKs under NDA (TruGolf, as reported), or nothing published at all. Garmin's Golf API is for selected partners and carries a licence fee.",
+        "sources": [
+          "https://developer.garmin.com/golf-api/overview/",
+          "https://forums.garmin.com/outdoor-recreation/golf/f/approach-r50/401156/approach-r50-and-gspro-on-mac-crossover/2020877",
+          "https://hackaday.io/project/195042/log/229245"
+        ]
+      }
+    ],
+    "notes": [
+      "Not on the roadmap, on purpose: taking GSPro's connector apart, speaking its private protocol, or using keys taken from it. GSPro's terms forbid reverse engineering and unauthorised methods of interacting with its services.",
+      "A connector launcher is cheaper than any driver: the wizard could start the chosen community connector with the right address already filled in."
+    ]
+  }
+}

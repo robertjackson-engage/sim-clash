@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Match UI demo — Open-Birdie</title>
+<!-- Standalone test page for public/arcade/match.js (Match v2, docs/dev/arcade-v2-contract.md
+     section 4): no launch monitor, no match engine. A fake engine in this page plays
+     scripted sequences of contract-shaped states into MatchUI.onMatch() and answers the
+     routes the UI calls, so this file doubles as the living spec of what the UI expects
+     from the server. Served by the app at /arcade/match-demo.html. Never plays sound: the
+     audio object is a stub that logs every say() and cue().
+
+     ?seq=quick | bo3              play a sequence from the top
+     ?jump=bo3:ko                  jump to a labelled state (see JUMPS below)
+     ?hold=1                       freeze after the jump (for screenshots)
+     ?panel=0                      hide the control panel
+     ?moment=1                     give the audio stub a moment() too (see _moment in match.js) -->
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="match.css">
+<style>
+  #scene { background:
+    radial-gradient(ellipse 30% 9% at 50% 43%, #7fd36a 0, #58b455 60%, transparent 62%),
+    radial-gradient(ellipse 70% 30% at 50% 78%, #3f9a48 0, #2f7f3d 60%, transparent 61%),
+    linear-gradient(180deg, #6fb6ee 0, #b9dcf5 38%, #2c6e3a 38.2%, #1f5a30 100%); }
+  #scene::after { content: ''; position: absolute; left: 50%; top: 31%; width: 3px; height: 12%; background: #f4f4f0; box-shadow: 14px 2px 0 6px #ff4a1f; }
+  .demo-toggle { position: fixed; left: 8px; bottom: 8px; z-index: 200; width: 34px; height: 34px; border-radius: 9px; cursor: pointer; background: rgba(16, 18, 21, .9); border: 1px solid var(--line-hi); font-weight: 800; }
+  .demo-panel { position: fixed; left: 8px; bottom: 48px; z-index: 200; width: 348px; max-height: calc(100vh - 60px); overflow: auto; padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 7px; background: rgba(16, 18, 21, .94); border: 1px solid var(--line-hi); border-radius: 12px; }
+  .demo-panel .lbl { color: var(--accent); margin-top: 3px; }
+  .demo-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; }
+  .demo-btn { height: 30px; padding: 0 6px; border-radius: 8px; cursor: pointer; background: var(--panel-hi); border: 1px solid var(--line-hi); font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .demo-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .demo-btn.wide { grid-column: span 3; }
+  .demo-check { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--dim); cursor: pointer; }
+  .demo-lines { height: 150px; overflow: auto; font: 600 10.5px/1.45 ui-monospace, "Cascadia Mono", Consolas, monospace; color: var(--dim); background: rgba(0, 0, 0, .35); border-radius: 8px; padding: 6px 8px; }
+  .demo-lines div { white-space: nowrap; }
+  .demo-lines .post { color: #9ad64a; } .demo-lines .say { color: #ffd21f; } .demo-lines .cue { color: #5ab8ff; } .demo-lines .st { color: var(--text); }
+  body.no-panel .demo-panel, body.no-panel .demo-toggle { display: none; }
+</style>
+</head>
+<body>
+<div id="scene"></div>
+
+<div id="hud">
+  <!-- stand-ins for the app's top bar and bottom bar, so the header and ticker are seen in their real slots -->
+  <header id="topbar">
+    <div class="round-card">
+      <div class="avatar" aria-hidden="true">RS</div>
+      <div class="round-meta"><div class="player-name">Alex</div><button class="course-name" type="button">Volcano Drop</button></div>
+      <div id="score-chip" class="score-chip">E</div>
+    </div>
+    <div class="hole-card"><div class="hole-num"><span class="lbl">HOLE</span><b>1</b></div><div class="hole-body"><div class="hole-facts"><div class="fact"><span class="lbl">PAR</span><b>3</b></div><div class="fact"><span class="lbl">LENGTH</span><b>192</b></div></div></div></div>
+    <div class="spacer"></div>
+    <div id="lm-status" class="connected"><span class="dot"></span><span>Monitor connected</span></div>
+    <nav class="top-actions"><button class="icon-btn"><span>Flyover</span></button><button class="icon-btn"><span>Scorecard</span></button><button class="icon-btn"><span>Menu</span></button></nav>
+  </header>
+</div>
+
+<button class="demo-toggle" id="demo-toggle" title="Show or hide the demo panel">≡</button>
+<section class="demo-panel" id="demo-panel" aria-label="Demo controls">
+  <span class="lbl" style="margin-top:0">SEQUENCES (the UI drives ready / continue)</span>
+  <div class="demo-grid">
+    <button class="demo-btn wide" data-seq="quick">Quick match: must-make, knockout, winner</button>
+    <button class="demo-btn wide" data-seq="bo3">Best of 3: tie, sudden death + re-round, KO, match point, comeback</button>
+  </div>
+  <span class="lbl">JUMP TO A SCREEN</span>
+  <div class="demo-grid" id="demo-jumps"></div>
+  <label class="demo-check"><input type="checkbox" id="demo-hold"> Hold after the jump (freeze the engine)</label>
+  <label class="demo-check"><input type="checkbox" id="demo-slow"> Slow course load (6 s: shows LOADING)</label>
+  <span class="lbl">LOG (POSTs, audio.say / audio.cue, phases)</span>
+  <div class="demo-lines" id="demo-log"></div>
+</section>
+
+<script type="module">
+import { MatchUI } from './match.js';
+
+const $ = (id) => document.getElementById(id);
+const query = new URLSearchParams(location.search);
+const clone = (v) => (v == null ? v : JSON.parse(JSON.stringify(v)));
+if (query.get('panel') === '0') document.body.classList.add('no-panel');
+$('demo-toggle').onclick = () => $('demo-panel').classList.toggle('hidden');
+
+// the app's HUD scale (app.js fitHud): one 1680 x 945 layout zoomed to the window
+function fitHud() {
+  const w = innerWidth, h = innerHeight;
+  const z = w <= 700 ? 1 : Math.max(0.72, Math.min(1.45, Math.min(w / 1680, h / 945)));
+  $('hud').style.zoom = z.toFixed(3);
+}
+fitHud();
+addEventListener('resize', fitHud);
+
+const logEl = $('demo-log');
+function log(cls, text) {
+  const d = document.createElement('div');
+  d.className = cls;
+  d.textContent = text;
+  logEl.append(d);
+  while (logEl.children.length > 200) logEl.firstChild.remove();
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+// ================================================================ demo data (contract-shaped)
+
+// GET /api/leagues -> players
+let ROSTER = [
+  { id: 'p_alex', name: 'Alex', handicap: 12 },
+  { id: 'p_dave', name: 'Dave', handicap: 18 },
+  { id: 'p_alex', name: 'Alexandra Montgomery', handicap: 6 },
+  { id: 'p_sam', name: 'Sam', handicap: null },
+];
+// GET /api/match -> profiles (the server's ledger); also on each match player as .profile
+const PROFILES = {
+  p_alex: { trophies: 1240, rank: 'Silver I', wins: 12, losses: 7, streak: 3, bestStreak: 5 },
+  p_dave: { trophies: 1105, rank: 'Silver II', wins: 9, losses: 10, streak: 0, bestStreak: 3 },
+  p_alex: { trophies: 2310, rank: 'Gold II', wins: 31, losses: 8, streak: 6, bestStreak: 9 },
+  p_sam: { trophies: 0, rank: 'Rookie', wins: 0, losses: 0, streak: 0, bestStreak: 0 },
+};
+// GET /api/match -> tour (<dataDir>/arcade-tour.json). A stage may carry routes (the three ways
+// to play it: the stage intro shows them as chips) and freeBall (a "rocket hole": everybody's
+// tee shot is that ball, free). Orders 10 and up are the extra stages beyond the nine (their
+// names here are placeholders of this page): only the quick-match picker and a shuffle use them.
+const R = (safe, risky, rocket) => [{ id: 'safe', name: safe, note: '' }, { id: 'risky', name: risky, note: '' }, { id: 'rocket', name: rocket, note: '' }];
+const TOUR = {
+  version: 1,
+  stages: [
+    { id: 'lagoon-island', order: 1, number: 1, name: 'Lagoon Island', par: 3, lengthYd: 150, theme: 'tropical', timeOfDay: 'day', blurb: 'An island green in a turquoise lagoon. Hit it or swim.', difficulty: 1, routes: R('Front of the island', 'Back pin over the palm', 'Skip it off the lagoon') },
+    { id: 'canyon-run', order: 2, number: 2, name: 'Canyon Run', par: 4, lengthYd: 346, theme: 'canyon', timeOfDay: 'golden', blurb: 'Carry the gorge, then find the green up on the mesa.', difficulty: 2, routes: R('Lay up left of the gorge', 'Carry the gorge', 'Drive the mesa green') },
+    { id: 'lighthouse-point', order: 3, number: 3, name: 'Lighthouse Point', par: 4, lengthYd: 310, theme: 'links', timeOfDay: 'day', blurb: 'A clifftop dogleg. Cut the corner if you dare.', difficulty: 2, routes: R('Round the dogleg', 'Cut the corner', 'Over the lighthouse') },
+    { id: 'volcano-drop', order: 4, number: 4, name: 'Volcano Drop', par: 3, lengthYd: 192, theme: 'volcano', timeOfDay: 'dusk', blurb: 'One swing from the crater rim to an island in the lava.', difficulty: 3 },
+    { id: 'frostbite-ridge', order: 5, number: 5, name: 'Frostbite Ridge', par: 4, lengthYd: 372, theme: 'alpine', timeOfDay: 'day', blurb: 'A snow ridge fairway and a frozen lake to carry.', difficulty: 2 },
+    { id: 'sakura-garden', order: 6, number: 6, name: 'Sakura Garden', par: 3, lengthYd: 132, theme: 'sakura', timeOfDay: 'golden', blurb: 'A tiny green wrapped in koi ponds. Pure precision.', difficulty: 2 },
+    { id: 'temple-run', order: 7, number: 7, name: 'Temple Run', par: 5, lengthYd: 512, theme: 'jungle', timeOfDay: 'day', blurb: 'The river crosses twice. The temple is waiting.', difficulty: 3, freeBall: 'rocket', routes: R('Three shots up the fairway', 'Carry the second river', 'One swing to the temple steps') },
+    { id: 'pharaohs-gate', order: 8, number: 8, name: "Pharaoh's Gate", par: 4, lengthYd: 296, theme: 'desert', timeOfDay: 'golden', blurb: 'Drivable. The green sits between two pyramids.', difficulty: 2 },
+    { id: 'midnight-mile', order: 9, number: 9, name: 'Midnight Mile', par: 5, lengthYd: 545, theme: 'neon', timeOfDay: 'night', blurb: 'Neon fairway, canal down the left, stadium finish.', difficulty: 3 },
+    { id: 'sky-fortress', order: 10, number: 10, name: 'Sky Fortress', par: 4, lengthYd: 410, theme: 'alpine', timeOfDay: 'golden', blurb: 'The green is on the castle wall. You will need the rocket.', difficulty: 3, freeBall: 'rocket', routes: R('The long way round the moat', 'Over the drawbridge', 'Straight onto the wall') },
+    { id: 'dragons-spine', order: 11, number: 11, name: "Dragon's Spine", par: 5, lengthYd: 590, theme: 'volcano', timeOfDay: 'night', blurb: 'A ridge of rock through the lava. Do not look down.', difficulty: 3, freeBall: 'rocket' },
+    { id: 'moon-shot', order: 12, number: 12, name: 'Moon Shot', par: 3, lengthYd: 320, theme: 'neon', timeOfDay: 'night', blurb: 'A par three no normal ball can reach.', difficulty: 3, freeBall: 'rocket' },
+  ],
+  tiebreaks: [
+    { id: 'bullseye-bay', order: 1, number: 21, name: 'Bullseye Bay', par: 3, lengthYd: 115, theme: 'tropical', timeOfDay: 'day', blurb: 'A giant target green in a calm bay.' },
+    { id: 'thunder-dome', order: 2, number: 22, name: 'Thunder Dome', par: 3, lengthYd: 140, theme: 'stadium', timeOfDay: 'night', blurb: 'Grandstands all round. Floodlights on.' },
+    { id: 'ice-pick', order: 3, number: 23, name: 'Ice Pick', par: 3, lengthYd: 100, theme: 'alpine', timeOfDay: 'day', blurb: 'A drop shot to a green on a frozen tarn.' },
+  ],
+};
+const TIERS = [
+  { id: 'rookie', label: 'Rookie', entryFee: 50, trophies: 20 },
+  { id: 'amateur', label: 'Amateur', entryFee: 200, trophies: 25 },
+  { id: 'pro', label: 'Pro', entryFee: 1000, trophies: 30 },
+  { id: 'master', label: 'Master', entryFee: 5000, trophies: 35 },
+];
+// GET /api/arcade -> powerups (the chest shows names and colours from here)
+const POWERUPS = [
+  { id: 'rocket', name: 'Rocket', emoji: '🚀', rarity: 'epic', kind: 'ball', color: '#ff7a1f', tagline: '' },
+  { id: 'sticky', name: 'Sticky', emoji: '🍯', rarity: 'common', kind: 'ball', color: '#ffb84a', tagline: '' },
+  { id: 'magnet', name: 'Magnet', emoji: '🧲', rarity: 'rare', kind: 'ball', color: '#ff4a6a', tagline: '' },
+  { id: 'fireball', name: 'Fireball', emoji: '🔥', rarity: 'epic', kind: 'ball', color: '#ff3d14', tagline: '' },
+  { id: 'ghost', name: 'Ghost', emoji: '👻', rarity: 'rare', kind: 'ball', color: '#b9c6ff', tagline: '' },
+  { id: 'gold', name: 'Golden', emoji: '🏆', rarity: 'legendary', kind: 'ball', color: '#ffd21f', tagline: '' },
+  { id: 'gust', name: 'Gust', emoji: '💨', rarity: 'rare', kind: 'trick', color: '#8fe3ff', tagline: '' },
+  { id: 'tiny-cup', name: 'Tiny Cup', emoji: '🕳️', rarity: 'epic', kind: 'trick', color: '#c878ff', tagline: '' },
+];
+
+const stageOf = (id, kind = 'match') => {
+  const s = [...TOUR.stages, ...TOUR.tiebreaks].find((x) => x.id === id);
+  return { id: s.id, name: s.name, par: s.par, lengthYd: s.lengthYd, theme: s.theme, timeOfDay: s.timeOfDay, blurb: s.blurb, difficulty: s.difficulty ?? null, kind, freeBall: s.freeBall ?? null, routes: s.routes ?? null };
+};
+const FORMAT = {
+  quick: { formatLabel: 'Quick Match', target: 1, maxHoles: 1, charges: 2 },
+  bo3: { formatLabel: 'Best of 3', target: 2, maxHoles: 3, charges: 3 },
+  bo9: { formatLabel: 'Best of 9', target: 5, maxHoles: 9, charges: 6 },
+};
+
+// ================================================================ the fake engine
+
+class Cancelled extends Error {}
+
+class FakeEngine {
+  constructor() { this.ui = null; this.state = null; this.run = 0; this.waiters = {}; this.ff = null; this.prev = null; this.last = null; this.evSeq = 0; this.matchN = 0; }
+  cancel() { this.run++; this.waiters = {}; this.ff = null; this.prev = null; }
+  alive(run) { if (run !== this.run) throw new Cancelled(); }
+
+  // the state of a match that has just been started (phase 'loading')
+  begin({ format = 'quick', playerIds, stageId, options = {} }) {
+    const f = FORMAT[format];
+    const now = Date.now();
+    const pl = playerIds.map((id, i) => {
+      const r = ROSTER.find((p) => p.id === id) || { id, name: `Player ${i + 1}` };
+      return {
+        id: r.id, name: r.name, initials: r.name.slice(0, 2).toUpperCase(), slot: i + 1,
+        strokes: 0, lie: 'tee', holed: false, ball: { x: 0, y: 0 }, distToPinYd: null,
+        holesWon: 0, holeScores: [], mustHole: false, capped: false,
+        charges: f.charges, usedPowerups: [], armedPowerup: null, cursedWith: null, tiebreakFt: null,
+        stats: { shots: 0, longestDriveYd: 0, closestFt: null, bestGrade: null, perfects: 0, points: 0, callouts: [] },
+        profile: clone(PROFILES[r.id] || { trophies: 0, rank: 'Rookie', wins: 0, losses: 0, streak: 0, bestStreak: 0 }),
+      };
+    });
+    this.evSeq = 0;
+    this.state = {
+      id: `m_demo_${++this.matchN}`, seq: 0,
+      format, formatLabel: f.formatLabel, target: f.target, maxHoles: f.maxHoles,
+      stakes: null,
+      options: { tieRule: 'shootout', powerups: 'loadout', order: 'tour', hazardLosesHole: false, strokeCap: 3, ...options },
+      phase: 'loading', currentPlayerId: null,
+      holeNumber: 1, stage: stageOf(stageId), nextStage: null, honourId: null,
+      players: pl,
+      holeResults: [], lastResult: null, tiebreak: null,
+      standings: 'ALL SQUARE', matchPoint: null,
+      winnerId: null, loserId: null, reason: null, rewards: null, awards: null,
+      events: [], turnStartedAt: now, startedAt: now, log: [], aborted: false, concededBy: null,
+    };
+    return this.state;
+  }
+  P(id) { return this.state.players.find((p) => p.id === id); }
+  say(text) { this.state.log.push({ t: Date.now(), text }); if (this.state.log.length > 40) this.state.log.shift(); }
+
+  // change the state, stamp it, hand it to the UI (like the 'match' SSE event)
+  async emit(run, label, change, events = []) {
+    this.alive(run);
+    const s = this.state;
+    change(s);
+    s.seq++;
+    for (const e of events) s.events.push({ seq: ++this.evSeq, ...e });
+    if (s.events.length > 12) s.events.splice(0, s.events.length - 12);
+    const snap = clone(s);
+    this.last = snap;
+    if (this.ff) {
+      if (label !== this.ff.label) { this.prev = snap; return; }
+      const { tweak, hold } = this.ff;
+      this.ff = null;
+      if (this.prev) { this.deliver(this.prev); await new Promise((r) => setTimeout(r, 90)); this.alive(run); }
+      const out = tweak ? (tweak(snap) || snap) : snap;
+      if (tweak) this.state = clone(out);
+      this.deliver(out);
+      if (hold) { this.cancel(); throw new Cancelled(); }
+      return;
+    }
+    this.deliver(snap);
+  }
+  deliver(snap) {
+    log('st', `match  seq ${snap.seq}  phase ${snap.phase}  ${snap.events.slice(-3).map((e) => e.type).join(', ')}`);
+    this.ui.onMatch(clone(snap));
+  }
+  async sleep(run, ms) {
+    this.alive(run);
+    if (this.ff) return;
+    await new Promise((r) => setTimeout(r, ms));
+    this.alive(run);
+  }
+  // wait for the UI to POST /api/match/<kind>
+  async wait(run, kind) {
+    this.alive(run);
+    if (this.ff) return;
+    await new Promise((res) => { this.waiters[kind] = res; });
+    this.alive(run);
+  }
+  post(kind) { const w = this.waiters[kind]; if (w) { delete this.waiters[kind]; w(); } }
+}
+
+const engine = new FakeEngine();
+const SWING = 2900;                    // a player's "walk up and hit it" in the demo
+const loadMs = () => ($('demo-slow').checked ? 6000 : 1500);
+
+// ---------------------------------------------------------------- script helpers
+
+const other = (s, id) => s.players.find((p) => p.id !== id).id;
+// the common "course loads, intro, ready, tee off" opening of every hole
+async function teeOff(e, run, label, first) {
+  await e.sleep(run, loadMs());
+  await e.emit(run, `${label}-intro`, (s) => { s.phase = 'intro'; if (s.nextStage) { s.stage = s.nextStage; s.nextStage = null; } s.holeNumber = s.holeResults.length + (s.stage.kind === 'tiebreak' ? 0 : 1); }, [{ type: 'stage-loaded' }]);
+  await e.wait(run, 'ready');
+  await e.emit(run, `${label}-play`, (s) => {
+    s.phase = s.stage.kind === 'tiebreak' ? 'tiebreak' : 'play';
+    s.currentPlayerId = first; s.honourId = first; s.turnStartedAt = Date.now();
+    for (const p of s.players) Object.assign(p, { strokes: 0, lie: 'tee', holed: false, distToPinYd: s.stage.lengthYd, mustHole: false, capped: false, tiebreakFt: null });
+    if (s.stage.kind === 'tiebreak') s.tiebreak = { arenaId: s.stage.id, round: (s.tiebreak && s.tiebreak.round) || 1, pending: [first, other(s, first)], results: (s.tiebreak && s.tiebreak.results) || [] };
+  }, [{ type: 'ready' }, ...(e.state.stage.kind === 'tiebreak' ? [{ type: 'tiebreak-start' }] : []), { type: 'turn', playerId: first }]);
+}
+// one swing in the play phase
+async function shot(e, run, label, id, { to, lie = 'fairway', holed = false, penalty = 0, text, next, must = null, events = [] }) {
+  await e.sleep(run, SWING);
+  await e.emit(run, label, (s) => {
+    const p = e.P(id);
+    p.strokes += 1 + penalty; p.lie = holed ? 'hole' : lie; p.holed = holed; p.distToPinYd = holed ? 0 : to; p.stats.shots++; p.mustHole = false;
+    if (text) e.say(text);
+    s.currentPlayerId = next ?? null; s.turnStartedAt = Date.now();
+    if (must) e.P(must).mustHole = true;
+  }, [...events, ...(must ? [{ type: 'must-hole', playerId: must }] : []), ...(next ? [{ type: 'turn', playerId: next }] : [])]);
+}
+// close the hole that was just played
+function closeHole(s, { winnerId, reason, scores, holed }) {
+  const n = s.holeNumber;
+  const r = { holeNumber: n, stageId: s.stage.id, stageName: s.stage.name, par: s.stage.par, winnerId, reason, scores, tiebreak: null };
+  s.holeResults[n - 1] = r;
+  s.lastResult = r;
+  for (const p of s.players) { p.holeScores[n - 1] = holed[p.id] ? scores[p.id] : null; p.mustHole = false; }
+  if (winnerId) s.players.find((p) => p.id === winnerId).holesWon++;
+  const [a, b] = s.players;
+  s.standings = a.holesWon === b.holesWon ? 'ALL SQUARE' : `${(a.holesWon > b.holesWon ? a : b).name} ${Math.abs(a.holesWon - b.holesWon)} UP`;
+  const mp = s.players.filter((p) => p.holesWon === s.target - 1);
+  s.matchPoint = s.target > 1 && mp.length ? (mp.length === 2 ? 'both' : mp[0].id) : null;
+  s.currentPlayerId = null;
+  return r;
+}
+function finish(s, { winnerId, reason, rewards, awards, profile }) {
+  s.phase = 'done'; s.winnerId = winnerId; s.loserId = other(s, winnerId); s.reason = reason; s.matchPoint = null; s.currentPlayerId = null; s.nextStage = null;
+  s.rewards = rewards; s.awards = awards;
+  const w = s.players.find((p) => p.id === winnerId), l = s.players.find((p) => p.id !== winnerId);
+  Object.assign(w.profile, { trophies: w.profile.trophies + rewards.winner.trophies, wins: w.profile.wins + 1, streak: w.profile.streak + 1 }, profile || {});
+  Object.assign(l.profile, { trophies: Math.max(0, l.profile.trophies + rewards.loser.trophies), losses: l.profile.losses + 1, streak: 0 });
+}
+
+// ---------------------------------------------------------------- sequence 1: a quick match
+// Volcano Drop, par 3. Both hit it close; A holes for birdie; B must make his to tie
+// (mustHole), lips out: KNOCKOUT, and the match is over.
+async function quick(e, run, { playerIds = ['p_alex', 'p_dave'], stageId = 'volcano-drop', options } = {}) {
+  const [A, B] = playerIds;
+  e.begin({ format: 'quick', playerIds, stageId: stageId === 'random' || stageId === 'current' || !stageId ? 'volcano-drop' : stageId, options });
+  const nm = (id) => e.P(id).name;
+  await e.emit(run, 'start', (s) => { s.honourId = A; e.say(`${nm(A)} vs ${nm(B)}: Quick Match on ${s.stage.name}. ${nm(A)} won the flip.`); }, [{ type: 'match-start' }, { type: 'coin-flip', winnerId: A }]);
+  await teeOff(e, run, 'h1', A);
+  await shot(e, run, 'h1-s1', A, { to: 2.0, lie: 'green', text: `${nm(A)}: PIN SEEKER! 6 ft.`, next: B });
+  await shot(e, run, 'h1-s2', B, { to: 1.4, lie: 'green', text: `${nm(B)} answers: 4 ft!`, next: A });
+  await shot(e, run, 'must', A, { holed: true, text: `${nm(A)} is in for a birdie (2)! ${nm(B)} must make his.`, next: B, must: B });
+  await e.sleep(run, SWING + 600);
+  await e.emit(run, 'winner', (s) => {
+    const b = e.P(B); b.strokes = 2; b.distToPinYd = 0.3; b.mustHole = false;
+    closeHole(s, { winnerId: A, reason: 'knockout', scores: { [A]: 2, [B]: 2 }, holed: { [A]: true, [B]: false } });
+    e.say(`ROBBED! ${nm(B)} lips out. KNOCKOUT: ${nm(A).toUpperCase()} WINS THE MATCH!`);
+    finish(s, {
+      winnerId: A, reason: 'holes',
+      rewards: { winner: { trophies: 20, coins: 100, chest: ['rocket'] }, loser: { trophies: -15 } },
+      awards: [
+        { id: 'closest', label: 'CLOSEST TO THE PIN', playerId: B, value: '4 ft' },
+        { id: 'shot-of-the-match', label: 'SHOT OF THE MATCH', playerId: A, value: 'PIN SEEKER' },
+        { id: 'best-hole', label: 'BEST HOLE', playerId: A, value: 'BIRDIE' },
+      ],
+    });
+  }, [{ type: 'hole-won', winnerId: A, reason: 'knockout' }, { type: 'match-over', winnerId: A, reason: 'holes' }]);
+}
+
+// ---------------------------------------------------------------- sequence 2: best of 3
+// Hole 1 is tied: SUDDEN DEATH (both miss, AGAIN!, then B is closer). Hole 2: A wins by
+// KNOCKOUT, 1-1, match point for both. Hole 3: A wins it: 2-1 from behind (COMEBACK).
+async function bo3(e, run, { playerIds = ['p_alex', 'p_dave'], options } = {}) {
+  const [A, B] = playerIds;
+  e.begin({ format: 'bo3', playerIds, stageId: 'lagoon-island', options });
+  const nm = (id) => e.P(id).name;
+  await e.emit(run, 'start', (s) => { s.honourId = B; e.say(`${nm(A)} vs ${nm(B)}: Best of 3. ${nm(B)} won the flip.`); }, [{ type: 'match-start' }, { type: 'coin-flip', winnerId: B }]);
+
+  // ---- hole 1: Lagoon Island, tied in 3
+  await teeOff(e, run, 'h1', B);
+  await shot(e, run, 'h1-s1', B, { to: 7, lie: 'green', text: `${nm(B)} finds the island: 21 ft.`, next: A });
+  await shot(e, run, 'h1-s2', A, { to: 3, lie: 'green', text: `${nm(A)} is inside him: 9 ft.`, next: B });
+  await shot(e, run, 'h1-s3', B, { to: 0.4, lie: 'green', text: `${nm(B)} lags it to a foot.`, next: A });
+  await shot(e, run, 'for-birdie', A, { to: 0.35, lie: 'green', text: `SO CLOSE! ${nm(A)} burns the edge.`, next: B });
+  await shot(e, run, 'h1-s5', B, { holed: true, text: `${nm(B)} is in for a par (3).`, next: A, must: A });
+  await e.sleep(run, SWING);
+  await e.emit(run, 'tied', (s) => {
+    const a = e.P(A); a.strokes = 3; a.holed = true; a.distToPinYd = 0;
+    closeHole(s, { winnerId: null, reason: 'tied', scores: { [A]: 3, [B]: 3 }, holed: { [A]: true, [B]: true } });
+    s.phase = 'hole-result'; s.nextStage = stageOf('bullseye-bay', 'tiebreak');
+    e.say(`${nm(A)} holes it: both make par. SUDDEN DEATH!`);
+  }, [{ type: 'hole-tied' }]);
+  await e.wait(run, 'continue');
+
+  // ---- sudden death on Bullseye Bay
+  await e.emit(run, 'sd', (s) => { s.phase = 'loading'; });
+  await teeOff(e, run, 'sd', A);
+  await e.sleep(run, SWING);
+  await e.emit(run, 'duel-miss', (s) => {
+    s.tiebreak.results.push({ round: 1, playerId: A, ft: null, miss: 'water', holed: false }); s.tiebreak.pending = [B];
+    s.currentPlayerId = B; s.turnStartedAt = Date.now(); e.say(`IN THE DRINK! ${nm(A)} misses the green.`);
+  }, [{ type: 'tiebreak-shot', playerId: A, ft: null, miss: 'water' }, { type: 'turn', playerId: B }]);
+  await e.sleep(run, SWING);
+  await e.emit(run, 'again', (s) => {
+    s.tiebreak.results.push({ round: 1, playerId: B, ft: null, miss: 'ob', holed: false });
+    s.tiebreak.round = 2; s.tiebreak.pending = [B, A];
+    s.currentPlayerId = B; s.turnStartedAt = Date.now(); e.say(`SEE YA! ${nm(B)} is out of bounds. Both miss: again!`);
+  }, [{ type: 'tiebreak-shot', playerId: B, ft: null, miss: 'ob' }, { type: 'tiebreak-again' }, { type: 'turn', playerId: B }]);
+  await e.sleep(run, SWING + 1800);
+  await e.emit(run, 'duel', (s) => {
+    s.tiebreak.results.push({ round: 2, playerId: B, ft: 14.2, miss: null, holed: false }); s.tiebreak.pending = [A];
+    e.P(B).tiebreakFt = 14.2; s.currentPlayerId = A; s.turnStartedAt = Date.now(); e.say(`${nm(B)} puts it to 14.2 ft. Over to ${nm(A)}.`);
+  }, [{ type: 'tiebreak-shot', playerId: B, ft: 14.2, miss: null }, { type: 'turn', playerId: A }]);
+  await e.sleep(run, SWING);
+  await e.emit(run, 'tb-result', (s) => {
+    s.tiebreak.results.push({ round: 2, playerId: A, ft: 22.6, miss: null, holed: false }); s.tiebreak.pending = [];
+    e.P(A).tiebreakFt = 22.6;
+    const r = s.holeResults[0];
+    r.winnerId = B; r.reason = 'tiebreak'; r.tiebreak = { arenaId: 'bullseye-bay', rounds: [{ [A]: null, [B]: null }, { [A]: 22.6, [B]: 14.2 }] };
+    s.lastResult = r; e.P(B).holesWon = 1; s.standings = `${nm(B)} 1 UP`; s.matchPoint = B; s.currentPlayerId = null;
+    s.phase = 'hole-result'; s.nextStage = stageOf('canyon-run');
+    e.say(`${nm(A)}: 22.6 ft. ${nm(B)} takes the hole in sudden death!`);
+  }, [{ type: 'tiebreak-shot', playerId: A, ft: 22.6, miss: null }, { type: 'hole-won', winnerId: B, reason: 'tiebreak' }, { type: 'match-point', playerId: B }]);
+  await e.wait(run, 'continue');
+
+  // ---- hole 2: Canyon Run, A wins by knockout
+  await e.emit(run, 'stage', (s) => { s.phase = 'loading'; s.tiebreak = null; });
+  await teeOff(e, run, 'h2', B);
+  await shot(e, run, 'h2-s1', B, { to: 65, text: `${nm(B)}: ABSOLUTE BOMB! 281 yd, 65 to go.`, next: A });
+  await shot(e, run, 'h2-s2', A, { to: 84, text: `${nm(A)} drives 262 yd: 84 to go.`, next: A });
+  await shot(e, run, 'h2-s3', A, { to: 1.4, lie: 'green', text: `DART! ${nm(A)} from 84 yd to 4 ft.`, next: B, events: [{ type: 'trick-cast', playerId: A, id: 'gust', targetId: B }] });
+  await e.emit(run, 'trick', (s) => { e.P(B).cursedWith = 'gust'; e.P(A).usedPowerups.push('gust'); e.P(A).charges--; });
+  await shot(e, run, 'h2-s4', B, { to: 14, lie: 'bunker', text: `BEACH DAY! The gust takes ${nm(B)} into the sand.`, next: B });
+  await e.emit(run, 'uncurse', (s) => { e.P(B).cursedWith = null; });
+  await shot(e, run, 'h2-s5', B, { to: 3.6, lie: 'green', text: `${nm(B)} splashes out to 11 ft.`, next: B });
+  await shot(e, run, 'h2-s6', B, { to: 0.4, lie: 'green', text: `${nm(B)} misses the par putt.`, next: A });
+  await e.sleep(run, SWING);
+  await e.emit(run, 'ko', (s) => {
+    const a = e.P(A); a.strokes = 3; a.holed = true; a.distToPinYd = 0;
+    closeHole(s, { winnerId: A, reason: 'knockout', scores: { [A]: 3, [B]: 4 }, holed: { [A]: true, [B]: false } });
+    s.phase = 'hole-result'; s.nextStage = stageOf('lighthouse-point');
+    e.say(`${nm(A)} is in for a birdie (3)! ${nm(B)} can't catch that. KNOCKOUT!`);
+  }, [{ type: 'hole-won', winnerId: A, reason: 'knockout' }, { type: 'match-point', playerId: 'both' }]);
+  await e.wait(run, 'continue');
+
+  // ---- hole 3: Lighthouse Point, match point for both
+  await e.emit(run, 'final-stage', (s) => { s.phase = 'loading'; });
+  await teeOff(e, run, 'h3', A);
+  await shot(e, run, 'h3-s1', A, { to: 42, text: `${nm(A)} cuts the corner: 268 yd, 42 to go.`, next: B });
+  await shot(e, run, 'h3-s2', B, { to: 55, text: `${nm(B)} plays it safe: 255 yd, 55 to go.`, next: B });
+  await shot(e, run, 'h3-s3', B, { to: 4.3, lie: 'green', text: `${nm(B)} pitches to 13 ft.`, next: A });
+  await shot(e, run, 'h3-s4', A, { to: 2.3, lie: 'green', text: `${nm(A)} pitches inside him: 7 ft.`, next: B });
+  await shot(e, run, 'h3-s5', B, { to: 0.4, lie: 'green', text: `ROBBED! ${nm(B)} lips out.`, next: A });
+  await e.sleep(run, SWING);
+  await e.emit(run, 'winner', (s) => {
+    const a = e.P(A); a.strokes = 3; a.holed = true; a.distToPinYd = 0;
+    closeHole(s, { winnerId: A, reason: 'knockout', scores: { [A]: 3, [B]: 3 }, holed: { [A]: true, [B]: false } });
+    e.say(`DRAINED IT! ${nm(A).toUpperCase()} WINS THE MATCH 2-1!`);
+    finish(s, {
+      winnerId: A, reason: 'holes', profile: { rank: 'Gold III' },
+      rewards: { winner: { trophies: 30, coins: 400, chest: ['fireball', 'ghost', 'tiny-cup'] }, loser: { trophies: -20 } },
+      awards: [
+        { id: 'longest-drive', label: 'LONGEST DRIVE', playerId: B, value: '281 yd' },
+        { id: 'closest', label: 'CLOSEST TO THE PIN', playerId: A, value: '4 ft' },
+        { id: 'shot-of-the-match', label: 'SHOT OF THE MATCH', playerId: A, value: 'DART!' },
+        { id: 'most-perfects', label: 'PERFECT SHOTS', playerId: A, value: '3' },
+      ],
+    });
+  }, [{ type: 'hole-won', winnerId: A, reason: 'knockout' }, { type: 'match-over', winnerId: A, reason: 'holes' }]);
+}
+
+const SCRIPTS = { quick, bo3, bo9: bo3 };
+let lastStart = { name: 'quick', args: {} };
+
+function play(name, args = {}, ff = null) {
+  engine.cancel();
+  const run = engine.run;
+  engine.ff = ff;
+  lastStart = { name, args };
+  SCRIPTS[name](engine, run, args).catch((err) => { if (!(err instanceof Cancelled)) throw err; });
+}
+
+// ---------------------------------------------------------------- jumps: any screen in one click
+// [button label, script, the labelled state to jump to, an optional tweak of that state]
+const longNames = (s) => { s.players[0].name = 'Alexandra Montgomery'; s.players[1].name = 'Christopher'; };
+const JUMPS = [
+  ['Lobby', 'lobby'],
+  ['Lobby: no roster', 'lobby-empty'],
+  ['VS screen', 'bo3', 'start'],
+  ['VS: long names', 'bo3', 'start', (s) => longNames(s)],
+  ['Stage intro (h2)', 'bo3', 'stage'],
+  ['Final hole intro', 'bo3', 'final-stage'],
+  ['Rocket hole intro', 'bo3', 'stage', (s) => { s.nextStage = stageOf('temple-run'); }],
+  ['Turn: rocket loaded', 'bo3', 'h2-play', (s) => { s.stage = stageOf('temple-run'); for (const p of s.players) p.distToPinYd = 512; }],
+  ['Turn: tee shot', 'quick', 'h1-play'],
+  ['Turn: for birdie', 'bo3', 'h1-s3'],
+  ['Turn: must make', 'quick', 'must'],
+  ['Match point', 'bo3', 'h3-play'],
+  ['Sabotage flash', 'bo3', 'h2-s3'],
+  ['Hole tied', 'bo3', 'tied'],
+  ['Sudden death', 'bo3', 'sd'],
+  ['Duel: first up', 'bo3', 'sd-play'],
+  ['Duel: a miss', 'bo3', 'duel-miss'],
+  ['Duel: AGAIN!', 'bo3', 'again'],
+  ['Duel: beat 14 ft', 'bo3', 'duel'],
+  ['Tiebreak result', 'bo3', 'tb-result'],
+  ['Knockout (hole)', 'bo3', 'ko'],
+  ['Hole won (score)', 'bo3', 'ko', (s) => {
+    const r = s.holeResults[1]; r.reason = 'score'; r.scores.p_dave = 4; s.lastResult = r; s.players[1].holeScores[1] = 4; s.players[1].strokes = 4; s.players[1].holed = true;
+  }],
+  ['Hole halved', 'bo3', 'tied', (s) => { s.holeResults[0].reason = 'halved'; s.lastResult = s.holeResults[0]; s.options.tieRule = 'halve'; s.nextStage = stageOf('canyon-run'); }],
+  ['Winner (quick, KO)', 'quick', 'winner'],
+  ['Winner (bo3)', 'bo3', 'winner'],
+  ['Winner: P2 flawless', 'bo3', 'winner', (s) => {
+    const [a, b] = s.players;
+    s.holeResults = s.holeResults.slice(0, 2).map((r) => ({ ...r, winnerId: b.id, reason: 'score', tiebreak: null, scores: { [a.id]: 5, [b.id]: 3 } }));
+    s.lastResult = s.holeResults[1]; a.holesWon = 0; b.holesWon = 2; a.holeScores = [5, 5]; b.holeScores = [3, 3];
+    s.winnerId = b.id; s.loserId = a.id; a.profile = clone(PROFILES[a.id]); a.profile.trophies -= 20; b.profile.trophies += 30;
+    s.awards = s.awards.map((x) => ({ ...x, playerId: b.id }));
+  }],
+  ['Winner: long name', 'bo3', 'winner', (s) => longNames(s)],
+  ['Winner: conceded', 'quick', 'must', (s) => {
+    s.phase = 'done'; s.winnerId = s.players[0].id; s.loserId = s.players[1].id; s.reason = 'concede'; s.concededBy = s.players[1].id; s.currentPlayerId = null;
+    s.rewards = { winner: { trophies: 20, coins: 0, chest: [] }, loser: { trophies: -15 } }; s.awards = [];
+    s.holeResults = [{ holeNumber: 1, stageId: s.stage.id, stageName: s.stage.name, par: 3, winnerId: s.players[0].id, reason: 'score', scores: { p_alex: 2, p_dave: 1 }, tiebreak: null }];
+    s.lastResult = s.holeResults[0]; s.players[0].holesWon = 1;
+  }],
+];
+const SAVED_ROSTER = clone(ROSTER);
+function jump(i) {
+  const [, script, label, tweak] = JUMPS[i];
+  if (script === 'lobby' || script === 'lobby-empty') {
+    engine.cancel(); engine.state = null;
+    ROSTER = script === 'lobby' ? clone(SAVED_ROSTER) : [];
+    ui.onMatch(null); ui.setPlayers(ROSTER); ui.openLobby();
+    return;
+  }
+  ui.onMatch(null);
+  play(script, {}, { label, tweak, hold: $('demo-hold').checked });
+}
+$('demo-jumps').innerHTML = JUMPS.map(([name], i) => `<button class="demo-btn" data-jump="${i}">${name}</button>`).join('');
+$('demo-panel').addEventListener('click', (e) => {
+  const j = e.target.closest('[data-jump]'); if (j) { jump(+j.dataset.jump); return; }
+  const s = e.target.closest('[data-seq]'); if (s) { ui.onMatch(null); play(s.dataset.seq); }
+});
+
+// ================================================================ the server the UI talks to (faked)
+
+async function fetchJson(url, init) {
+  const method = (init && init.method) || 'GET';
+  const body = init && init.body ? JSON.parse(init.body) : null;
+  if (method === 'POST') log('post', `POST ${url} ${body && Object.keys(body).length ? JSON.stringify(body) : ''}`);
+  await new Promise((r) => setTimeout(r, 30));
+  const state = () => clone(engine.state);
+  if (method !== 'POST') {
+    if (url === '/api/leagues') return { players: clone(ROSTER), activePlayerId: ROSTER[0]?.id || null, leagues: [] };
+    if (url === '/api/match') return { ok: true, match: state(), tour: clone(TOUR), tiers: clone(TIERS), profiles: clone(PROFILES) };
+    if (url === '/api/arcade') return { powerups: clone(POWERUPS) };
+    return null;
+  }
+  switch (url) {
+    case '/api/players': {
+      const name = String(body.name || '').trim();
+      if (!name) return { ok: false, error: 'A player needs a name' };
+      if (ROSTER.some((p) => p.name.toLowerCase() === name.toLowerCase())) return { ok: false, error: `${name} is already on the roster` };
+      const player = { id: `p_${Math.random().toString(36).slice(2, 8)}`, name, handicap: null };
+      ROSTER.push(player);
+      setTimeout(() => ui.setPlayers(clone(ROSTER)), 20);   // the 'leagues' SSE event
+      return { ok: true, player };
+    }
+    case '/api/voice/name': return { ok: false };   // no key in the demo: the fallback lines are used
+    case '/api/match/start': {
+      if (engine.state && engine.state.phase !== 'done' && !engine.state.aborted) return { ok: false, error: 'A match is already in play' };
+      if (!Array.isArray(body.playerIds) || body.playerIds.length !== 2 || body.playerIds[0] === body.playerIds[1]) return { ok: false, error: 'Pick two players from the roster' };
+      const { playerIds, format = 'quick', stage, ...options } = body;
+      play(SCRIPTS[format] ? format : 'quick', { playerIds, stageId: stage, options: { tieRule: options.tieRule, powerups: options.powerups, order: options.order, hazardLosesHole: !!options.hazardLosesHole } });
+      return { ok: true, match: state() };
+    }
+    case '/api/match/ready': engine.post('ready'); return { ok: true, match: state() };
+    case '/api/match/continue': engine.post('continue'); return { ok: true, match: state() };
+    case '/api/match/arm': return { ok: true, match: state() };
+    case '/api/match/concede': {
+      const s = engine.state;
+      if (!s || s.phase === 'done') return { ok: false, error: 'No match in play' };
+      engine.cancel();
+      const loser = body.playerId || s.currentPlayerId, winner = other(s, loser);
+      s.concededBy = loser;
+      finish(s, { winnerId: winner, reason: 'concede', rewards: { winner: { trophies: 20, coins: 0, chest: [] }, loser: { trophies: -15 } }, awards: [] });
+      s.seq++; s.events.push({ seq: ++engine.evSeq, type: 'match-over', winnerId: winner, reason: 'concede' });
+      engine.deliver(clone(s));
+      return { ok: true, match: state() };
+    }
+    case '/api/match/abort':
+      engine.cancel(); engine.state = null;
+      setTimeout(() => ui.onMatch(null), 10);
+      return { ok: true, match: null };
+    case '/api/match/rematch':
+      play(lastStart.name, lastStart.args);
+      return { ok: true, match: state() };
+    default: return { ok: false, error: `No such route: ${url}` };
+  }
+}
+
+// the announcer and the SFX, as a log (this page is always silent)
+const fmtLine = (l) => (Array.isArray(l) ? l : [l]).map((x) => (typeof x === 'string' ? x : `{${x.name}|${x.fallback}}`)).join(' + ');
+const audio = {
+  say(line, opts) { log('say', `say  ${fmtLine(line)}${opts && opts.priority ? `  (priority ${opts.priority})` : ''}`); },
+  cue(name) { log('cue', `cue  ${name}`); },
+  stopVoice() { log('cue', 'stopVoice'); },
+};
+// ?moment=1: the audio also has moment() (the voice stream's sequencer), so that path can be watched too
+if (query.get('moment') === '1') audio.moment = (m) => log('say', `moment  ${['impact', 'sting', 'crowd'].filter((k) => m[k]).map((k) => `${k}:${m[k]}`).join('  ')}${m.say ? `  say:${fmtLine(m.say)}` : ''}`);
+
+const ui = new MatchUI({ hud: $('hud'), fetchJson, audio, toast: (a, b) => log('post', `toast: ${a} — ${b}`), shotClock: 0 });
+engine.ui = ui;
+ui.setPlayers(clone(ROSTER));
+window.demo = { ui, engine, play, jump, JUMPS };
+
+// ?seq= / ?jump=script:label (with ?hold=1 to freeze there)
+if (query.get('hold') === '1') $('demo-hold').checked = true;
+if (query.get('seq') && SCRIPTS[query.get('seq')]) play(query.get('seq'));
+else if (query.get('jump')) {
+  const [script, label] = query.get('jump').split(':');
+  const i = JUMPS.findIndex((j) => j[1] === script && (j[2] || '') === (label || '') && !j[3]);
+  const k = /^\d+$/.test(query.get('jump')) ? +query.get('jump') : i;
+  if (k >= 0 && JUMPS[k]) jump(k);
+} else {
+  ui.openLobby();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FAQ and troubleshooting · Sim Clash</title>
+<meta name="description" content="Answers about Sim Clash and fixes for the usual problems: port 921 in use, no shots arriving, the SmartScreen warning, sound, frame rate.">
+<meta name="theme-color" content="#07090d">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; base-uri 'self'; form-action 'none'">
+<meta property="og:type" content="website">
+<meta property="og:title" content="FAQ and troubleshooting · Sim Clash">
+<meta property="og:description" content="Answers about Sim Clash and fixes for the usual problems: port 921 in use, no shots arriving, the SmartScreen warning, sound, frame rate.">
+<meta property="og:image" content="https://robertjackson-engage.github.io/sim-clash/assets/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="index.html"><img src="assets/icon.svg" alt="" width="36" height="36"><b><span class="p1">Sim</span> <span class="p2">Clash</span></b></a>
+    <nav class="nav" aria-label="Site">
+      <a href="index.html">Home</a>
+      <a href="install.html">Install</a>
+      <a href="connect.html">Connect</a>
+      <a href="play.html">How to play</a>
+      <a href="faq.html" aria-current="page">FAQ</a>
+      <a href="contribute.html">Contribute</a>
+    </nav>
+    <a class="btn btn-go btn-sm" data-gh="download" href="install.html"><span>Download</span></a>
+  </div>
+</header>
+
+<main id="main">
+<section class="page-head">
+  <div class="wrap">
+    <p class="kicker">FAQ and troubleshooting</p>
+    <h1>Questions, and fixes</h1>
+    <p class="lead">Short answers first. If something is not working, jump to <a href="#trouble">troubleshooting</a>; if it is still not working after that, <a data-gh="new-issue" href="contribute.html">open an issue</a> and tell us what you see.</p>
+  </div>
+</section>
+
+<div class="wrap doc">
+  <nav class="toc" aria-label="On this page">
+    <b>On this page</b>
+    <ol>
+      <li><a href="#about">About the game</a></li>
+      <li><a href="#setup">Setting up</a></li>
+      <li><a href="#playing">Playing</a></li>
+      <li><a href="#trouble">Troubleshooting</a></li>
+    </ol>
+  </nav>
+
+  <div class="prose">
+    <section id="about">
+      <h2>About the game</h2>
+      <details open>
+        <summary>What is Sim Clash?</summary>
+        <div><p>An arcade 1v1 golf game for real launch monitors. Two players in one simulator bay take turns hitting real balls into short, dramatic holes. It is loud, quick and deliberately over the top: power-up balls, sabotage, sudden death, an announcer.</p></div>
+      </details>
+      <details>
+        <summary>Is it really free?</summary>
+        <div><p>Yes. It is open source under the MIT licence: no price, no subscription, no account, no adverts, nothing to buy inside it. The coins and trophies in the game are a scoreboard, not money.</p></div>
+      </details>
+      <details>
+        <summary>Does it replace my simulator software?</summary>
+        <div><p>No, and it is not trying to. It is a party game you start when a friend comes round, not a place to play eighteen holes or work on your numbers. It uses the same port as GSPro, so you run one or the other, not both at once.</p></div>
+      </details>
+      <details>
+        <summary>Who makes it?</summary>
+        <div><p>It is an independent open-source project built on Open-Birdie: the original simulator by Rooj Rin (<a href="https://github.com/rroojrooj/Open-Birdie">rroojrooj/Open-Birdie</a>) and the fork by jordan-shilts (<a href="https://github.com/jordan-shilts/Open-Birdie">jordan-shilts/Open-Birdie</a>) that Sim Clash is forked from. It is not affiliated with GSPro, Foresight Sports, Uneekor or any launch-monitor maker.</p></div>
+      </details>
+      <details>
+        <summary>Can it be played online?</summary>
+        <div><p>Not today. Both players use the same bay and take turns.</p></div>
+      </details>
+    </section>
+
+    <section id="setup">
+      <h2>Setting up</h2>
+      <details>
+        <summary>Which launch monitors work?</summary>
+        <div><p>Fewer than "anything that works with GSPro". The game listens where GSPro's Open API listens (GSPro Open Connect, TCP port 921), but GSPro reaches most launch monitors through connections built into its own connector, and those cannot be pointed at another program. What can feed the game: a maker's own Open API connector, the open-source launch monitors, community connectors, and Foresight GC units through a bridge built into the game. The <a href="connect.html#monitors">Connect page</a> lists every launch monitor we know about in four tiers (tested, expected to work, community, not supported yet), generated from the same data the game's connection wizard uses. One unit, a GCQuad, has been tested on a real rig so far. If yours works, or does not, please tell us.</p></div>
+      </details>
+      <details>
+        <summary>Do I need a launch monitor to try it?</summary>
+        <div><p>No. Press <kbd>T</kbd> in a game for a <a href="connect.html#no-monitor">test swing</a>: the game plays a sensible shot for wherever the ball lies, or one you pick, and treats it like a real one.</p></div>
+      </details>
+      <details>
+        <summary>Does it run on a Mac or on Linux?</summary>
+        <div><p>The installer is for Windows only, which is where launch-monitor software lives. The game is an Electron app run with Node.js, so starting it <a href="install.html#source">from source</a> on another system may work, but nobody on the project has tested that.</p></div>
+      </details>
+      <details>
+        <summary>Why does Windows warn me about the installer?</summary>
+        <div><p>Because it is not code-signed: there is no company behind the project to buy a certificate. Click <b>More info</b>, then <b>Run anyway</b>. The <a href="install.html#smartscreen">Install page</a> explains it in full, and the alternative of running from source.</p></div>
+      </details>
+      <details>
+        <summary>Does it need the internet?</summary>
+        <div><p>Not to play. The stages are built into the game and load without the network, the sound is shipped with it, and shots travel over a local connection inside your PC.</p></div>
+      </details>
+    </section>
+
+    <section id="playing">
+      <h2>Playing</h2>
+      <details>
+        <summary>We are very different golfers. Is it fair?</summary>
+        <div><p>Fairer than real golf. Putting is assisted, tap-ins are given, a slice is softened, nobody loses a ball, and the stroke cap ends a bad hole quickly. Power-ups and tricks let the weaker player steal a hole. It is still decided by who hits the better shots, and every one of those helps can be turned down in Settings.</p></div>
+      </details>
+      <details>
+        <summary>A ball rolled off the mat and the game counted it. Now what?</summary>
+        <div><p>If the swing was under 40 mph the game asks STRAY BALL? straight away: press <kbd>U</kbd>. Otherwise open the match menu (<kbd>Esc</kbd>) and choose <b>Undo last shot</b>. Either way the swing is taken back as if it never happened.</p></div>
+      </details>
+      <details>
+        <summary>Can we play with one launch monitor and a left-hander and a right-hander?</summary>
+        <div><p>The game itself does not mind who is hitting: it plays whatever ball data arrives. Whether your monitor can read both sides without being moved is down to the monitor. One wrinkle: the callouts assume a right-hander, so a left-hander's slice gets announced as HOOK CITY.</p></div>
+      </details>
+      <details>
+        <summary>Is there a shot clock?</summary>
+        <div><p>No. Nothing times or hurries a player standing over a real ball, and no sound repeats while you set up.</p></div>
+      </details>
+      <details>
+        <summary>Can I turn the power-ups off?</summary>
+        <div><p>Yes. In the match options, power-ups can be a loadout (the default), unlimited, or off. On a rocket hole everyone still gets the free Rocket ball on the tee, because the hole cannot be reached without it.</p></div>
+      </details>
+    </section>
+
+    <section id="trouble">
+      <h2>Troubleshooting</h2>
+      <details open>
+        <summary>The game says the monitor is offline</summary>
+        <div>
+          <ul>
+            <li><strong>Is another simulator open?</strong> GSPro and Sim Clash both want port 921 and only one can have it. Close the other one completely, then restart Sim Clash.</li>
+            <li><strong>Start order.</strong> Start Sim Clash first, then your monitor's connector.</li>
+            <li><strong>Foresight GC:</strong> GSPro itself must be closed, the Foresight connector must be open and must see the monitor, and no other bridge program may be running. See <a href="connect.html#foresight">Connect</a>.</li>
+            <li><strong>The log.</strong> An installed game writes what it is doing to <code>%APPDATA%\Sim Clash\logs\game.log</code>. A line saying port 921 is in use means another program has the port.</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary>The monitor is connected but no shot shows up</summary>
+        <div>
+          <ul>
+            <li>Check the connector's own window first: does <em>it</em> show the shot? If not, the problem is between the monitor and its connector, before Sim Clash.</li>
+            <li>In a match, swings are ignored while a full-screen intro or result is showing. Press a key to get to the tee.</li>
+            <li>In the menus a swing is not a shot: only the title screen reacts to one. Get onto a stage first.</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary>Every shot goes about half the distance it should</summary>
+        <div><p>Your connector is sending ball speed in metres per second. Start the game with the environment variable <code>BIRDIE_SPEED_SCALE=2.23694</code>. See <a href="connect.html#network">Connect</a>.</p></div>
+      </details>
+      <details>
+        <summary>There is no sound</summary>
+        <div><p>Press <kbd>S</kbd>: it switches the game's sound on and off, and it remembers the last choice. Settings has the volume. Then check that Windows is sending sound to the screen or speakers you expect.</p></div>
+      </details>
+      <details>
+        <summary>It stutters, or the picture looks coarse</summary>
+        <div><p>Graphics, in Settings, has Auto, Ultra, High and Low. Auto drops to Low by itself when it cannot hold the frame rate, which is what a coarse picture usually means. Close other heavy programs (a second simulator, a browser full of video), or pick Low yourself on a modest graphics card.</p></div>
+      </details>
+      <details>
+        <summary>Windows will not let me run the installer</summary>
+        <div><p>On the blue "Windows protected your PC" box click <b>More info</b> to reveal <b>Run anyway</b>. If your PC is managed by an employer or a school it may block unsigned programs outright; in that case use a PC you control.</p></div>
+      </details>
+      <details>
+        <summary>A putt I barely touched went in</summary>
+        <div><p>Easy putting is on by default and is generous on purpose: it pulls a reasonable stroke toward the hole and makes the cup bigger. If that is too easy for your matches, set Putting to <b>Assisted</b> or <b>Real</b> in Settings, and shorten or switch off the tap-ins there too.</p></div>
+      </details>
+      <details>
+        <summary>Something else is wrong</summary>
+        <div><p><a data-gh="new-issue" href="contribute.html">Open an issue on GitHub</a>. Say which launch monitor and connector you use, what you did, what you expected and what happened, and attach <code>game.log</code> if you have it.</p></div>
+      </details>
+    </section>
+
+    <div class="next">
+      <a class="btn btn-go" href="play.html"><span>How to play</span></a>
+      <a class="btn btn-ghost" href="contribute.html"><span>Contribute</span></a>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <div>
+      <h2>Sim Clash</h2>
+      <p>Arcade 1v1 golf for real launch monitors. Free and open source under the MIT licence.</p>
+      <p>Built on Open-Birdie: the original by Rooj Rin (<a href="https://github.com/rroojrooj/Open-Birdie">rroojrooj/Open-Birdie</a>) and the fork by jordan-shilts (<a href="https://github.com/jordan-shilts/Open-Birdie">jordan-shilts/Open-Birdie</a>) that Sim Clash is built on.</p>
+    </div>
+    <nav aria-label="Pages">
+      <h2>Site</h2>
+      <ul>
+        <li><a href="install.html">Install</a></li>
+        <li><a href="connect.html">Connect your launch monitor</a></li>
+        <li><a href="play.html">How to play</a></li>
+        <li><a href="faq.html">FAQ and troubleshooting</a></li>
+        <li><a href="contribute.html">Contribute</a></li>
+      </ul>
+    </nav>
+    <nav aria-label="Project">
+      <h2>Project</h2>
+      <ul>
+        <li><a data-gh="repo" href="contribute.html">GitHub repository</a></li>
+        <li><a data-gh="releases" href="install.html">Releases</a></li>
+        <li><a data-gh="issues" href="contribute.html">Issues</a></li>
+        <li><a data-gh="license" href="contribute.html">MIT licence</a></li>
+        <li><a data-gh="disclaimer" href="contribute.html">Disclaimer</a></li>
+      </ul>
+    </nav>
+    <p class="fine">Sim Clash is an independent open-source project. It is not affiliated with, endorsed by or sponsored by GSPro, Foresight Sports, Uneekor or any other company named on this site; their names are used only to say what the game works with, and all trademarks belong to their owners. The software is provided as is, with no warranty. Hitting golf balls indoors can hurt people and break things: swing at your own risk.</p>
+  </div>
+</footer>
+<script src="config.js"></script>
+<script src="site.js"></script>
+</body>
+</html>

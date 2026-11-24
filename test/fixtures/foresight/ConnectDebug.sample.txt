@@ -1,0 +1,42 @@
+2026-11-22 21:24:48,360 [1] INFO  VGPconnect.ForesightForm [(null)] - Sending Shot
+2026-11-22 21:24:48,383 [1] INFO  VGPconnect.ForesightForm [(null)] - Logging ball data IMMEDIATELY before sending to GSPro
+2026-11-22 21:24:48,387 [1] INFO  VGPconnect.ForesightForm [(null)] - [53.5074539,5.214206,26.1026459,1337.0,2574.40649,2200.0,31.28819,0.0]
+2026-11-22 21:25:00,831 [1] INFO  VGPconnect.ForesightForm [(null)] - Sending Shot
+2026-11-22 21:25:00,833 [1] INFO  VGPconnect.ForesightForm [(null)] - Logging ball data IMMEDIATELY before sending to GSPro
+2026-11-22 21:25:00,876 [1] INFO  VGPconnect.ForesightForm [(null)] - [75.59378,25.7324047,0.8699217,973.0,3273.928,3126.0,17.2892971,0.0]
+2026-11-22 21:25:15,652 [1] INFO  VGPconnect.ForesightForm [(null)] - Sending Shot
+2026-11-22 21:25:15,654 [1] INFO  VGPconnect.ForesightForm [(null)] - Logging ball data IMMEDIATELY before sending to GSPro
+2026-11-22 21:25:15,654 [1] INFO  VGPconnect.ForesightForm [(null)] - [28.240696,5.62557173,22.5464382,2442.0,3049.80225,1827.0,53.1977348,0.0]
+2026-11-22 21:27:30,448 [1] INFO  VGPconnect.ForesightForm [(null)] - Sending Shot
+2026-11-22 21:27:30,448 [1] INFO  VGPconnect.ForesightForm [(null)] - Logging ball data IMMEDIATELY before sending to GSPro
+2026-11-22 21:27:30,448 [1] INFO  VGPconnect.ForesightForm [(null)] - [5.9062767,1.94555271,1.39439392,0.0,0.0,0.0,0.0,0.0]
+2026-11-22 21:34:46,833 [33] ERROR VGPconnect.ForesightForm [(null)] - System.IO.IOException: Unable to read data from the transport connection: An existing connection was forcibly closed by the remote host. ---> System.Net.Sockets.SocketException: An existing connection was forcibly closed by the remote host
+   at System.Net.Sockets.NetworkStream.Read(Byte[] buffer, Int32 offset, Int32 size)
+   --- End of inner exception stack trace ---
+   at System.Net.Sockets.NetworkStream.Read(Byte[] buffer, Int32 offset, Int32 size)
+   at VGPconnect.ForesightForm.ListenForData() in C:\Projects\VGPconnect\VGPconnect\Foresight.cs:line 2477
+2026-11-22 21:34:46,851 [33] ERROR VGPconnect.ForesightForm [(null)] -    at System.Environment.GetStackTrace(Exception e, Boolean needFileInfo)
+   at System.Environment.get_StackTrace()
+   at VGPconnect.ForesightForm.CleanUpConnectionKill() in C:\Projects\VGPconnect\VGPconnect\Foresight.cs:line 2282
+   at VGPconnect.ForesightForm.ListenForData() in C:\Projects\VGPconnect\VGPconnect\Foresight.cs:line 2477
+   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state, Boolean preserveSyncCtx)
+   at System.Threading.ExecutionContext.Run(ExecutionContext executionContext, ContextCallback callback, Object state, Boolean preserveSyncCtx)
+   at System.Threading.ExecutionContext.Run(ExecutionContext executionContext, ContextCallback callback, Object state)
+   at System.Threading.ThreadHelper.ThreadStart()
+2026-11-22 21:53:12,864 [1] INFO  VGPconnect.ForesightForm [(null)] - Sending Shot
+2026-11-22 21:53:12,865 [1] INFO  VGPconnect.ForesightForm [(null)] - Logging ball data IMMEDIATELY before sending to GSPro
+2026-11-22 22:16:50,792 [1] INFO  VGPconnect.ForesightForm [(null)] - Sending Shot
+2026-11-22 22:16:50,793 [1] INFO  VGPconnect.ForesightForm [(null)] - Logging ball data IMMEDIATELY before sending to GSPro
+2026-11-22 22:16:50,793 [1] INFO  VGPconnect.ForesightForm [(null)] - [47.18525,27.3292542,-5.73109055,165.0,2874.739,2870.0,3.2903862,0.0]
+2026-11-22 22:17:15,842 [1] INFO  VGPconnect.ForesightForm [(null)] - Sending Shot
+2026-11-22 22:17:15,842 [1] INFO  VGPconnect.ForesightForm [(null)] - Logging ball data IMMEDIATELY before sending to GSPro
+2026-11-22 22:17:15,842 [1] INFO  VGPconnect.ForesightForm [(null)] - [7.410872,0.0,-2.99686742,0.0,0.0,0.0,0.0,0.0]
+2026-11-22 22:17:38,744 [1] INFO  VGPconnect.ForesightForm [(null)] - Sending Shot
+2026-11-22 22:17:38,744 [1] INFO  VGPconnect.ForesightForm [(null)] - Logging ball data IMMEDIATELY before sending to GSPro
+2026-11-22 22:17:38,745 [1] INFO  VGPconnect.ForesightForm [(null)] - [107.432358,25.4714546,-7.17377329,734.0,7799.61426,7765.0,5.399937,0.0]
+2026-11-22 22:18:01,116 [1] INFO  VGPconnect.ForesightForm [(null)] - Sending Shot
+2026-11-22 22:18:01,117 [1] INFO  VGPconnect.ForesightForm [(null)] - Logging ball data IMMEDIATELY before sending to GSPro
+2026-11-22 22:18:01,117 [1] INFO  VGPconnect.ForesightForm [(null)] - [8.143612,19.5940552,-4.397254,4017.0,6249.133,4787.0,40.0016174,0.0]
+2024-11-28 14:55:57,494 [1] INFO  VGPconnect.ForesightForm [(null)] - Sending Shot
+2024-11-28 14:55:57,496 [1] INFO  VGPconnect.ForesightForm [(null)] - Logging ball data IMMEDIATELY before sending to GSPro
+2024-11-28 14:55:57,496 [1] INFO  VGPconnect.ForesightForm [(null)] - [79.75499,3.16992664,-5.246079,0.0,0.0,0.0,"NaN",0.0]

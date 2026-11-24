@@ -2,9 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Open-Birdie</title>
+<title>Sim Clash</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="arcade/arcade.css">
+<link rel="stylesheet" href="arcade/match.css">
+<link rel="stylesheet" href="arcade/shell.css"><!-- v2:shell the game product's front end; every rule is scoped to html[data-product="simclash"] or .sc-* -->
 <script type="importmap">
   { "imports": {
     "three": "/vendor/three/build/three.module.js",
@@ -16,6 +19,8 @@
 </script>
 </head>
 <body>
+<!-- v2:shell which product this is (the server says: the game, or the simulator) and its name, before anything draws -->
+<script src="/product.js"></script>
 <div id="scene"></div>
 
 <!-- Everything over the 3D view. #hud is zoomed to the window (app.js), so one layout
@@ -104,6 +109,11 @@
         <div class="set-text"><b>Auto club</b><span>Pick the club that fits at each new lie.</span></div>
         <div class="seg wide" id="seg-autoclub" role="radiogroup" aria-label="Pick the club that fits at each new lie"></div>
       </div>
+    </section>
+    <!-- v2:bridge the Foresight bridge's status and its auto / on / off switch (arcade/foresight-panel.js, docs/foresight-bridge.md) -->
+    <section class="drawer-sec" aria-label="Launch monitor">
+      <span class="lbl">LAUNCH MONITOR</span>
+      <div id="foresight-panel"></div>
     </section>
     <section class="drawer-sec" aria-label="View">
       <span class="lbl">VIEW</span>

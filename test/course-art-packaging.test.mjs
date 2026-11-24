@@ -92,10 +92,17 @@ test('package scripts prepare runtime art and Electron copies only the staged tr
   const pkg = JSON.parse(fs.readFileSync(path.join(REPO, 'package.json'), 'utf8'));
   assert.equal(pkg.scripts['prepare:course-art'], 'node tools/course-art/prepare-runtime.mjs');
   assert.equal(pkg.scripts['check:course-art'], 'node tools/course-art/prepare-runtime.mjs --check');
-  assert.equal(pkg.scripts.start, 'npm run prepare:course-art && electron .');
-  assert.equal(pkg.scripts['start:server'], 'npm run prepare:course-art && node server.js');
-  assert.equal(pkg.scripts.pack, 'npm run prepare:course-art && electron-builder --dir');
-  assert.equal(pkg.scripts.dist, 'npm run prepare:course-art && electron-builder --win');
+  // v2:release starting from source also bundles the arcade stages; the packaged GAME is built
+  // from build/electron-builder.cjs (docs/dev/packaging.md) and ships no real-course art, so
+  // pack and dist no longer stage it. The `build` block below is still upstream's.
+  assert.equal(pkg.scripts.start, 'npm run prepare:course-art && npm run prepare:arcade-data && electron .');
+  assert.equal(pkg.scripts['start:server'], 'npm run prepare:course-art && npm run prepare:arcade-data && node server.js --bundled-arcade');
+  // v2:final the stages' sky photos are bundled too: starting from source takes them when it can
+  // (--soft: no connection is a warning), a packaged build does not go on without them
+  assert.equal(pkg.scripts['prepare:arcade-data'], 'node tools/arcade-holes/bundle.mjs && node tools/arcade-holes/sky-bundle.mjs --soft');
+  assert.equal(pkg.scripts['prepare:sky'], 'node tools/arcade-holes/sky-bundle.mjs');
+  assert.equal(pkg.scripts.pack, 'npm run prepare:arcade-data && npm run prepare:sky && electron-builder --dir --config build/electron-builder.cjs');
+  assert.equal(pkg.scripts.dist, 'npm run prepare:arcade-data && npm run prepare:sky && electron-builder --win --config build/electron-builder.cjs && node tools/release/verify-package.cjs');
   assert.equal(pkg.scripts.prepack, undefined);
   assert.equal(pkg.scripts.predist, undefined);
 

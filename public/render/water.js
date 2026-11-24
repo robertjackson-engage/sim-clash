@@ -38,6 +38,44 @@ const RIPPLE = `
   }
 `;
 
+// Self-lit water for an arcade theme (arcade-look.js water.glow), compiled in only behind
+// WATER_GLOW: molten lava (a dark crust broken by slow bright veins, white-hot where they
+// pool), or a night city's neon standing in black water (streaks of two colours that
+// shimmer with the ripples). uArcFlow: strength, 1 / pattern size (m), speed, mode (0 lava, 1 neon).
+const GLOW_GLSL = /* glsl */`
+  #ifdef WATER_GLOW
+  uniform vec3 uArcGlow, uArcHot, uArcCrust;
+  uniform vec4 uArcFlow;
+  float arcHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+  float arcNoise(vec2 p) {
+    vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(arcHash(i), arcHash(i + vec2(1.0, 0.0)), f.x), mix(arcHash(i + vec2(0.0, 1.0)), arcHash(i + vec2(1.0, 1.0)), f.x), f.y);
+  }
+  vec3 arcGlow(vec3 col, vec2 p, vec3 N, vec3 V, float t) {
+    vec2 q = p * uArcFlow.y;
+    float s = t * uArcFlow.z;
+    vec3 outCol = col;
+    if (uArcFlow.w < 0.5) {
+      float n = arcNoise(q + vec2(s, s * 0.6)) * 0.55 + arcNoise(q * 2.3 - vec2(s * 0.7, s * 1.1)) * 0.3 + arcNoise(q * 5.1 + vec2(s * 1.3, -s)) * 0.15;
+      float vein = 1.0 - abs(n * 2.0 - 1.0);
+      float pool = smoothstep(0.35, 0.8, arcNoise(q * 0.45 - vec2(s * 0.4, 0.0)));
+      vec3 lava = mix(uArcCrust, uArcGlow, smoothstep(0.42, 0.86, vein) * (0.45 + 0.55 * pool));
+      lava = mix(lava, uArcHot * 1.5, smoothstep(0.8, 0.99, vein) * (0.2 + 0.8 * pool));
+      lava *= 0.86 + 0.14 * sin(t * 0.9 + n * 6.0);
+      outCol = mix(col, lava, uArcFlow.x);
+    } else {
+      // streaks standing toward the viewer (a bearing from the camera), two colours
+      float ang = atan(V.x, V.z) * 144.0 * uArcFlow.y + N.x * 2.2;
+      float b = arcNoise(vec2(ang, 1.7));
+      float shimmer = 0.6 + 0.4 * sin(t * (9.0 * uArcFlow.z) + p.x * 0.31 + p.y * 0.27 + N.z * 9.0);
+      float graze = 0.3 + 0.7 * pow(1.0 - max(V.y, 0.0), 2.0);
+      outCol = col + (uArcGlow * smoothstep(0.58, 0.85, b) + uArcHot * smoothstep(0.42, 0.15, b)) * (uArcFlow.x * shimmer * graze);
+    }
+    return outCol;
+  }
+  #endif
+`;
+
 // ---------------------------------------------------------------- mirror ponds
 const POND_VERT = /* glsl */`
   uniform mat4 textureMatrix;
@@ -66,6 +104,10 @@ const POND_FRAG = /* glsl */`
   uniform float uDepthOn, uCamNear, uCamFar, uMirror;
   uniform sampler2D uDepthTex, uSky;
   uniform vec2 uResolution;
+  #ifdef WATER_ARCADE
+  uniform vec4 uArcWater;        // arcade look: reflection kept, shallows' reach (m), foam line (m), shallows' strength
+  uniform vec3 uArcFoam;
+  #endif
   varying vec4 vUv;
   varying vec3 vWorldPos;
   varying float vEye;
@@ -73,6 +115,7 @@ const POND_FRAG = /* glsl */`
   #include <fog_pars_fragment>
   #include <logdepthbuf_pars_fragment>
   ${RIPPLE}
+  ${GLOW_GLSL}
   void main() {
     #include <logdepthbuf_fragment>
     vec3 N = rippleNormal(vWorldPos.xz, uTime, uChop);
@@ -80,6 +123,9 @@ const POND_FRAG = /* glsl */`
     // Schlick Fresnel, floored: a calm pond mirrors well above water's 2% at normal
     // incidence once the sky and banks are bright behind the viewer
     float F = mix(0.22, 1.0, 0.02 + 0.98 * pow(1.0 - max(dot(V, N), 0.0), 5.0));
+    #ifdef WATER_ARCADE
+    F *= uArcWater.x;   // arcade look: the water's own colour over the mirror
+    #endif
     vec4 uv = vUv;
     uv.xy += N.xz * uDistort * uv.w;
     // a live mirror shows the course; the others reflect the sky photo alone
@@ -97,9 +143,26 @@ const POND_FRAG = /* glsl */`
       float sceneEye = (uCamNear * uCamFar) / (uCamFar - d * (uCamFar - uCamNear));
       float thick = max(sceneEye - vEye, 0.0);
       float clear = exp(-thick * 1.6);          // the waterline clears; ~1.5 m of water doesn't
+      #ifdef WATER_ARCADE
+      // arcade look: the shallows glow (uSilt is their colour) well out from the bank,
+      // and a white foam line, breathing a little, rims the water
+      float day = 0.45 + 0.55 * clamp(uSunDir.y * 1.5, 0.0, 1.0);
+      // the water's depth straight down, near enough (the column along the view ray,
+      // foreshortened), so the bands keep their width at a grazing view
+      float deepM = thick * clamp(V.y, 0.12, 1.0);
+      col = mix(col, uSilt * day, exp(-deepM / uArcWater.y) * uArcWater.w);
+      float lap = 0.5 + 0.5 * sin(uTime * 1.4 + (vWorldPos.x + vWorldPos.z) * 0.7);
+      float rim = 1.0 - smoothstep(0.35 * uArcWater.z, uArcWater.z * (1.0 + 0.5 * lap), deepM);
+      col = mix(col, uArcFoam * day, rim);
+      alpha = 1.0;
+      #else
       col = mix(col, mix(col, uSilt, 0.35), clear * (1.0 - F));
       alpha = 1.0 - clear * (1.0 - F) * 0.9;
+      #endif
     }
+    #ifdef WATER_GLOW
+    col = arcGlow(col, vWorldPos.xz, N, V, uTime);
+    #endif
     gl_FragColor = vec4(col, alpha);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
@@ -208,6 +271,10 @@ const SEA_FRAG = /* glsl */`
   uniform vec3 uSunDir, uSunColor, uSeaDeep, uSeaScatter, uSeaShallow;
   uniform sampler2D uSky, uSeaMask;
   uniform vec4 uMaskRect;         // grid corner (sim m, less half a cell); 1 / its width, height
+  #ifdef WATER_ARCADE
+  uniform vec4 uArcSea;           // arcade look: reflection kept, shallows' reach (m), foam wash (m)
+  uniform vec3 uArcFoam;
+  #endif
   varying vec3 vWorldPos;
   varying float vEye;
   #include <common>
@@ -219,6 +286,7 @@ const SEA_FRAG = /* glsl */`
     return mix(mix(seaHash(i), seaHash(i + vec2(1.0, 0.0)), f.x), mix(seaHash(i + vec2(0.0, 1.0)), seaHash(i + vec2(1.0, 1.0)), f.x), f.y);
   }
   vec3 seaSky(vec3 d) { d.y = abs(d.y); return texture2D(uSky, equirectUv(normalize(d))).rgb; }
+  ${GLOW_GLSL}
   void main() {
     #include <logdepthbuf_fragment>
     vec2 sim = vec2(vWorldPos.x, -vWorldPos.z);
@@ -252,6 +320,9 @@ const SEA_FRAG = /* glsl */`
     vec3 N = normalize(vec3(-g.x, 1.0, g.y));   // sim north is world -z
     // Fresnel, less of it where sub-pixel chop shadows and masks the facets
     float F = (0.02 + 0.98 * pow(1.0 - max(dot(V, N), 0.0), 5.0)) * (1.0 - 0.45 * clamp(rough * 6.0, 0.0, 1.0));
+    #ifdef WATER_ARCADE
+    F *= uArcSea.x;   // arcade look: the sea's own colour over the sky's
+    #endif
     // the sky in the waves, softened where the chop is finer than a pixel
     vec3 R = reflect(-V, N);
     float spread = clamp(rough * 3.0, 0.0, 0.5);
@@ -265,6 +336,9 @@ const SEA_FRAG = /* glsl */`
     // the sand within a few tens of metres of the shore
     vec3 body = uSeaDeep * day + uSeaScatter * day * smoothstep(-0.02, 0.1, crest) * 0.45;
     body = mix(body, uSeaShallow * day, exp(-shore / 14.0) * 0.85);
+    #ifdef WATER_ARCADE
+    body = mix(body, uSeaShallow * day, exp(-shore / uArcSea.y) * 0.92);   // arcade look: a wide turquoise band off the shore
+    #endif
     vec3 col = mix(body, sky, F);
     // the sun's glitter: sharp on near water, a broad sheen where the chop is sub-pixel
     vec3 H = normalize(uSunDir + V);
@@ -277,9 +351,21 @@ const SEA_FRAG = /* glsl */`
     float br = seaNoise(sim * 0.35 + vec2(uTime * 0.08, 0.0)) * 0.6 + seaNoise(sim * 1.1 - uTime * 0.1) * 0.4;
     float lines = smoothstep(0.86, 0.99, run) * smoothstep(0.45, 0.8, br);
     float wash = (1.0 - smoothstep(0.2, 1.3, shore)) * smoothstep(0.35, 0.7, br);
+    #ifdef WATER_ARCADE
+    // arcade look: a solid white wash along the waterline, its edge breathing in and out
+    wash = max(wash, 1.0 - smoothstep(0.4 * uArcSea.z, uArcSea.z * (0.8 + 0.4 * sin(uTime * 0.8 + seaNoise(sim * 0.07) * 6.0)), shore));
+    #endif
     float caps = smoothstep(0.45, 1.0, wind) * smoothstep(0.03, 0.09, crest) * smoothstep(0.62, 0.8, seaNoise(sim * 0.09 - uWindDir * uTime * 0.8));
     float foam = clamp(max(max(lines * zone, wash), caps), 0.0, 1.0) * (1.0 - smoothstep(600.0, 2500.0, vEye));
+    #ifdef WATER_ARCADE
+    col = mix(col, uArcFoam * day, foam * 0.95);
+    #else
     col = mix(col, vec3(0.82, 0.86, 0.88) * day, foam * 0.8);
+    #endif
+    #ifdef WATER_GLOW
+    // the glow under the surf: the foam keeps its own colour
+    col = mix(arcGlow(col, sim, N, V, uTime), col, foam * 0.95);
+    #endif
     gl_FragColor = vec4(col, 1.0);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
@@ -288,7 +374,7 @@ const SEA_FRAG = /* glsl */`
 
 // sea: sea.js findSea; shared: buildWater's live uniforms (time, sun, sky);
 // center: sim { x, y } the plane is centred on.
-function buildSea(sea, shared, center) {
+function buildSea(sea, shared, center, look = null) {
   const n = sea.nx * sea.ny;
   const data = new Uint8Array(n * 4);
   const half = sea.cellM / 2;
@@ -314,7 +400,16 @@ function buildSea(sea, shared, center) {
     uSeaMask: { value: mask },
     uMaskRect: { value: new THREE.Vector4(sea.minX - half, sea.minY - half, 1 / (sea.nx * sea.cellM), 1 / (sea.ny * sea.cellM)) },
   };
-  const mat = new THREE.ShaderMaterial({ name: 'Sea', uniforms, vertexShader: SEA_VERT, fragmentShader: SEA_FRAG, fog: true });
+  if (look) {   // the arcade look's sea (arcade-look.js water.sea)
+    const s = look.sea || {};
+    uniforms.uSeaDeep.value.set(s.deep ?? look.deep);
+    uniforms.uSeaScatter.value.set(s.scatter ?? look.shallow);
+    uniforms.uSeaShallow.value.set(s.shallow ?? look.shallow);
+    uniforms.uArcSea = { value: new THREE.Vector4(s.reflect ?? 1, s.shallowReachM ?? 14, s.foamM ?? 1.3, 0) };
+    uniforms.uArcFoam = shared.uArcFoam;
+    if (shared.uArcFlow) Object.assign(uniforms, { uArcGlow: shared.uArcGlow, uArcHot: shared.uArcHot, uArcCrust: shared.uArcCrust, uArcFlow: shared.uArcFlow });
+  }
+  const mat = new THREE.ShaderMaterial({ name: 'Sea', defines: look ? { WATER_ARCADE: '', ...(shared.uArcFlow ? { WATER_GLOW: '' } : {}) } : {}, uniforms, vertexShader: SEA_VERT, fragmentShader: SEA_FRAG, fog: true });
   mat.userData.disposeTextures = [mask];
   // out past the horizon haze band (9.5 km), inside the camera's far plane
   const mesh = new THREE.Mesh(new THREE.CircleGeometry(9000, 96), mat);
@@ -334,7 +429,9 @@ function buildSea(sea, shared, center) {
 // sunDir: world Vector3 toward the sun; depth: the terrain depth pre-pass or null;
 // sea: sea.js findSea, with seaCenter the sim { x, y } to centre it on, or null.
 // Returns { meshes, waterMeshes, sea, waterUpdate, setFoamDepth, setMirrorSkip, setWind }.
-export function buildWater(ponds, sunDir, depth, sea = null, seaCenter = null) {
+// look (optional, arcade-look.js water): the arcade look's colours, shallows, foam and
+// glitter, compiled in behind WATER_ARCADE; null leaves the water as it is.
+export function buildWater(ponds, sunDir, depth, sea = null, seaCenter = null, look = null) {
   const meshes = [];
   const mirrorSkip = [];   // objects left out of the live mirrors (setMirrorSkip)
   const mirrorOnly = [];   // objects drawn only inside them
@@ -354,8 +451,23 @@ export function buildWater(ponds, sunDir, depth, sea = null, seaCenter = null) {
     uCamNear: { value: 0.3 },
     uCamFar: { value: 12000 },
   };
+  const glintMul = look?.glint ?? 1, chopMul = look?.chopMul ?? 1;
+  if (look) {
+    shared.uDeep.value.set(look.deep);
+    shared.uSilt.value.set(look.shallow);
+    shared.uArcWater = { value: new THREE.Vector4(look.reflect ?? 1, look.shallowReachM ?? 0.6, look.foamM ?? 0, look.shallowMix ?? 0.35) };
+    shared.uArcFoam = { value: new THREE.Color(look.foam ?? '#ffffff') };
+    shared.uChop.value *= chopMul;
+    if (look.glow) {   // a theme's self-lit water: lava, neon (WATER_GLOW)
+      const g = look.glow;
+      shared.uArcGlow = { value: new THREE.Color(g.color ?? '#ff5a14') };
+      shared.uArcHot = { value: new THREE.Color(g.hot ?? '#ffd04a') };
+      shared.uArcCrust = { value: new THREE.Color(g.crust ?? '#000000') };
+      shared.uArcFlow = { value: new THREE.Vector4(g.strength ?? 1, 1 / Math.max(0.5, g.scaleM ?? 12), g.speed ?? 0.05, g.mode === 'neon' ? 1 : 0) };
+    }
+  }
   const open = sea
-    ? buildSea(sea, shared, seaCenter || { x: sea.minX + (sea.nx * sea.cellM) / 2, y: sea.minY + (sea.ny * sea.cellM) / 2 })
+    ? buildSea(sea, shared, seaCenter || { x: sea.minX + (sea.nx * sea.cellM) / 2, y: sea.minY + (sea.ny * sea.cellM) / 2 }, look)
     : null;
 
   for (const p of ponds) {
@@ -368,6 +480,7 @@ export function buildWater(ponds, sunDir, depth, sea = null, seaCenter = null) {
     // a hair over the flattened water line: the bank where it rises out draws the shore
     const level = p.level + 0.03;
     const m = reflect ? mirrorPond(g, shared, mirrorSkip, mirrorOnly) : skyPond(g, shared);
+    if (look) m.material.defines = { ...m.material.defines, WATER_ARCADE: '', ...(look.glow ? { WATER_GLOW: '' } : {}) };
     m.rotation.x = -Math.PI / 2;
     m.position.y = level;
     m.updateMatrixWorld(true);
@@ -424,13 +537,13 @@ export function buildWater(ponds, sunDir, depth, sea = null, seaCenter = null) {
     sea: open ? open.mesh : null,
     // the day's wind ({ mph, toDeg }): ponds ruffle with it, the sea runs downwind
     setWind: (wind) => {
-      shared.uChop.value = 0.16 + 0.32 * Math.min(1, (wind?.mph || 0) / 25);
+      shared.uChop.value = (0.16 + 0.32 * Math.min(1, (wind?.mph || 0) / 25)) * chopMul;
       open?.setWind(wind);
     },
     waterUpdate: (t) => { shared.uTime.value = t; },
     setSun: (dir) => shared.uSunDir.value.copy(dir).normalize(),
     // the sun's glitter on the water, as bright as the sun is: none to speak of under cloud
-    setSunGlint: (k) => shared.uSunColor.value.setRGB(1.0, 0.95, 0.84).multiplyScalar(Math.max(0, k)),
+    setSunGlint: (k) => shared.uSunColor.value.setRGB(1.0, 0.95, 0.84).multiplyScalar(Math.max(0, k) * glintMul),
     setSky: (tex) => { shared.uSky.value = tex; },
     updateMirrors,
     setFoamDepth,

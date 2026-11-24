@@ -63,7 +63,8 @@ export function impactSchedule(points, events, flightTime, { isPutt = false } = 
       });
       continue;
     }
-    if (ev.type !== 'bounce' && ev.type !== 'water') continue;
+    // 'skip': a Skipper ball skipping off water like a stone (lib/physics.js): a splash, and on it goes
+    if (ev.type !== 'bounce' && ev.type !== 'water' && ev.type !== 'skip') continue;
     const i = nearestSampleFrom(points, from, ev.x, ev.y);
     if (i < 0) continue;
     from = i + 1;
@@ -75,6 +76,11 @@ export function impactSchedule(points, events, flightTime, { isPutt = false } = 
     const down = Math.max(0, -v.vz), speed = Math.hypot(v.vx, v.vy, v.vz);
     const h = Math.hypot(v.vx, v.vy);
     const dirX = h > 1e-6 ? v.vx / h : 0, dirY = h > 1e-6 ? v.vy / h : 0;
+    if (ev.type === 'skip') {
+      // a splash ring where it skips; the ball is not gone (scene._animStep keeps it in sight)
+      out.push({ t, x: ev.x, y: ev.y, kind: 'water', power: Math.min(0.85, Math.max(0.35, 0.2 + speed / 40)), dirX, dirY, skip: true });
+      continue;
+    }
     if (ev.type === 'water') {
       // a ball that only rolls in still goes under with a plop
       out.push({ t, x: ev.x, y: ev.y, kind: 'water', power: Math.min(1, Math.max(0.3, 0.25 + speed / 32)), dirX, dirY });
@@ -217,6 +223,9 @@ function seeded(seed) {
 export class ImpactFx {
   constructor({ capacity = 768 } = {}) {
     this.capacity = capacity;
+    // a look's scale on what is thrown up (arcade-look.js impact): particle and ring size, particle count
+    this.sizeMul = 1;
+    this.countMul = 1;
     this._next = 0;
     this._aliveUntil = -Infinity;
     this._spawned = 0;
@@ -283,7 +292,7 @@ export class ImpactFx {
     const dirX = impact.dirX || 0, dirY = impact.dirY || 0;
     let made = 0, lastDeath = now;
     for (const r of recipe) {
-      const n = Math.max(1, Math.round(r.n * (0.35 + 0.65 * power)));
+      const n = Math.max(1, Math.round(r.n * (0.35 + 0.65 * power) * this.countMul));
       for (let k = 0; k < n; k++) {
         const i = this._next;
         this._next = (this._next + 1) % this.capacity;
@@ -301,7 +310,7 @@ export class ImpactFx {
         const life = r.life[0] + (r.life[1] - r.life[0]) * rnd();
         const birth = now + rnd() * 0.04;
         this._life.setXYZ(i, birth, life, r.grow);
-        this._look.setXYZW(i, (r.size[0] + (r.size[1] - r.size[0]) * rnd()) * (0.8 + 0.4 * power), r.grav, r.drag, r.alpha);
+        this._look.setXYZW(i, (r.size[0] + (r.size[1] - r.size[0]) * rnd()) * (0.8 + 0.4 * power) * this.sizeMul, r.grav, r.drag, r.alpha);
         const c = rnd();
         this._col.setXYZ(i,
           r.col[0][0] + (r.col[1][0] - r.col[0][0]) * c,
@@ -317,7 +326,7 @@ export class ImpactFx {
     if (impact.kind === 'water') {
       const ring = this.rings[this._ringNext];
       this._ringNext = (this._ringNext + 1) % RING_COUNT;
-      const reach = 5 + 7 * power;               // metres the rings spread to
+      const reach = (5 + 7 * power) * this.sizeMul;   // metres the rings spread to
       ring.position.set(impact.x, groundZ + 0.04, -impact.y);
       ring.scale.set(reach * 2, 1, reach * 2);
       ring.userData.born = now;

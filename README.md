@@ -1,420 +1,322 @@
-# ⛳ Open-Birdie
+<p align="center"><img src="docs/media/icon.png" width="112" alt="Sim Clash icon"></p>
 
-A golf course simulator built entirely on **open data and free infrastructure**, playable
-with any launch monitor that speaks the **GSPro Open Connect** protocol — including the
-**Uneekor EYEMINI LITE** via Uneekor VIEW + GSPconnect.
+# Sim Clash
 
-- **Real courses** from OpenStreetMap (fairways, greens, bunkers, water, trees, hole routings)
-- **Real terrain** from AWS Terrain Tiles open elevation data — slopes affect flight, bounce, roll, and putts
-- **Real physics** — drag + Magnus lift flight model from published aero fits (Ferguson, McNally &
-  McPhee 2022), the same model as the OpenFlight launch monitor so carries match, spin-axis draws/fades, backspin zip-back on greens, gravity-fed breaks on slopes
-- **Full round play** — 18 holes, scorecard with a round-complete summary, pick up to bail on a hole, water/OB penalties, gimmes, cup capture
-- Desktop app (Electron) — no browser needed; a tablet/phone on the same network can mirror via the built-in web server (set `BIRDIE_HOST=0.0.0.0` to allow LAN access — localhost-only by default)
+**Arcade 1v1 golf for real launch monitors.** Two players, one bay, real swings. Free and
+open source.
 
-> **Independent open-source project — not affiliated with, endorsed by, or sponsored by
-> Uneekor, GSPro, TrackMan, OpenStreetMap, or AWS.** All trademarks belong to their
-> respective owners and are used nominatively for interoperability only. Provided **"AS IS",
-> with no warranty and no liability** — see **[DISCLAIMER.md](DISCLAIMER.md)** and **[LICENSE](LICENSE)**.
-> Golf is a physical activity that can cause injury or property/equipment damage; **use at your own risk.**
+![The Sim Clash title screen over Canyon Run](docs/media/title.jpg)
 
-## Install
+Sim Clash is a video game you play with a real golf club. You hit a real ball into your
+simulator screen or net, your launch monitor measures it, and the game does the rest: a
+head-to-head match on fantasy holes, with power-up balls, tricks to play on your opponent,
+a crowd, an announcer, and sudden death when a hole is tied. It is built to be loud, quick
+and friendly to a bad swing. It is not a golf simulator: there are no real courses in it.
 
-Download the latest **Open-Birdie-Setup-_x.y.z_.exe** from
-[Releases](https://github.com/rroojrooj/Open-Birdie/releases) and run it. It installs
-per-user (no admin prompt), adds Start Menu + desktop shortcuts, and launches when done.
+- **Status:** beta (`1.0.0-beta.1`). Windows. It has been played on one simulator bay so
+  far; reports from other launch monitors are very welcome.
+- **Price:** nothing. No account, no real money, nothing to buy.
+- **Licence:** MIT. Built on [Open-Birdie](#built-on-open-birdie).
 
-Open-Birdie isn't code-signed yet, so the first run trips Windows SmartScreen
-("Windows protected your PC"). Click **More info → Run anyway** — it's a one-time prompt.
+## What is in it
 
-## Launch
+- **Versus on one bay.** Two players take turns at the same simulator. Quick match (one
+  hole), best of 3, or a best-of-9 tournament.
+- **15 stages.** Twelve match holes, each its own world (a lagoon, a canyon, a volcano
+  crater, an ice ridge, a cherry-blossom garden, a temple, a desert gate, a neon city at
+  midnight and more) and three sudden-death arenas. Three of the twelve are "rocket holes"
+  of 400 to 700 yards, played with a free rocket ball off the tee.
+- **Knockout rules.** A hole ends the moment one player cannot tie it. A tied hole goes
+  straight to sudden death: one ball each, closest to the pin.
+- **15 power-up balls and 3 tricks.** Rocket, Sticky, Magnet, Ghost, Skipper, Fireball and
+  the rest change what your ball does; Gust, Tiny Cup and Fog are played on your opponent's
+  next swing.
+- **Every shot gets a verdict.** Graded from the launch data, with a callout banner, points,
+  coins, streaks and a crowd that rises as the ball tracks at the hole.
+- **A ball cam** that flies with the ball and cuts to the pin to watch it arrive.
+- **An announcer and a full sound pack**, all short one-shots. Nothing loops and there is no
+  shot clock: take your time over a real ball.
+- **Easy putting on purpose.** Launch monitors read putts poorly, so the game reads the
+  green for you. A putt needs pace more than line.
+- **Solo**: a tour of 3, 6 or all 12 stages against your own best score, or any single
+  stage. **Practice**: free play, closest to the pin, a putting challenge, up and down.
+- **Test swings** from the mouse when no launch monitor is connected, so anyone can try it.
 
-Double-click **Open-Birdie** on the Desktop, or from this folder:
+## Screenshots
+
+| | |
+| --- | --- |
+| ![Main menu](docs/media/menu.jpg) The main menu | ![Match lobby](docs/media/lobby.jpg) The match lobby |
+| ![VS screen](docs/media/vs.jpg) The coin flip | ![A match in play](docs/media/match-play.jpg) Called to the tee |
+| ![Stage intro](docs/media/stage-intro.jpg) A stage introduces itself | ![Ball cam](docs/media/ballcam.jpg) The ball cam in flight |
+| ![Callout](docs/media/callout.jpg) Every shot gets a verdict | ![Winner](docs/media/winner.jpg) The winner screen |
+| ![Canyon Run](docs/media/stage-canyon-run.jpg) Canyon Run | ![Frostbite Ridge](docs/media/stage-frostbite-ridge.jpg) Frostbite Ridge |
+| ![Sakura Garden](docs/media/stage-sakura-garden.jpg) Sakura Garden | ![Midnight Mile](docs/media/stage-midnight-mile.jpg) Midnight Mile |
+| ![Pharaoh's Gate](docs/media/stage-pharaohs-gate.jpg) Pharaoh's Gate | ![Lagoon Island](docs/media/stage-lagoon-island.jpg) Lagoon Island |
+| ![Volcano Drop](docs/media/stage-volcano-drop.jpg) Volcano Drop | ![Thunder Dome](docs/media/stage-thunder-dome.jpg) Thunder Dome, a sudden-death arena |
+
+## Install (Windows)
+
+1. Download `Sim-Clash-Setup-<version>.exe` from the
+   [Releases page](../../releases).
+2. Run it. One click: it installs for your Windows user only (no administrator prompt),
+   adds a desktop and a Start-menu shortcut called **Sim Clash**, and starts the game.
+3. The game opens full screen on your main display. **F11** or **Alt+Enter** switches
+   between full screen and a window, and it remembers which you left it in.
+
+Two things Windows will ask the first time:
+
+- **"Windows protected your PC" (SmartScreen).** The installer is not code-signed yet, so
+  Windows does not know who published it. Choose **More info**, then **Run anyway**. If
+  you would rather not, [run it from source](#run-from-source): it is the same game. (On a
+  Windows 11 PC with **Smart App Control** switched on, unsigned apps are blocked with no
+  "Run anyway": running from source is the way there too.) Each release lists the
+  installer's SHA-256 checksum so you can check your download.
+- **Windows Firewall.** The game listens for your launch monitor on TCP port 921, on every
+  network interface, so Windows asks whether to allow it. If your launch monitor's
+  connector software runs on this same PC, you can refuse: local connections still work.
+  If the connector runs on another device, allow **private networks** only. (The
+  experimental Foresight bridge uses a second port, 9050, on this PC only. Windows does not
+  normally ask about that one.)
+
+Sim Clash keeps its settings, players and coins in `%APPDATA%\Sim Clash`. It installs
+beside Open-Birdie without touching it, but the two cannot run at the same time (they use
+the same ports).
+
+To remove it: Windows Settings, Apps, **Sim Clash**, Uninstall. Your players, coins and
+settings are left in `%APPDATA%\Sim Clash`; delete that folder too if you want them gone.
+
+The game works offline and makes no network requests of its own: the stages and the sky
+photos they are lit by are installed with it. The one exception is yours to switch on: with
+your own ElevenLabs key it fetches [spoken player names](docs/arcade-voice.md).
+
+## Run from source
+
+You need [Node.js](https://nodejs.org) 22 or newer and Git.
 
 ```
-npm start            # desktop app
-npm run start:server # headless server only (view at http://localhost:8222)
+git clone https://github.com/robertjackson-engage/sim-clash.git
+cd sim-clash
+npm install
+npm start
 ```
 
-## Connect your Uneekor EYEMINI LITE
+On Windows you can double-click `Sim Clash.bat` instead of the last two lines. `npm start`
+builds the 15 stages (a few seconds), fetches the two sky photos the stages are lit by the
+first time (33 MB, CC0, from Poly Haven, checked against pinned checksums; without a
+connection the game starts anyway and those stages use the midday sky) and opens the game
+full screen. **F11** leaves full screen. `Open-Birdie.bat` starts the original simulator
+instead.
 
-1. **Close GSPro if it's running** — Open-Birdie listens on the same port (TCP 921).
-   The console will say `Port 921 is in use` if there's a clash.
-2. Start Open-Birdie.
-3. In **Uneekor VIEW**, pick **GSPro** as the connected sim, exactly as you do today.
-   GSPconnect will connect to `127.0.0.1:921` and find Open-Birdie answering.
-4. The **LM badge** (top right) turns green when GSPconnect connects. Hit balls.
+Other ways to run it:
 
-> **Using the free bridge (no GSPconnect)?** The desktop app auto-starts the bundled
-> Uneekor VIEW feed bridge ([`tools/uneekor-watch.js`](tools/uneekor-watch.js)) whenever it
-> finds your VIEW `ShotData` folder — the LM badge goes green by itself, just swing. No paid
-> GSPconnect needed. Set `BIRDIE_NO_WATCH=1` to turn it off. (Headless `npm run start:server`
-> users: run `npm run watch` alongside it.)
-
-Everything runs on this PC; no firewall changes needed. (If GSPconnect ever runs on a
-*different* PC, allow inbound TCP 921 in Windows Firewall.)
-
-## Playing
-
-| Control | Action |
+| Command | What |
 | --- | --- |
-| Mouse drag / wheel | look around / zoom (between shots) |
-| AIM slider | rotate the aim line (shots are relative to it) |
-| Club buttons | tells GSPconnect your club; also loads practice presets |
-| Practice shot | hit simulated shots without the launch monitor |
-| Range & games | driving range and mini games on the loaded course (see below) |
-| Course button | search and load any OSM-mapped course |
-| Next ▶ / Pick up | advance to the next hole; pick up to concede a hole you aren't finishing |
-| Hole pills / HOLE | tap a played hole to review it on the scorecard |
-| Scorecard | scores, round-complete summary, restart / new round |
-| Graphics | Auto / Ultra / High / Low (High: live pond mirrors, grass blades, full tree detail; Ultra: High held further from the camera, for a desktop GPU, picked by hand) |
-| Sky | cycle Morning / Midday / Golden hour (sky photo + matching sun and haze) |
-| Flyover / F | fly over the current hole, tee to green; any key or click skips back to the shot |
-| F11 | toggle fullscreen |
+| `npm run start:server` | the game server without a window; open `http://localhost:8222` in a browser |
+| `npm test` | the test suite (Node 22 or newer) |
+| `npm run pack` | build the unpacked Windows app into `dist/win-unpacked` |
+| `npm run prepare:sky` | fetch (or find on this PC) the sky photos the stages use, into `build/arcade-data/sky` |
+| `npm run dist` | build the Windows installer into `dist/` and check it |
 
-Putts are detected automatically when on the green (low speed + low launch).
-Anything stopped inside the gimme distance (8 ft default) is conceded for +1 stroke.
-A ball rolled near the cup at holeable speed drops in.
+## Connect a launch monitor
 
-### Range & games
+The first time you start the game it walks you through connecting your launch monitor. The
+short version:
 
-Practice on the loaded course's real ground. Your round pauses, and **Back to the round**
-picks it up exactly where you left it. Every ball is hit from the game's spot (the putting and
-chipping games move it round the green, ball by ball), with no penalties.
+Sim Clash speaks **GSPro Open Connect v1**: it listens on **TCP port 921** and plays the
+part GSPro's "Open API" plays. A connector that sends its shots to GSPro's Open API, and
+has no other tie to GSPro, can send them to Sim Clash instead when GSPro is closed.
 
-| Mode | How it plays |
-| --- | --- |
-| Driving range | from the course's own range (OpenStreetMap `golf=driving_range`), else hole 1's tee; yellow yardage flags every 50 yd (pick one to aim at); a shot table and club averages |
-| Closest to the pin | 5 balls at a par 3 (the shortest; the others are a click away); balls in the water or out of bounds don't count; an ace ends it |
-| Long drive | 6 drives; only drives that stop inside the grid (25 yd either side of the line) count |
-| Target challenge | 10 balls, a new flag 60–200 yd out each time; 10 / 5 / 3 / 1 points inside 3 / 8 / 15 / 25 yd |
-| Putting challenge | 9 putts on the green of the hole you're on: 3, 5, 8, 12, 16, 20, 25, 30 and 40 ft, each from its own side of the cup (a small green brings the long ones in); most holed wins, fewest feet left breaks a tie |
-| Up and down | 6 chips from just off the same green, 8–30 yd from the cup, all round it (never from sand, water or out of bounds); 10 points for a chip-in, 5 / 3 / 2 / 1 inside 3 / 6 / 10 / 20 ft |
-| Distance ladder | flags at 50, 75, 100, 125, 150 and 175 yd on the range; stop within 7 yd of the current one to climb to the next; 12 balls, and clearing all six ends it |
+**That is fewer launch monitors than "anything that works with GSPro".** GSPro reaches
+most launch monitors (Uneekor, FlightScope, Garmin, Rapsodo, Full Swing, Square, ProTee and
+others) through connections built into its own connector program. Those do not use the Open
+API and cannot be pointed at another program, so choosing "GSPro" in your launch monitor's
+software is usually not enough. What can feed this game:
 
-Shots come from the launch monitor or the Practice shot panel, as in a round.
+- a maker's own Open API client (Square's SQG GSPro Connect, NVisage's N-Connect and a few
+  more);
+- the open-source launch monitors (PiTrac, OpenFlight), which send Open Connect themselves;
+- community connectors: unofficial helper programs that read a launch monitor and send
+  Open Connect to an address you type;
+- Foresight GC units, through the Foresight bridge built into the game (below).
 
-## Courses
+For a connector of the first three kinds:
 
-Search by name (e.g. *St Andrews Old Course*, *Pebble Beach Golf Links*). Quality depends on
-OpenStreetMap mapping — famous courses are usually excellent. A course needs `golf=hole`
-routing lines to be playable; the loader tells you if they're missing. First load downloads
-geometry + elevation (10–90 s) and caches it in `data/courses/` — afterwards it's instant
-and works offline.
+1. **Close GSPro and any other simulator software.** Only one program can own port 921.
+2. Start Sim Clash.
+3. Start the connector and give it the address `127.0.0.1` (it runs on this PC) or this
+   PC's network address, port `921`.
+4. The chip at the top right changes from **Monitor waiting** to **Monitor connected**.
+   Hit a ball.
 
-Once a course is playable, its missing scenery follows in the background — real buildings and
-the lakes and ponds around the course (OpenStreetMap), every real tree (canopy height map; needs
-the optional `geotiff` package or the cloud service) and the course-wide aerial photo (USGS, US
-only) — and appears on screen as each layer arrives. It is saved with the course, so this happens
-once per course.
+**Which launch monitors?** Every one we know about is below, in four tiers. How each one
+connects, with the source for every claim, is in
+[docs/launch-monitors.md](docs/launch-monitors.md). The table, that document, the website
+and the in-game connection wizard are all generated from one catalogue
+(`lib/launch-monitors.json`), so they never disagree. Nothing is called tested unless a
+ball has been hit with it on a real rig: today that is one unit.
 
-## Configuration
-
-| Env var | Default | Meaning |
+<!-- launch-monitors:start (filled from lib/launch-monitors.json by: node tools/release/readme-monitors.cjs) -->
+| Tier | What it means | Launch monitors |
 | --- | --- | --- |
-| `BIRDIE_PORT` | 8222 | web UI / API port |
-| `BIRDIE_OC_PORT` | 921 | GSPro Open Connect listener |
-| `BIRDIE_HOST` | 127.0.0.1 | web UI/API bind address. Localhost-only by default (the API is unauthenticated); set `0.0.0.0` to mirror on your LAN — **trusted networks only** |
-| `BIRDIE_SPEED_SCALE` | 1 | multiplier for incoming ball speed; set `2.23694` if your monitor reports m/s (shots play ~2.2× short otherwise) |
-| `BIRDIE_NO_WATCH` | (unset) | set to `1` to skip auto-starting the Uneekor VIEW feed bridge |
-| `BIRDIE_OVERPASS_URLS` | (unset) | comma-separated Overpass interpreter URLs to try before the built-in public mirrors (overpass-api.de, maps.mail.ru, kumi.systems, private.coffee) — useful when they are all at capacity or you run your own |
-| `GOOGLE_MAPS_API_KEY` | (unset) | your own Google Map Tiles API key — turns on the optional Google 3D surroundings (below). Unset = no requests to Google at all |
-| `BIRDIE_ENRICH` | 1 | set to `0` to stop fetching missing scenery (buildings, trees, aerial photo) in the background |
-| `BIRDIE_CACHE_MAX_MB` | 1024 | size cap of the local course cache; the least recently played courses are deleted past it (never the one being played) and are downloaded again when picked. `0` = no cap |
-| `BIRDIE_CLOUD_URL` | (unset) | base URL of an Open-Birdie cloud course service (see [Cloud courses](#cloud-courses)). Unset = everything is built on this computer and no cloud request is ever made |
-| `BIRDIE_CLOUD_BUILD_TOKEN` | (unset) | lets this app ask the cloud to build a course it does not have yet (must match the service's token); without it, such courses are built locally |
+| **Tested** (1) | Works on a real rig. | Foresight GCQuad |
+| **Expected to work** (8) | Its own connector is documented to send Open Connect, or it is the same connector as a tested unit. Nobody has tried it with this game yet. | Foresight GC3 / GCHawk / QuadMAX / Falcon; Bushnell Launch Pro; Square Golf (Home); NVisage N1; Bullseye LM; GolfIn Idra; PiTrac; OpenFlight |
+| **Community / unofficial** (12) | Needs an unofficial helper program between the launch monitor and the game. Untested here. | Foresight GC2; Uneekor EYE XO / XO2 / EYE MINI / QED; Garmin Approach R10; Garmin Approach R50; FlightScope Mevo+ / Mevo Gen2 / Xi; SkyTrak / SkyTrak+; Rapsodo MLM2PRO; Square Golf Omni; Full Swing KIT; TrackMan; Voice Caddie Swing Caddie SC4 / SC4 Pro; TruGolf Apogee |
+| **Not supported yet** (9) | No way in that we know of. You can still play with test swings. | FlightScope X3 / X2 / Mevo (original); ProTee VX; OpenLaunch NOVA; OptiShot Nova / BallFlight / Orbit; Golfzon WAVE; GolfJoy GDS / GR / Spica; VTrack; Bluetees RAINMAKER; Ernest Sports ES16 / ES Tour Plus |
 
-Gimme distance: `POST /api/settings {"gimmeYd": feet}` (UI toggle coming later).
+Catalogue version 1, checked 2026-11-23.
+<!-- launch-monitors:end -->
 
-### Optional: shot history in Supabase
+Sim Clash has been played on very few setups so far. If you try it, please tell us what
+happened with the [launch monitor report](../../issues/new/choose) form, working or not.
 
-The bag (the last 30 full shots of each club, which the shot lineup predicts with) lives in
-`data/bag.json`. To keep every shot in a Supabase project instead, and share one bag between
-computers:
+> **Foresight GC support is experimental.** To use a Foresight GC launch monitor the game
+> works with the connector that comes with GSPro (GSPconnect). You need your own GSPro
+> installation and licence for that: the connector is GSPro's, and the game neither
+> includes nor modifies it. All the game does is listen on a local port on your own PC and
+> read a log file that your own software writes there. This feature is not affiliated with,
+> endorsed by or supported by Foresight Sports or GSPro, and it may stop working when the
+> connector changes. Please check that your GSPro terms allow this use before you rely on it.
 
-1. Apply `supabase/migrations/` to the project (SQL editor, or `supabase db push`).
-2. Put the project's URL and **publishable** key in the data dir:
-   `data/supabase.json` = `{"url": "https://<ref>.supabase.co", "key": "sb_publishable_..."}`.
-   A secret key is refused. The publishable key may only read and add shots: a reset is a
-   marker row, and nothing is ever updated or deleted.
-3. Restart the server.
+Start the game, open GSPconnect from your GSPro folder, connect the launch monitor in it as
+you do for GSPro, and hit a ball: there is no other program to install. GSPro itself must
+be closed. It has been tested on one setup (a GCQuad); the GC3, GCHawk, QuadMAX, Falcon and
+the Bushnell Launch Pro use the same connector and are expected to work. Ball data only.
+Details: [docs/foresight-bridge.md](docs/foresight-bridge.md).
 
-Every shot lands in `data/bag.json` and `data/bag-outbox.json` before anything is sent, so the
-game keeps recording without a connection and sends what waited once Supabase answers. A bag
-recorded before Supabase was set up is sent on the first start.
+If shots arrive but every one flies about 2.2 times too short, your connector is sending
+metres per second: set the environment variable `BIRDIE_SPEED_SCALE=2.23694`.
 
-### Optional: Google 3D surroundings
+Sim Clash is not affiliated with any launch monitor maker or with GSPro. Check the terms
+of your launch monitor and its software before connecting anything to it.
 
-With a key, the real houses, trees and lakes around the course stream in as Google
-Photorealistic 3D Tiles. The course itself is still drawn from open data: inside the course's
-terrain rectangle our own terrain, trees and buildings take over, and the Google tiles are
-lifted or lowered to meet our terrain at the edge.
+## No launch monitor?
 
-1. In a Google Cloud project with **billing enabled**, enable the **Map Tiles API** and create an
-   API key (restrict it to the Map Tiles API). Each course load starts one tiles session (one
-   root-tileset request); see Google's current Map Tiles pricing.
-2. Start the app with the key in the environment, e.g. `GOOGLE_MAPS_API_KEY=... npm start`
-   (Windows: `setx GOOGLE_MAPS_API_KEY "..."`, then reopen the terminal / restart the app).
+You can try the whole game without one. While no launch monitor is connected a **TEST
+SWING** button sits at the bottom right: press it and the game plays a sensible shot for the
+club it picked. The arrow beside it (or **T**) offers a drive, an iron, a wedge, a chip, a
+putt, or sliders for ball speed, launch angle, direction and spin. It works in a match too,
+so two people can play a whole match with the mouse.
 
-The key is handed only to the local window (never to LAN mirrors) and is never logged or
-cached. A rejected key logs one console warning and the game carries on without the tiles.
-Attribution (the Google Maps logo, or the words "Google Maps", plus the data providers for the
-tiles in view) shows at the bottom right, next to the course's own data credit. To use the
-official logo, save Google's logo file as `public/assets/attribution/google-maps-logo.svg`.
-Google's terms apply to everything streamed: no caching or exporting the tiles, and keep the
-attribution visible. `?googleTiles=0` turns the tiles off for a page.
+## How to play
 
-## Cloud courses
+The game opens on its title screen, then the main menu: VERSUS, SOLO, PRACTICE, PLAYERS,
+SETTINGS, HOW TO PLAY, QUIT. For a match choose **VERSUS**, pick two players, a format and
+a stage, and press START. A coin decides who
+tees off. After that, whoever is farther from the hole plays next. Arm a power-up ball
+before your swing if you want one (each player gets a few charges per match). Win the hole
+by holing out in fewer strokes; the hole is called the moment it is decided.
 
-Point the app at an Open-Birdie cloud course service and courses are downloaded when you pick
-them instead of being built on your computer, already complete with buildings, real trees and
-the max-quality aerial photo:
+The full guide, with every ball, every rule and the known rough edges, is
+[docs/arcade-v2.md](docs/arcade-v2.md).
 
-```bash
-BIRDIE_CLOUD_URL=https://<your-service> BIRDIE_CLOUD_BUILD_TOKEN=<token> npm start
-```
+### Keys
 
-Or keep the setting in the data dir instead of the environment (the environment wins when both are
-set): `data/cloud.json` = `{"url": "https://<your-service>", "buildToken": "<token>"}`.
-
-- A course the cloud has is downloaded (every file checked against its sha256) into the local
-  cache, which stays under `BIRDIE_CACHE_MAX_MB`.
-- A course the cloud does not have yet is built there (needs the build token); the course picker
-  shows the build's progress, the course is playable as soon as its base data is ready, and its
-  scenery appears when the cloud has added it.
-- If the cloud cannot be reached, the course is built on this computer as before.
-
-### Running the cloud service
-
-The service is [`cloud/server.js`](cloud/server.js) (Node ≥ 22). It builds each course once with
-the same code as the desktop — OSM holes and buildings, USGS 3DEP lidar terrain, the NDVI
-classmap — plus what the desktop app cannot ship: real trees from the canopy height map
-(`geotiff`) and the max-quality tiled aerial (`sharp`). Each course becomes a package (manifest +
-files with sha256) in object storage. It publishes a playable package as soon as the base data is
-ready, then a complete one with the scenery. After that it adds HD holes (1 m lidar terrain and
-0.3 m NAIP imagery) and publishes the package again, so a pick never waits on them. Holes with a
-reviewed manifest in [`tools/hd-course/manifests`](tools/hd-course/manifests) use it; every other
-hole 1–18 of a course in the contiguous US is pinned automatically to the newest NAIP photo that
-covers it (`npm run auto-pin:hd-hole` does the same for a reviewed manifest), on 3 m terrain where
-there is no 1 m lidar. `BIRDIE_CLOUD_AUTO_HD=0` limits HD to the reviewed manifests. This needs
-`tools/` in the deployment (the Vercel builds have it; the container image doesn't). A hole that
-fails is skipped, and the package lists it with the reason (`hdMissing`). Its dependencies are in
-[`cloud/package.json`](cloud/package.json); the image is [`cloud/Dockerfile`](cloud/Dockerfile)
-(`node:22-slim`).
-
-```bash
-# local run, packages in ./cloud-store
-BIRDIE_CLOUD_BUILD_TOKEN=dev-token node cloud/server.js
-BIRDIE_CLOUD_URL=http://localhost:8080 BIRDIE_CLOUD_BUILD_TOKEN=dev-token npm start
-
-# container (build context = repository root)
-docker build -f cloud/Dockerfile -t open-birdie-cloud .
-```
-
-| Env var | Default | Meaning |
-| --- | --- | --- |
-| `PORT` (or `BIRDIE_CLOUD_PORT`) | 8080 | listen port (Railway sets `PORT`) |
-| `BIRDIE_CLOUD_BUILD_TOKEN` | (unset) | bearer token required by `POST /v1/courses`; unset = read-only service |
-| `S3_ENDPOINT`, `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | | object storage (any S3-compatible store; SigV4-signed, no AWS SDK). Without `S3_BUCKET` packages go to a directory |
-| `S3_FORCE_PATH_STYLE` | 0 | `1` for MinIO and older Railway buckets (an endpoint with a path, like Supabase's, is always path style) |
-| `S3_PUBLIC_ENDPOINT` | `S3_ENDPOINT` | endpoint used in presigned download URLs, when desktops must reach the store under another URL |
-| `BIRDIE_CLOUD_STORE_DIR` | `./cloud-store` | directory store, when `S3_BUCKET` is unset |
-| `BIRDIE_CLOUD_FILES` | `redirect` with S3, else `proxy` | serve files as 302s to presigned URLs, or stream them through the service |
-| `BIRDIE_CLOUD_CONCURRENCY` | 1 | builds running at once (one build per course at a time regardless) |
-| `BIRDIE_CLOUD_MAX_QUEUE` | 16 | builds waiting; beyond that `POST` answers 429 |
-| `BIRDIE_DATA_DIR` | `<tmp>/birdie-cloud-staging` | scratch space for builds in progress |
-| `BIRDIE_OVERPASS_URLS` | (unset) | Overpass mirrors to try first, as on the desktop |
-
-API (JSON; `:key` is the course key, e.g. `osm-relation-9892305`):
-
-| Request | Answer |
+| Key | |
 | --- | --- |
-| `GET /v1/courses/:key` | `200` package manifest (`complete: false` while scenery is still being added) · `404` |
-| `POST /v1/courses` with `Authorization: Bearer <token>`, body `{"source":{"osmType":"relation","osmId":9892305},"name":"…","bbox":[s,n,w,e]}` (`"force":true` rebuilds) | `200 {status:"ready", manifest}` · `202 {status, job}` · `401` · `429` queue full · `503` builds disabled |
-| `GET /v1/jobs/:id` | `200 {status: queued\|running\|done\|failed, stage, message, pct, packageId, complete, error, pollMs?}` · `404` (`pollMs`: how often to poll, when the service wants slower than every 2 s) |
-| `GET /v1/courses/:key/files/:sha256` | `302` to a presigned URL (S3) or `200` bytes |
-| `GET /healthz` | `200 {ok, store, builds, files, queue}` |
+| Left / Right (Shift: bigger steps) | aim |
+| A / 0 | auto aim / aim straight at the pin |
+| 1 to 9, Shift+1 to 9 | arm a ball |
+| B | open the ball bag |
+| V | view from above: tap to go up and to come back, hold to peek |
+| R | drop on the line: back on the fairway for a stroke (press twice), free out of a dead lie |
+| F | fly over the hole |
+| Esc or M | the match menu: undo a shot, drop, restart the hole, exit (in a match); Esc is the pause menu in solo and practice |
+| U / C | undo or count a stray ball, when the game asks |
+| T | test swing: choose a drive, an iron, a wedge, a chip, a putt or the sliders |
+| D | show or hide the shot data panels (the last shot's numbers, the club card) |
+| S | sound on / off |
+| F11 or Alt+Enter | full screen on / off |
+| any key or a click | skip an intro screen |
 
-### Deploying on Railway (service + bucket)
+## Settings for tinkerers
 
-1. New project → deploy this GitHub repository as a service. In the service's variables set
-   `RAILWAY_DOCKERFILE_PATH=cloud/Dockerfile` and `BIRDIE_CLOUD_BUILD_TOKEN` to a long random string.
-2. Add a **Bucket** to the project (Create → Bucket). Give the service the bucket's credentials with
-   reference variables (use your bucket's name in place of `Bucket`):
-   ```
-   S3_ENDPOINT=${{Bucket.ENDPOINT}}
-   S3_BUCKET=${{Bucket.BUCKET}}
-   S3_REGION=${{Bucket.REGION}}
-   S3_ACCESS_KEY_ID=${{Bucket.ACCESS_KEY_ID}}
-   S3_SECRET_ACCESS_KEY=${{Bucket.SECRET_ACCESS_KEY}}
-   ```
-   If the bucket's Credentials tab says to use path-style URLs, add `S3_FORCE_PATH_STYLE=1`.
-3. Settings → Networking → generate a public domain, then check `https://<domain>/healthz`.
-4. Point the desktop app at it: `BIRDIE_CLOUD_URL=https://<domain>` (plus `BIRDIE_CLOUD_BUILD_TOKEN`
-   on machines allowed to start builds).
+Environment variables, read when the game starts:
 
-Railway buckets are private, so downloads go out as presigned redirects straight from the bucket
-(bucket egress is free; proxying through the service would count as service egress).
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `BIRDIE_OC_PORT` | 921 | the Open Connect port the launch monitor connects to |
+| `BIRDIE_PORT` | 8222 | the game's own local web port |
+| `BIRDIE_SPEED_SCALE` | 1 | multiplier for incoming ball speed (`2.23694` for a connector that sends m/s) |
+| `BIRDIE_HOST` | 127.0.0.1 | set `0.0.0.0` to watch the game from a tablet on your own network (trusted networks only: the local API has no password) |
+| `BIRDIE_NO_WATCH` | unset | `1`: do not start the Uneekor VIEW feed bridge |
+| `BIRDIE_PRODUCT` | simclash | `open-birdie`: run the original simulator instead of the game |
+| `ELEVENLABS_API_KEY` | unset | your own key, for spoken player names (see `.env.example`) |
 
-Other providers work the same way: **Cloudflare R2** (`S3_ENDPOINT=https://<account>.r2.cloudflarestorage.com`,
-`S3_REGION=auto`), **Supabase Storage** (`S3_ENDPOINT=https://<project>.supabase.co/storage/v1/s3`),
-or **Coolify + MinIO** (`S3_FORCE_PATH_STYLE=1`, and `S3_PUBLIC_ENDPOINT` if MinIO's address inside
-the server differs from its public one).
+The `BIRDIE_` prefix is kept from Open-Birdie so that its updates keep merging.
 
-Limits: the job queue is in memory (a restart forgets running jobs; desktops ask again, and any
-package already published survives), so run a single instance; files of superseded packages are
-kept in the bucket (no clean-up yet).
+## Troubleshooting
 
-### Deploying on Vercel (Blob storage, builds in Vercel Sandbox)
+**The game says it could not start because a port is in use.** Another copy of the game,
+or Open-Birdie, is already running. Close it and start Sim Clash again. (Starting the game
+twice normally just brings the running one to the front.)
 
-A Vercel Function can't run a 5–10 minute build, so on Vercel the API ([`api/index.js`](api/index.js))
-is a Function over a public **Vercel Blob** store, and each build gets its own **Vercel Sandbox**
-(a microVM) that clones this repository (`BIRDIE_CLOUD_REPO` at `BIRDIE_CLOUD_REF`), installs
-[`cloud/package.json`](cloud/package.json) and runs [`cloud/sandbox-build.js`](cloud/sandbox-build.js).
-Builds write their progress into job records in the store, and the API stops a build's sandbox
-once its record says it is over. Desktops download package files straight from the Blob CDN.
+**The chip stays on "Monitor waiting".** Something else has port 921 (GSPro, another
+simulator, a second copy of the game), the connector is pointed at another address, or it
+is one of GSPro's own connections, which cannot be pointed at this game (see
+[Connect a launch monitor](#connect-a-launch-monitor)). SETTINGS, LAUNCH MONITOR names the
+likely cause; the game takes the port by itself within a few seconds of the other program
+closing.
 
-With the [Vercel CLI](https://vercel.com/docs/cli) signed in (`vercel login`):
+**Where is the log?** Installed: `%APPDATA%\Sim Clash\logs\game.log`. From source: the
+terminal you started it from.
 
-```bash
-node cloud/vercel/stage.js ../open-birdie-cloud     # the API function + the modules it loads
-cd ../open-birdie-cloud
-vercel link --yes --project open-birdie-cloud
-vercel blob create-store open-birdie-courses --access public   # answer yes: link it to the project
-printf '%s' "$(openssl rand -hex 24)" | vercel env add BIRDIE_CLOUD_BUILD_TOKEN production --sensitive
-printf 'main' | vercel env add BIRDIE_CLOUD_REF production
-vercel deploy --prod
-```
+**Shots arrive but distances are wrong.** About 2.2 times too short: see
+`BIRDIE_SPEED_SCALE` above. Anything else: open an issue with one shot's numbers from your
+launch monitor's own software beside what the game showed.
 
-`BIRDIE_CLOUD_REF` is the branch the builds clone: it must contain `cloud/sandbox-build.js`.
-If the store isn't linked (the CLI asks only in an interactive shell), connect it under the
-project's **Storage** tab; that adds `BLOB_READ_WRITE_TOKEN`, which the API hands to each build's
-sandbox. Sandboxes themselves authenticate with the deployment's OIDC token, so there is nothing
-else to configure. `BIRDIE_CLOUD_REPO` builds from another fork; `BIRDIE_OVERPASS_URLS` works as on
-the desktop. Check `https://<project>.vercel.app/healthz`, then point the desktop at it
-(`BIRDIE_CLOUD_URL`, or `data/cloud.json`). A failed build's cause is in the project's function
-logs (`vercel logs --query failed`); the sandbox itself is gone by then.
+**The game is slow.** Main menu, SETTINGS, graphics: choose Low. Integrated graphics can run it, at
+a lower frame rate.
 
-### Building courses ahead of time
+**No sound.** Press **S**. Sound is remembered as on or off.
 
-`npm run cloud:build-courses` asks the cloud to build courses before anyone picks them, so the
-first pick downloads in seconds instead of waiting on a build. With no arguments it builds the
-featured courses in [`courses/featured.json`](courses/featured.json) (the course picker's
-suggestions plus the courses with HD hole manifests). It skips courses the cloud already has
-and runs one build at a time. HD holes the cloud still lacks for a passing reason (a timeout, a
-USGS 502, out of time) are asked for again, as is a course built before HD planning existed: the
-build resumes from the cloud's package and only adds the holes. Holes with no imagery or lidar
-are left alone.
+**The announcer says PLAYER ONE instead of my name.** Names are spoken only with your own
+ElevenLabs key (see `.env.example`). Without one the game uses the two shipped lines.
 
-```bash
-npm run cloud:build-courses                                    # the featured courses
-npm run cloud:build-courses -- "Pinehurst No. 2" relation/9892305   # by name (searched on OSM) or OSM id
-npm run cloud:build-courses -- --file my-courses.txt           # one name or id per line
-npm run cloud:build-courses -- --status                        # which of them the cloud has
-```
+**Can I have my real courses back?** Sim Clash hides the simulator it is built on. Run it
+with the environment variable `BIRDIE_PRODUCT=open-birdie` to get the original, or better,
+use [Open-Birdie](https://github.com/jordan-shilts/Open-Birdie) itself.
 
-`--force` rebuilds, and `--concurrency N` runs N builds at once. The script uses the desktop's cloud
-settings (`BIRDIE_CLOUD_URL` + `BIRDIE_CLOUD_BUILD_TOKEN`, or `data/cloud.json`).
+**Is there betting?** No real money, nothing to buy. Coins are play points earned by
+hitting shots.
 
-On Vercel's Hobby plan nothing is ever charged; a feature that runs past its monthly allowance pauses
-until 30 days have passed. The allowances that matter: Blob storage 1 GB (Hazeltine's package is
-11 MB), 2,000 Blob uploads (a build writes ~50 progress records plus its files) and 10,000 reads
-(the desktop polls a running build every 10 s), and 5 Sandbox CPU-hours with sessions of up to
-45 minutes (Hazeltine took 6 minutes).
+**Mac or Linux?** Not packaged or tested. Running from source may work: the code is
+Node.js, Electron and Three.js.
 
-### Building courses on this computer
+## Contributing
 
-`npm run download:courses` is the course download engine: it brings in courses we don't have,
-built the way the featured courses were. It runs the cloud's own build
-([`cloud/builder.js`](cloud/builder.js)) on this computer, so each course gets the OSM holes and
-surfaces, the 1 m lidar terrain and NDVI classmap, OSM buildings and nearby water, every real tree,
-the 0.3 m tiled aerial, and 1 m HD terrain on every hole (the reviewed manifests, every other US hole
-auto-pinned) with no time limit: a cloud sandbox stops starting HD holes after 20 minutes. It needs
-the development dependencies (`npm ci`: `sharp`, `geotiff` and the HD tools' `proj4` and `ajv`), and
-stops if one is missing rather than build a lesser course.
+Bug reports, launch monitor reports, new stages, new balls and better art are all welcome.
+Start with [CONTRIBUTING.md](CONTRIBUTING.md). The documentation index is
+[docs/README.md](docs/README.md).
 
-```bash
-npm run download:courses -- "Medinah Country Club" relation/9892305   # by name (searched on OSM) or OSM id
-npm run download:courses -- --file my-courses.txt   # one name or id per line, # for comments
-npm run download:courses -- --featured              # the course picker's featured courses
-npm run download:courses -- --featured --status     # what each has here; nothing is built
-```
+## Built on Open-Birdie
 
-Each course lands in the data dir, where the course picker lists it, and its package goes to
-`data/course-store/` (`--store DIR` puts it elsewhere). The package's manifest records what the
-build got, so a second run skips a complete course, finishes one that is not (a layer or an HD
-hole that failed for a passing reason), and puts back, offline, a course the app's cache deleted.
-A course whose lidar terrain did not come (the loader then keeps the smoothed ~10 m terrain) is
-thrown away and built again, and a course that failed for a passing reason is tried again after
-the others, 1 and then 2 minutes later. `--force` builds from scratch. Courses build one at a time;
-an HD hole takes 3 to 5 minutes, so a course with 18 takes about an hour.
+Sim Clash is a fork. The physics, the course engine, the renderer, the Open Connect
+listener and the desktop app come from **Open-Birdie**:
 
-The store is a cloud store: `BIRDIE_CLOUD_STORE_DIR=data/course-store node cloud/server.js` serves
-its courses to another computer whose app has `BIRDIE_CLOUD_URL` pointing here. A full course is
-far over the app's default cache cap's share (`BIRDIE_CACHE_MAX_MB`, 1024): the run warns when the
-courses here come to more than the cap, and on the computer that plays them `BIRDIE_CACHE_MAX_MB=0`
-keeps them all.
+- [rroojrooj/Open-Birdie](https://github.com/rroojrooj/Open-Birdie), the original project
+  by **Rooj Rin**: an open-source golf simulator that plays real courses built from open map
+  data.
+- [jordan-shilts/Open-Birdie](https://github.com/jordan-shilts/Open-Birdie), the actively
+  developed fork by **jordan-shilts** that Sim Clash is based on.
 
-## Dev tools
+Both are MIT licensed. Sim Clash adds the arcade game on top and puts the simulator away;
+it does not replace Open-Birdie and is not endorsed by its authors. If you want a golf
+simulator, use theirs. Changes that are useful to Open-Birdie are offered back to it as
+small pull requests. How this fork follows upstream is in
+[docs/dev/upstream.md](docs/dev/upstream.md).
 
-```
-npm run calibrate                  # flight model vs tour TrackMan targets
-node tools/test-shot.js driver     # fake GSPconnect shot over real TCP 921
-node tools/test-shot.js --speed 150 --vla 13 --spin 2700 --axis -4
-node tools/test-load.js "Course name"   # test course download/parse
-```
+The idea comes from mobile arcade golf games: quick head-to-head holes, loud feedback,
+silly power-ups. Sim Clash has no connection to any of them and uses nothing from them.
 
-The app adds buildings, trees and the aerial photo to every course by itself (see Courses), and
-`npm run download:courses` builds a course with all of it at once (see above). These tools run the
-same code by hand, one layer at a time — e.g. to refresh a course after OpenStreetMap edits, or
-to get the max-quality tiled aerial (needs `sharp`). Run them in this order; each only adds
-scenery and leaves the HD fingerprint alone, except refresh-elevation:
+## Licence and credits
 
-```bash
-node tools/add-buildings.mjs      data/courses/<slug>.json   # OSM building footprints, clubhouse
-node tools/add-course-aerial.mjs  data/courses/<slug>.json   # 0.3-0.6 m USGS aerial photo (US)
-node tools/add-canopy-trees.mjs   data/courses/<slug>.json   # every real tree, with height and crown
-node tools/refresh-elevation.mjs  data/courses/<slug>.json   # re-fetch lidar if a load fell back
-```
+MIT: see [LICENSE](LICENSE). Who made what, and the licence of every sound, model, texture
+and library, is in [CREDITS.md](CREDITS.md), [NOTICE.md](NOTICE.md),
+[ASSETS.md](ASSETS.md) and [public/arcade/sfx/CREDITS.md](public/arcade/sfx/CREDITS.md).
+Everything in the game is CC0, generated for this project, or made for this project.
+Nothing is taken from a commercial game.
 
-## Open data credits
-
-- Course geometry © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors,
-  via [Overpass API](https://overpass-api.de/) and [Nominatim](https://nominatim.org/)
-- Elevation: [AWS Terrain Tiles](https://registry.opendata.aws/terrain-tiles/) (Mapzen terrarium) and
-  [USGS 3DEP](https://www.usgs.gov/3d-elevation-program) lidar (public domain)
-- Aerial imagery: [USGS NAIP / NAIPPlus](https://www.usgs.gov/centers/eros/science/usgs-eros-archive-aerial-photography-national-agriculture-imagery-program-naip) (public domain)
-- Tree positions and heights: Meta and World Resources Institute (WRI),
-  [High Resolution Canopy Height Maps](https://registry.opendata.aws/dataforgood-fb-forests/),
-  licensed [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) (`lib/canopy-fetch.js`)
-- Skies, leaves, needles and bark: [Poly Haven](https://polyhaven.com) (CC0) — see `ASSETS.md`
-- Optional surroundings (only with your own key): Google Photorealistic 3D Tiles, streamed under
-  the [Google Maps Platform terms](https://cloud.google.com/maps-platform/terms), rendered with
-  [3d-tiles-renderer](https://github.com/NASA-AMMOS/3DTilesRendererJS) (Apache-2.0)
-
-## Known limitations / roadmap
-
-- Visuals are "good indie sim" tier, not premium-sim grade: flat-shaded splat terrain, low-poly trees.
-  Next: grass textures, normal maps, better tree models, bunker depth.
-- The flight model is fit to measured shots, not tuned to PGA Tour averages: vs those, carries sit
-  within ~5% (driver 279 vs 275 yd, 7-iron 163 vs 172) and apex within ~5 ft (`npm run calibrate`).
-- Pin positions come from OSM hole lines (one per green; double greens use the mapped point).
-- No wind UI yet (the physics supports it).
-
-## License & disclaimer
-
-Open-Birdie is free and open-source software under the **[MIT License](LICENSE)**.
-
-It is an **independent project, not affiliated with, authorized by, or endorsed by** Uneekor,
-GSPro, TrackMan, the OpenStreetMap Foundation, AWS, or any other referenced party. The Software
-implements the publicly documented GSPro Open Connect interface for interoperability and contains
-no third-party proprietary code or assets. All product names and trademarks are the property of
-their respective owners and are used solely nominatively.
-
-The Software is provided **"AS IS", without warranty of any kind**, and the authors accept
-**no liability** for any damages, personal injury, or damage to equipment or property arising
-from its use. **You** are responsible for your own safety and for complying with the terms of
-service / EULAs of your launch monitor, its first-party software, and every third-party data
-source the app contacts (OpenStreetMap/ODbL, Overpass, Nominatim, AWS Terrain Tiles, USGS,
-Meta/WRI canopy data).
-
-Read the full terms in **[DISCLAIMER.md](DISCLAIMER.md)**
+Swinging real clubs at real balls indoors is at your own risk: read
+[DISCLAIMER.md](DISCLAIMER.md). Product names mentioned here belong to their owners and
+are used only to describe compatibility.

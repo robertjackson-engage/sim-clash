@@ -141,8 +141,12 @@ export function makeSandMaterial(bounds, aniso, aux = null, sunDir = null, cours
 // shore (optional, a coastal course): { tex, offset: [x, y], size: [w, h] }, the ground
 // the sea meets (sea.js shoreGround) as a texture over the terrain grid; offset is the
 // grid texture's corner from bounds' (m), size its extent.
-export function makeTurfMaterial({ baseMap, mownMask, bunkerMask, bounds, anisotropy, macro = null, courseDry = 0, surfaceMaskRaw = null, pal = null, hq = true, sunDir = null, shore = null }) {
+// arcade (optional, arcade-look.js turf): the arcade look's stripes, collar, sand and
+// grass tone, compiled in behind TURF_ARCADE; null leaves the shader as it is.
+export function makeTurfMaterial({ baseMap, mownMask, bunkerMask, bounds, anisotropy, macro = null, courseDry = 0, surfaceMaskRaw = null, pal = null, hq = true, sunDir = null, shore = null, arcade = null }) {
   const splatTex = baseMap, maskTex = mownMask, bunkerMaskTex = bunkerMask, aniso = anisotropy;
+  const glow = arcade?.glow || null;   // an arcade theme's night glow (TURF_GLOW), or nothing
+  const cliff = arcade?.cliff || null; // the arcade look's rock on steep ground (TURF_CLIFF), or nothing
   // P2a: a RAW (unblurred) mask for the crisp fwidth edge. Falls back to the blurred
   // mask so the headless material test (no raw mask supplied) still builds.
   const maskRawTex = surfaceMaskRaw || mownMask;
@@ -159,7 +163,7 @@ export function makeTurfMaterial({ baseMap, mownMask, bunkerMask, bounds, anisot
 
   const mat = new THREE.MeshStandardMaterial({
     map: splatTex,
-    normalMap, normalScale: new THREE.Vector2(0.8, 0.8),
+    normalMap, normalScale: new THREE.Vector2(arcade?.normalScale ?? 0.8, arcade?.normalScale ?? 0.8),   // (an arcade theme may smooth it: snow)
     // no roughness map: the turf one (grass_rough.jpg, every texel under 0.9) only ever
     // fed the 0.9 floor below, and the shader is at WebGL's 16 texture units without it
     roughness: 0.9, metalness: 0,
@@ -174,7 +178,27 @@ export function makeTurfMaterial({ baseMap, mownMask, bunkerMask, bounds, anisot
     shader.uniforms.uBunker = { value: bunkerMaskTex };
     shader.uniforms.uSand = { value: sand };
     shader.uniforms.uExt = { value: new THREE.Vector2(extX, extY) };
-    shader.uniforms.uStripeM = { value: RENDER_CONFIG.mowStripeM ?? 7.0 }; // mow-band width (m)
+    shader.uniforms.uStripeM = { value: arcade?.stripeM ?? RENDER_CONFIG.mowStripeM ?? 7.0 }; // mow-band width (m)
+    if (arcade) {
+      shader.uniforms.uArcStripe = { value: new THREE.Vector3(arcade.stripeGain ?? 1, arcade.stripeStatic ?? 0, arcade.crossGain ?? 1) };
+      shader.uniforms.uArcTone = { value: new THREE.Vector2(arcade.saturation ?? 1, arcade.gain ?? 1) };
+      shader.uniforms.uArcCollar = { value: new THREE.Color(arcade.collar ?? '#a5e04a') };
+      const sandCol = new THREE.Color(arcade.sand ?? '#ffffff');
+      shader.uniforms.uArcSand = { value: new THREE.Vector4(sandCol.r, sandCol.g, sandCol.b, arcade.sandMix ?? 0) };
+    }
+    if (cliff) {
+      // steep ground is rock (arcade-look.js turf.cliff): where the slope turns to rock, its strata's spacing, its two colours
+      shader.uniforms.uArcCliff = { value: new THREE.Vector3(cliff.from ?? 0.6, cliff.to ?? 0.8, (2 * Math.PI) / Math.max(0.5, cliff.strataM ?? 3)) };
+      shader.uniforms.uArcCliffA = { value: new THREE.Color(cliff.a ?? '#8f7f6a') };
+      shader.uniforms.uArcCliffB = { value: new THREE.Color(cliff.b ?? '#6f6254') };
+    }
+    if (glow) {
+      // an arcade theme's night golf (arcade-look.js turf.glow): self-lit mown ground, glowing edges
+      const edge = new THREE.Color(glow.edge ?? '#000000'), gEdge = new THREE.Color(glow.greenEdge ?? '#000000');
+      shader.uniforms.uArcLift = { value: new THREE.Vector2(glow.lift ?? 0, glow.baseLift ?? 0) };
+      shader.uniforms.uArcEdge = { value: new THREE.Vector4(edge.r, edge.g, edge.b, glow.edge ? glow.edgeGain ?? 1 : 0) };
+      shader.uniforms.uArcGreenEdge = { value: new THREE.Vector4(gEdge.r, gEdge.g, gEdge.b, glow.greenEdge ? glow.greenEdgeGain ?? 1 : 0) };
+    }
     shader.uniforms.uMowDir = turfMowDir;
     shader.uniforms.uSunLift = turfSunLift;
     shader.uniforms.uCourseDry = { value: courseDry }; // P1b: 0 lush parkland .. 1 dry links
@@ -315,6 +339,9 @@ export function makeTurfMaterial({ baseMap, mownMask, bunkerMask, bounds, anisot
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', `#include <common>
         ${hq ? '#define TURF_HQ' : ''}
+        ${arcade ? '#define TURF_ARCADE\nuniform vec3 uArcStripe; uniform vec2 uArcTone; uniform vec3 uArcCollar; uniform vec4 uArcSand;' : ''}
+        ${glow ? '#define TURF_GLOW\nuniform vec2 uArcLift; uniform vec4 uArcEdge; uniform vec4 uArcGreenEdge;' : ''}
+        ${cliff ? '#define TURF_CLIFF\nuniform vec3 uArcCliff; uniform vec3 uArcCliffA; uniform vec3 uArcCliffB;' : ''}
         ${shore ? '#define TURF_SHORE\nuniform sampler2D uShore; uniform vec4 uShoreRect; varying float vShoreH;' : ''}
         uniform sampler2D uDetail; uniform vec2 uDetailRepeat;
         uniform sampler2D uMask; uniform sampler2D uBunker; uniform sampler2D uSand;
@@ -385,6 +412,9 @@ export function makeTurfMaterial({ baseMap, mownMask, bunkerMask, bounds, anisot
           // the downstream grain / warm-mix / sun-rake / desat all apply to it, so it reads
           // as real mown grass, not a flat decal.
           vec3 collarCol = clamp(uPalGreenA * vec3(1.25, 1.15, 0.90), 0.0, 1.0);
+          #ifdef TURF_ARCADE
+          collarCol = uArcCollar;   // arcade look: the apron is its own bright ring
+          #endif
           vec3 baseCol = mix(diffuseColor.rgb, collarCol, collarBand);
           baseCol = mix(baseCol, uPalGreenA, gCrisp);
           // v44 CLEAN MOWN SURFACES: fairways and greens (crisp masks) are manicured — one even
@@ -518,6 +548,12 @@ export function makeTurfMaterial({ baseMap, mownMask, bunkerMask, bounds, anisot
           float vd1 = dot(toCamH, uMowDir), vd2 = dot(toCamH, mowN);
           float sheen1 = stripe * (0.25 * (1.0 - abs(vd1)) + 0.85 * vd1);
           float sheen2 = stripe2 * (0.25 * (1.0 - abs(vd2)) + 0.85 * vd2);
+          #ifdef TURF_ARCADE
+          // arcade look: painted bands, the same from every side (x = gain, y = how painted,
+          // z = the cross set's share: 1 makes a plaid of it, 0 leaves the bands alone)
+          sheen1 = mix(sheen1, stripe, uArcStripe.y) * uArcStripe.x;
+          sheen2 = mix(sheen2, stripe2, uArcStripe.y) * uArcStripe.x * uArcStripe.z;
+          #endif
           grass *= 1.0 + (0.38 * sheen1 + 0.17 * sheen2) * mix(1.0, 0.6, uTurfClean) * max(mCrisp, cls.r) * (1.0 - 0.85 * g - 0.6 * collarBand) * (1.0 - 0.92 * teeK) * sFade * (1.0 - 0.7 * uCourseDry);
           {
             float tb1 = sin((wx * 0.71 + wy * 0.71) * (3.14159265 / 1.6));
@@ -705,12 +741,19 @@ export function makeTurfMaterial({ baseMap, mownMask, bunkerMask, bounds, anisot
           #endif
           // Soft highlight rolloff: light mown/aerial areas + mow-stripe peaks were
           // washing out to pale rectangles. Compress grass values above ~0.66.
+          #ifdef TURF_ARCADE
+          // arcade look: candy grass (x = saturation, y = gain)
+          grass = max(vec3(0.0), mix(vec3(dot(grass, vec3(0.2126, 0.7152, 0.0722))), grass, uArcTone.x)) * uArcTone.y;
+          #endif
           grass = grass / (1.0 + 0.5 * max(vec3(0.0), grass - 0.66));
           // sand path: real tiled sand toned to muted GREIGE native sand (was brightened
           // toward bunker-white *1.28 — real links/waste sand is grey-tan ~#b7a98b, verified
           // vs Chambers Bay photos; white sand read as manufactured/wrong).
           vec3 sand = texture2D(uSand, vMapUv * uDetailRepeat).rgb;
           sand = mix(sand, vec3(0.72, 0.68, 0.58), 0.18) * 1.04;
+          #ifdef TURF_ARCADE
+          sand = mix(sand, uArcSand.rgb, uArcSand.a);   // arcade look: bright white sand
+          #endif
           // Union NDVI-detected sand (cls.b) into the OSM bunker mask, but only OUTSIDE
           // mown ground — m is post-union here, so "no sand where OSM- or NDVI-mown".
           // P2a: crisp the OSM bunker edge with fwidth AA so the sand->grass boundary is a
@@ -718,6 +761,36 @@ export function makeTurfMaterial({ baseMap, mownMask, bunkerMask, bounds, anisot
           // around each bunker. (The NDVI cls.b feather stays; Task 3 reconciles it.)
           float bm = max(bCrisp, cls.b * (1.0 - m));
           diffuseColor.rgb = mix(grass, sand, bm);
+          #if defined(TURF_CLIFF) || defined(TURF_GLOW)
+          float arcRock = 0.0;   // how far this ground is a cliff face
+          #endif
+          #ifdef TURF_CLIFF
+          {
+            // STEEP GROUND IS ROCK. The turf is painted from above, so down a cliff its
+            // stripes and edges smear into vertical streaks. Past about 40 degrees the ground
+            // is drawn as rock instead: strata by height (not by the map), broken by noise.
+            float upN = normalize((vec4(normalize(vNormal), 0.0) * viewMatrix).xyz).y;
+            arcRock = (1.0 - smoothstep(uArcCliff.x, uArcCliff.y, upN)) * (1.0 - gCrisp);
+            float wH = cameraPosition.y - (vec4(vViewPosition, 0.0) * viewMatrix).y;
+            float lump = tNoise(vec2(wx, wy) * 0.11);
+            float strata = 0.5 + 0.5 * sin(wH * uArcCliff.z + lump * 9.0 + tNoise(vec2(wy, wx) * 0.031) * 7.0);
+            float chips = tNoise(vec2(wx + wH * 0.7, wy - wH * 0.4) * 0.6);
+            vec3 rock = mix(uArcCliffA, uArcCliffB, smoothstep(0.2, 0.8, strata) * 0.8) * (0.78 + 0.44 * chips);
+            diffuseColor.rgb = mix(diffuseColor.rgb, rock, arcRock);
+          }
+          #endif
+          #ifdef TURF_GLOW
+          {
+            // an arcade theme at night: the mown ground gives back some of its own colour
+            // unlit, and the fairway's and the green's edges glow (the soft masks' half-way
+            // band), so the hole reads from the tee under a dark sky
+            // (x: the mown ground's share; y: everything else's, which is what makes snow white)
+            totalEmissiveRadiance += grass * mix(uArcLift.y, uArcLift.x, max(mk.r, mk.g)) * (1.0 - bm) * (1.0 - arcRock);
+            float fEdge = smoothstep(0.26, 0.5, mk.r) * (1.0 - smoothstep(0.5, 0.74, mk.r)) * (1.0 - mk.g);
+            float gEdge = smoothstep(0.26, 0.5, mk.g) * (1.0 - smoothstep(0.5, 0.74, mk.g));
+            totalEmissiveRadiance += (uArcEdge.rgb * (uArcEdge.a * fEdge) + uArcGreenEdge.rgb * (uArcGreenEdge.a * gEdge)) * (1.0 - arcRock);
+          }
+          #endif
         }
         #endif`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
@@ -774,7 +847,7 @@ export function makeTurfMaterial({ baseMap, mownMask, bunkerMask, bounds, anisot
           }
         }`);
   };
-  mat.customProgramCacheKey = () => `turf-grain-v46${macro ? '-macro' : ''}${hq ? '' : '-lq'}${shore ? '-shore' : ''}`; // v46: a low sun lights the blades' sides; v45: the sun's mirror reflection off turf cut to a sheen; v44: clean fairways/greens, stripes down the hole (v43: Low's lighter grain; v42: divots, crisp tee box, rough sheen; v41: distance/surface-gated taps; v40: texture value noise)
+  mat.customProgramCacheKey = () => `turf-grain-v46${macro ? '-macro' : ''}${hq ? '' : '-lq'}${shore ? '-shore' : ''}${arcade ? '-arcade' : ''}${glow ? '-glow' : ''}${cliff ? '-cliff' : ''}`; // v46: a low sun lights the blades' sides; v45: the sun's mirror reflection off turf cut to a sheen; v44: clean fairways/greens, stripes down the hole (v43: Low's lighter grain; v42: divots, crisp tee box, rough sheen; v41: distance/surface-gated taps; v40: texture value noise)
   // textures injected via onBeforeCompile (+ the canvas masks) aren't reachable from
   // the standard material slots, so register them for disposal on course reload.
   mat.userData.disposeTextures = [detail, sand, maskTex, bunkerMaskTex, ...(surfaceMaskRaw ? [maskRawTex] : []), ...(shore ? [shore.tex] : [])];

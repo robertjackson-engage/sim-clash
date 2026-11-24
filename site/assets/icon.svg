@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <clipPath id="r"><rect x="6" y="6" width="244" height="244" rx="54"/></clipPath>
+    <linearGradient id="a" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8a3a"/><stop offset=".45" stop-color="#ff5a36"/><stop offset="1" stop-color="#b3260a"/></linearGradient>
+    <linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#63d2ff"/><stop offset=".5" stop-color="#2e9bff"/><stop offset="1" stop-color="#0a45b8"/></linearGradient>
+  </defs>
+  <g clip-path="url(#r)">
+    <rect width="256" height="256" fill="#07090d"/>
+    <polygon points="0,0 164,0 92,256 0,256" fill="url(#a)"/>
+    <polygon points="164,0 256,0 256,256 92,256" fill="url(#b)"/>
+    <polygon points="0,0 256,0 256,74 0,118" fill="#ffffff" opacity=".10"/>
+    <polygon points="146,20 180,20 143,106 186,106 94,238 118,140 74,140" fill="#fffdf5" stroke="#07090d" stroke-width="11" stroke-linejoin="round" paint-order="stroke"/>
+  </g>
+  <rect x="6" y="6" width="244" height="244" rx="54" fill="none" stroke="#07090d" stroke-width="7"/>
+</svg>

@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: A problem with real courses or the golf simulator itself
+    url: https://github.com/jordan-shilts/Open-Birdie
+    about: Sim Clash is a game built on Open-Birdie. The simulator (real courses, HD terrain) is their project; please do not send Sim Clash bugs there.

@@ -37,6 +37,9 @@ regenerable, too large for history). None of this data is committed to the repo.
 - Both are loaded from Poly Haven's CDN (4K .hdr, ~15-17 MB each) the first time the Sky button
   picks them (`public/render/sky-presets.js`); Midday is the bundled sky above and the fallback when
   a download fails.
+- The game product (Sim Clash) never downloads: its installer carries these two files, unmodified,
+  beside the stage courses (`tools/arcade-holes/sky-bundle.mjs`, `lib/sky-bundle.js`; `CREDITS.md`
+  names their authors).
 
 ## Trees (Tier 1)
 - `public/assets/trees/foliage_diff.jpg`, `foliage_alpha.jpg`, `bark_diff.jpg` — from

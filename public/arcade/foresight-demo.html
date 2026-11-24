@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Foresight bridge panel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body { margin: 0; padding: 28px; background: #0b1118; color: #f4f6f8; font: 16px/1.4 system-ui, "Segoe UI", sans-serif; }
+  h1 { margin: 0 0 4px; font-size: 22px; }
+  h2 { margin: 28px 0 10px; font-size: 13px; letter-spacing: .14em; color: rgba(255, 255, 255, .6); }
+  p.lead { margin: 0 0 18px; color: rgba(255, 255, 255, .7); }
+  .card { max-width: 640px; padding: 18px 20px; border: 1px solid rgba(255, 255, 255, .14); border-radius: 10px; background: rgba(255, 255, 255, .04); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 14px; }
+  .grid .card { max-width: none; }
+  .name { margin-bottom: 10px; font: 12px/1 ui-monospace, Consolas, monospace; color: rgba(255, 255, 255, .5); }
+</style>
+</head>
+<body>
+<!-- The Foresight bridge's panel on its own (no 3D, no sound): the live one talks to this
+     server's /api/foresight; the rest are every state, drawn from fixed statuses.
+     docs/foresight-bridge.md -->
+<h1>Foresight bridge panel</h1>
+<p class="lead">public/arcade/foresight-panel.js · the first card is live (this server), the others show every state.</p>
+<h2>LIVE</h2>
+<div class="card"><div id="live"></div></div>
+<h2>EVERY STATE</h2>
+<div class="grid" id="states"></div>
+<script type="module">
+import { mountForesightPanel } from './foresight-panel.js';
+
+const events = new EventSource('/events');
+mountForesightPanel(document.getElementById('live'), { events });
+
+const base = {
+  ok: true, experimental: true, source: 'foresight', mode: 'auto', modeFrom: 'saved', active: true, idleReason: null,
+  host: '127.0.0.1', port: 9050, listening: true, connections: 0, connectsTotal: 0, bytesReceived: 0, portHolder: null,
+  logFile: 'C:\\GSProV1\\Core\\GSPC\\ConnectDebug.txt', logDir: 'C:\\GSProV1\\Core\\GSPC', dirFound: true, logFound: true,
+  logFrom: 'default', savedLogFile: null, shots: 0, lastShotAt: null, lastShot: null, lastError: null,
+};
+const samples = {
+  'listening': { state: 'listening' },
+  'connector-connected, no shot yet': { state: 'connector-connected', connections: 1 },
+  'connector-connected, shots': { state: 'connector-connected', connections: 1, shots: 14, lastShotAt: Date.now() - 12000, lastShot: { Speed: 152.4375 } },
+  'port-in-use': { state: 'port-in-use', listening: false, portHolder: 'loopback' },
+  'no-log (on, folder missing)': { state: 'no-log', mode: 'on', dirFound: false, logFound: false },
+  'no-log (auto, no connector on this PC)': { state: 'no-log', active: false, idleReason: 'no-connector', listening: false, dirFound: false, logFound: false },
+  'off': { state: 'off', mode: 'off', active: false, idleReason: 'off', listening: false },
+  'off (auto on a private copy)': { state: 'off', active: false, idleReason: 'private-instance', listening: false },
+  'error': { state: 'error', listening: false, lastError: 'EADDRNOTAVAIL' },
+};
+const grid = document.getElementById('states');
+for (const [name, patch] of Object.entries(samples)) {
+  const card = document.createElement('div');
+  card.className = 'card';
+  const label = document.createElement('div');
+  label.className = 'name';
+  label.textContent = name;
+  const mount = document.createElement('div');
+  card.append(label, mount);
+  grid.append(card);
+  const status = { ...base, ...patch };
+  // a panel that never reaches the server: its status is fixed
+  mountForesightPanel(mount, { fetchJson: async () => status, pollMs: 3600000 }).update(status);
+}
+</script>
+</body>
+</html>

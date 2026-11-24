@@ -25,6 +25,7 @@ function collect(sock, count) {
     });
   });
 }
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 test('replies keep the GSPro shape and name the simulator', async (t) => {
   const oc = new OpenConnectServer(0);
@@ -45,7 +46,31 @@ test('replies keep the GSPro shape and name the simulator', async (t) => {
   assert.deepEqual(heartbeat, { Code: 200, Message: 'Heartbeat OK', Simulator: 'Open-Birdie' });
 });
 
-test('distance updates leave the club alone; a club pick is sent once', async (t) => {
+// OpenFlight changes club on its own side and applies the Club of every 201: once it has
+// said who it is, a distance update does not repeat our club, and a club pick is sent once.
+test('OpenFlight: distance updates leave the club alone; a club pick is sent once', async (t) => {
+  const oc = new OpenConnectServer(0);
+  oc.start();
+  await new Promise((resolve) => oc.server.once('listening', resolve));
+  t.after(() => oc.server.close());
+  const sock = net.connect(oc.server.address().port, '127.0.0.1');
+  t.after(() => sock.destroy());
+  const replies = collect(sock, 4);
+  await new Promise((resolve) => sock.once('connect', resolve));
+  sock.write(JSON.stringify({ DeviceID: 'OpenFlight', ShotNumber: 0, ShotDataOptions: { IsHeartBeat: true, LaunchMonitorIsReady: true } }));
+  await sleep(200);                                            // the greeting and the heartbeat's reply first
+  oc.setPlayer({ DistanceToTarget: 172 });                     // after a shot
+  await sleep(120);
+  oc.setPlayer({ Club: 'I7' });                                // picked in Open-Birdie
+  const [greeting, , distance, club] = await replies;
+  assert.equal(greeting.Player.Club, 'DR');
+  assert.deepEqual(distance.Player, { Handed: 'RH', DistanceToTarget: 172 }, 'no Club: the monitor keeps its own');
+  assert.deepEqual(club.Player, { Handed: 'RH', Club: 'I7' });
+});
+
+// Every other connector is sent what GSPro sends: the whole player in every 201 (one
+// connector reads Player.Club of every 201 without checking that it is there).
+test('any other connector gets the whole player in every 201', async (t) => {
   const oc = new OpenConnectServer(0);
   oc.start();
   await new Promise((resolve) => oc.server.once('listening', resolve));
@@ -54,14 +79,14 @@ test('distance updates leave the club alone; a club pick is sent once', async (t
   t.after(() => sock.destroy());
   const replies = collect(sock, 3);
   await new Promise((resolve) => sock.once('connect', resolve));
-  await new Promise((resolve) => setTimeout(resolve, 50));   // the greeting first
-  oc.setPlayer({ DistanceToTarget: 172 });                     // after a shot
-  await new Promise((resolve) => setTimeout(resolve, 20));
-  oc.setPlayer({ Club: 'I7' });                                // picked in Open-Birdie
+  await sleep(120);
+  oc.setPlayer({ DistanceToTarget: 172 });
+  await sleep(120);
+  oc.setPlayer({ Club: '7i' });
   const [greeting, distance, club] = await replies;
-  assert.equal(greeting.Player.Club, 'DR');
-  assert.deepEqual(distance.Player, { Handed: 'RH', DistanceToTarget: 172 }, 'no Club: the monitor keeps its own');
-  assert.equal(club.Player.Club, 'I7');
+  assert.deepEqual(greeting.Player, { Handed: 'RH', Club: 'DR', DistanceToTarget: 1 }, 'never a distance of 0: connectors read that as "do not arm"');
+  assert.deepEqual(distance.Player, { Handed: 'RH', Club: 'DR', DistanceToTarget: 172 });
+  assert.deepEqual(club.Player, { Handed: 'RH', Club: 'I7', DistanceToTarget: 172 });
 });
 
 // A launch monitor that resends a shot after a dropped link (OpenFlight, when the

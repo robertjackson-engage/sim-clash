@@ -59,6 +59,11 @@ export async function generateValidatorBytes() {
       sourcefile: 'course-art-pack-validator.generated.cjs',
     },
     bundle: true,
+    // Name bundled modules by the path they were asked for (node_modules/ajv/...), not by
+    // where a linked node_modules really lives: esbuild writes those names into the output,
+    // so a checkout whose node_modules is a junction or a symlink produced different bytes
+    // (and put a path of the build machine in the shipped file). No effect in a plain clone.
+    preserveSymlinks: true,
     platform: 'node',
     format: 'cjs',
     target: ['node22'],

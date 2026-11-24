@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contribute · Sim Clash</title>
+<meta name="description" content="Sim Clash is open source under the MIT licence: where the code lives, how the holes are authored in tools/arcade-holes, and how to add a stage.">
+<meta name="theme-color" content="#07090d">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; base-uri 'self'; form-action 'none'">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Contribute · Sim Clash">
+<meta property="og:description" content="Sim Clash is open source under the MIT licence: where the code lives, how the holes are authored in tools/arcade-holes, and how to add a stage.">
+<meta property="og:image" content="https://robertjackson-engage.github.io/sim-clash/assets/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="index.html"><img src="assets/icon.svg" alt="" width="36" height="36"><b><span class="p1">Sim</span> <span class="p2">Clash</span></b></a>
+    <nav class="nav" aria-label="Site">
+      <a href="index.html">Home</a>
+      <a href="install.html">Install</a>
+      <a href="connect.html">Connect</a>
+      <a href="play.html">How to play</a>
+      <a href="faq.html">FAQ</a>
+      <a href="contribute.html" aria-current="page">Contribute</a>
+    </nav>
+    <a class="btn btn-go btn-sm" data-gh="download" href="install.html"><span>Download</span></a>
+  </div>
+</header>
+
+<main id="main">
+<section class="page-head">
+  <div class="wrap">
+    <p class="kicker">Contribute</p>
+    <h1>Build a hole. Fix a bug.</h1>
+    <p class="lead">Sim Clash is open source under the MIT licence. The stages are plain JavaScript files that describe a piece of ground, so a new hole is something you can write in an evening and playtest without a launch monitor.</p>
+    <div class="btn-row" style="margin-top:26px">
+      <a class="btn btn-go" data-gh="repo" href="#repo"><span>The repository</span></a>
+      <a class="btn btn-ghost" data-gh="issues" href="#repo"><span>Issues</span></a>
+    </div>
+  </div>
+</section>
+
+<div class="wrap doc">
+  <nav class="toc" aria-label="On this page">
+    <b>On this page</b>
+    <ol>
+      <li><a href="#repo">Where everything is</a></li>
+      <li><a href="#dev">Run it for development</a></li>
+      <li><a href="#holes">How the holes are authored</a></li>
+      <li><a href="#add">Add a stage</a></li>
+      <li><a href="#rules">Design rules for a hole</a></li>
+      <li><a href="#more">Other ways to help</a></li>
+      <li><a href="#credits">Credits and licence</a></li>
+    </ol>
+  </nav>
+
+  <div class="prose">
+    <section id="repo">
+      <h2>Where everything is</h2>
+      <p>The code is on GitHub at <a data-gh="repo" href="#repo"><span data-fill="repo-slug">the Sim Clash repository</span></a>. Bugs and ideas go in <a data-gh="issues" href="#repo">Issues</a>; changes come in as pull requests.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Path</th><th>What lives there</th></tr></thead>
+        <tbody>
+          <tr><td><code>lib/match.js</code></td><td class="wrapok">The match rules as a pure state machine: formats, knockout, sudden death, the stroke cap, undo. Described in <code>docs/match.md</code>.</td></tr>
+          <tr><td><code>lib/arcade.js</code></td><td class="wrapok">The balls and tricks, shot grading, callouts, points and streaks. Described in <code>docs/arcade.md</code>.</td></tr>
+          <tr><td><code>lib/physics.js</code></td><td class="wrapok">Ball flight, bounce, roll and the cup.</td></tr>
+          <tr><td><code>lib/openconnect.js</code></td><td class="wrapok">The GSPro Open Connect listener that launch monitors talk to.</td></tr>
+          <tr><td><code>tools/arcade-holes/</code></td><td class="wrapok">The stages: one file per hole in <code>holes/</code>, plus the builder. Described in <code>docs/arcade-holes.md</code>.</td></tr>
+          <tr><td><code>public/arcade/</code></td><td class="wrapok">The game's screens and HUD, the 3D props, the announcer and the sound effects.</td></tr>
+          <tr><td><code>public/render/</code></td><td class="wrapok">The 3D renderer (three.js): terrain, water, the themed looks, the ball camera.</td></tr>
+          <tr><td><code>test/</code></td><td class="wrapok">The tests. <code>npm test</code> runs all of them.</td></tr>
+          <tr><td><code>site/</code></td><td class="wrapok">This website.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="dev">
+      <h2>Run it for development</h2>
+      <p>You need Node.js 22 or newer.</p>
+      <pre><code>git clone <span data-fill="clone-url">(the repository address, from its GitHub page)</span>
+cd <span data-fill="repo-dir">sim-clash</span>
+npm install
+npm start
+npm test</code></pre>
+      <p>You do not need a launch monitor to work on the game. The TEST SWING button (key <kbd>T</kbd>) plays a shot without one, its SLIDERS take any numbers you like, and a running game accepts the same thing over HTTP, which is how the tests and the playtest scripts hit balls:</p>
+      <pre><code>POST http://localhost:8222/api/test-shot
+{ "speed": 150, "vla": 13, "hla": 0, "spin": 2600, "spinAxis": 0 }</code></pre>
+      <p>That is a 150 mph drive launched at 13 degrees with 2,600 rpm. <code>npm run start:server</code> runs the game without the desktop window, for a browser at <code>http://localhost:8222</code>.</p>
+    </section>
+
+    <section id="holes">
+      <h2>How the holes are authored</h2>
+      <p>The holes exist nowhere on Earth: they are written by hand. Each one is a JavaScript file in <code>tools/arcade-holes/holes/</code> that describes a piece of ground, and the builder turns it into the same course file format the engine already loads. One hole is one <strong>stage</strong>: its own world, theme, sky and wind.</p>
+      <p>A hole file exports:</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Export</th><th>What it is</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code>, <code>extent</code></td><td class="wrapok">The file's name, and the rectangle of ground the hole covers.</td></tr>
+          <tr><td><code>stage</code></td><td class="wrapok">The card: name, a number no stage has used before, its place in the tour, theme, time of day, a blurb under 90 characters, difficulty 1 to 3, an optional wind range, and <code>freeBall</code> for a rocket hole.</td></tr>
+          <tr><td><code>hole</code></td><td class="wrapok">Par, name, notes and the line of play, starting at the tee.</td></tr>
+          <tr><td><code>height(x, y)</code></td><td class="wrapok">The ground: a function that returns the height in metres at any point. Cliffs, craters and islands are all just this function.</td></tr>
+          <tr><td><code>surfaces</code>, <code>trees</code>, <code>props</code></td><td class="wrapok">Fairway, green, sand and water shapes; trees; and the props that carry the theme (lighthouses, pyramids, castles, crowds, blimps: over fifty kinds are modelled).</td></tr>
+          <tr><td><code>obLine</code>, <code>sea</code></td><td class="wrapok">Where a ball is out of bounds, and whether the hole sits in a sea.</td></tr>
+          <tr><td><code>probes</code></td><td class="wrapok">Spots that must come out as a given surface, checked by the builder so a redesign cannot quietly drown the tee.</td></tr>
+        </tbody>
+      </table></div>
+      <p>The themes are <code>tropical</code>, <code>canyon</code>, <code>links</code>, <code>volcano</code>, <code>alpine</code>, <code>sakura</code>, <code>jungle</code>, <code>desert</code>, <code>neon</code> and <code>stadium</code>. A theme sets the colours, the sky and what the water is: on a volcano stage it is lava.</p>
+      <pre><code>node tools/arcade-holes/build.mjs              # build every stage and the tour list
+node tools/arcade-holes/build.mjs --check      # validate only, write nothing
+node tools/arcade-holes/preview.mjs            # top-down PNG maps of every hole</code></pre>
+    </section>
+
+    <section id="add">
+      <h2>Add a stage</h2>
+      <ol class="steps">
+        <li><p><b>Copy a hole</b> in <code>tools/arcade-holes/holes/</code> to <code>holes/&lt;your-id&gt;.js</code>. A par 3 such as <code>lagoon-island.js</code> is the easiest start. Give its <code>stage</code> a <code>number</code> that has never been used: it is the stage's identity for good.</p></li>
+        <li><p><b>Shape the ground.</b> Write <code>height(x, y)</code>, lay out the surfaces, and place props. Give it a safe route and a hero route; a third route that needs a Rocket ball is the house style.</p></li>
+        <li><p><b>Look at the map and validate it:</b></p>
+          <pre><code>node tools/arcade-holes/preview.mjs --only &lt;your-id&gt;
+node tools/arcade-holes/build.mjs --check --only &lt;your-id&gt;</code></pre>
+          <p>The builder names what is wrong: a green that is too steep, water above the ground beside it, a prop on the line of play.</p></li>
+        <li><p><b>Playtest it.</b> Build it, start the game, pick your stage (Practice &gt; Free play, or a quick match) and fire test swings or <code>/api/test-shot</code> swings: a stock drive, a weak one, a slice, a Rocket. Check that a bad shot costs a stroke, not the hole.</p></li>
+        <li><p><b>Add its tests.</b> The catalogue test already checks every stage in general (it builds, validates, has a unique number, a green of the right size, known props). Add a test file for what is particular to yours: the carries, the routes, where a ball must stay dry.</p></li>
+        <li><p><b>Open a pull request</b> with a screenshot or two. If the stage gallery on this site should show it, <code>node site/dev/refresh.mjs</code> rewrites the cards from the game's own data.</p></li>
+      </ol>
+    </section>
+
+    <section id="rules">
+      <h2>Design rules for a hole</h2>
+      <p>The stages are built for real swings by average golfers, two of them, in a hurry. The rules the existing ones follow:</p>
+      <ul>
+        <li>Greens at least 28 by 24 metres (sudden-death greens 34 metres and more across), on a slope under 3 %.</li>
+        <li>Fairways 40 metres and wider where drives land.</li>
+        <li>A safe line and a hero line on every hole.</li>
+        <li>Hazards you can see from the tee, that cost a stroke rather than a lost ball.</li>
+        <li>Out of bounds far enough away that a reasonable miss never finds it.</li>
+        <li>Plenty of props: they are what makes a stage a world.</li>
+        <li>No wall a ball can get stuck behind: a player can aim 45 degrees either side of the flag and no further, so read "Aiming: 45 degrees and no more" in <code>docs/arcade-holes.md</code> before building anything tall.</li>
+      </ul>
+    </section>
+
+    <section id="more">
+      <h2>Other ways to help</h2>
+      <ul>
+        <li><strong>Tell us what your launch monitor does.</strong> The <a href="connect.html">Connect page</a> only lists setups with a source. A report that says "monitor X with connector Y works" (or does not, and how) is worth a lot.</li>
+        <li><strong>Play a match and report the rough edges.</strong> Anything confusing on screen, any moment the camera or the sound gets in the way.</li>
+        <li><strong>Balls and tricks.</strong> They are entries in <code>POWERUPS</code> in <code>lib/arcade.js</code>, built from a handful of physics options (drag, lift, bounce, roll, the size of the cup). <code>docs/arcade.md</code> has the measured numbers for each.</li>
+        <li><strong>Sound.</strong> Every effect is CC0 or generated for the project, and listed with its source in <code>public/arcade/sfx/CREDITS.md</code>. Replacements have to be as free as that.</li>
+      </ul>
+      <div class="note warn">
+        <p><b>Keep it clean.</b> Nothing copied from a commercial game, film or broadcast: no sounds, no art, no course layouts. Everything in the repository has to be something the project may give away under the MIT licence.</p>
+      </div>
+    </section>
+
+    <section id="credits">
+      <h2>Credits and licence</h2>
+      <p>Sim Clash is free software under the MIT licence. It is a fork of <strong>Open-Birdie</strong>, and would not exist without it:</p>
+      <ul>
+        <li><a href="https://github.com/rroojrooj/Open-Birdie">rroojrooj/Open-Birdie</a>: the original open-source golf simulator, by Rooj Rin (MIT).</li>
+        <li><a href="https://github.com/jordan-shilts/Open-Birdie">jordan-shilts/Open-Birdie</a>: the actively developed fork, by jordan-shilts, that Sim Clash is built on (MIT).</li>
+      </ul>
+      <p>If you fix something in the engine itself (physics, the renderer, the launch-monitor link), consider sending it to Open-Birdie too, so both projects get it.</p>
+      <p>Sound effects use Kenney's CC0 audio packs and CC0 recordings from freesound.org; skies and textures are CC0 from Poly Haven and ambientCG. The full lists are in <code>ASSETS.md</code> and <code>public/arcade/sfx/CREDITS.md</code> in the repository.</p>
+      <p class="muted">GSPro, Foresight, GSPconnect, Uneekor and the other product names on this site belong to their owners and are used only to describe what the game works with. Sim Clash is not affiliated with or endorsed by any of them.</p>
+    </section>
+
+    <div class="next">
+      <a class="btn btn-go" data-gh="repo" href="#repo"><span>Open the repository</span></a>
+      <a class="btn btn-ghost" href="play.html"><span>How to play</span></a>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <div>
+      <h2>Sim Clash</h2>
+      <p>Arcade 1v1 golf for real launch monitors. Free and open source under the MIT licence.</p>
+      <p>Built on Open-Birdie: the original by Rooj Rin (<a href="https://github.com/rroojrooj/Open-Birdie">rroojrooj/Open-Birdie</a>) and the fork by jordan-shilts (<a href="https://github.com/jordan-shilts/Open-Birdie">jordan-shilts/Open-Birdie</a>) that Sim Clash is built on.</p>
+    </div>
+    <nav aria-label="Pages">
+      <h2>Site</h2>
+      <ul>
+        <li><a href="install.html">Install</a></li>
+        <li><a href="connect.html">Connect your launch monitor</a></li>
+        <li><a href="play.html">How to play</a></li>
+        <li><a href="faq.html">FAQ and troubleshooting</a></li>
+        <li><a href="contribute.html">Contribute</a></li>
+      </ul>
+    </nav>
+    <nav aria-label="Project">
+      <h2>Project</h2>
+      <ul>
+        <li><a data-gh="repo" href="contribute.html">GitHub repository</a></li>
+        <li><a data-gh="releases" href="install.html">Releases</a></li>
+        <li><a data-gh="issues" href="contribute.html">Issues</a></li>
+        <li><a data-gh="license" href="contribute.html">MIT licence</a></li>
+        <li><a data-gh="disclaimer" href="contribute.html">Disclaimer</a></li>
+      </ul>
+    </nav>
+    <p class="fine">Sim Clash is an independent open-source project. It is not affiliated with, endorsed by or sponsored by GSPro, Foresight Sports, Uneekor or any other company named on this site; their names are used only to say what the game works with, and all trademarks belong to their owners. The software is provided as is, with no warranty. Hitting golf balls indoors can hurt people and break things: swing at your own risk.</p>
+  </div>
+</footer>
+<script src="config.js"></script>
+<script src="site.js"></script>
+</body>
+</html>
