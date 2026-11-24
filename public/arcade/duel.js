@@ -226,10 +226,15 @@ export class DuelUI {
     this._clearTimers();
     if (!v) { this._next(); return; }
     this._card(s, v);
-    if (v.kind === 'call') { this._cue('stage-sting'); }
-    else if (v.kind === 'matched') { this._cue('fanfare-hole'); this._cue('confetti-pop'); }
-    else if (v.kind === 'letter') { this._cue('sting-fail'); }
-    else this._cue('ui-back');
+    // the mode's own sounds and lines (docs/arcade-voice.md, "Bullseye, the duel, replays")
+    if (v.kind === 'call') { this._cue('dl-call'); }
+    else if (v.kind === 'matched') { this._cue('dl-matched'); this._cue('confetti-pop'); this._say('dl-matched'); }
+    else if (v.kind === 'letter') {
+      const left = String(s.word || '').length - String((s.last && s.last.letters) || '').length;   // letters still to spell
+      this._cue('dl-letter');
+      this._say(s.word && left <= 0 ? 'dl-spelled-it' : s.word && left === 1 ? 'dl-one-letter-left' : 'dl-letter');
+    }
+    else { this._cue('dl-no-call'); this._say('dl-no-call'); }
     const hold = v.kind === 'call' ? CALL_MS : VERDICT_MS;
     if (s.phase === 'done') { this._after(hold, () => this._screenResult(s)); return; }
     this._after(hold, () => { this.banner.innerHTML = ''; this._next(); });
@@ -253,7 +258,7 @@ export class DuelUI {
       ${big(`${shout(p.name)}, ${match ? 'MATCH IT' : 'CALL YOUR SHOT'}`, 'dl-turn-t')}
       <span class="dl-turn-s">${match ? esc(String(s.call ? s.call.text : '').replace(/^MATCH IT: /, '')) : 'HIT ANY SHOT · WHAT MAKES IT SPECIAL IS THE CALL'}</span></div>`;
     this._cue('turn-chime');
-    this._say(match ? 'm-youre-up' : 'm-get-ready');
+    this._say(match ? 'dl-match-it' : 'dl-call-your-shot');
     this._after(TURN_MS, () => { const t = this.banner.querySelector('.dl-turn'); if (t) t.remove(); });
   }
   /** The call card, or the verdict, over the picture of the ball that was just hit. */

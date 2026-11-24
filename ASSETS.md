@@ -86,6 +86,27 @@ regenerable, too large for history). None of this data is committed to the repo.
   Source: https://polyhaven.com/a/coast_sand_02
   Tiled bunker sand, brightened in-shader and mixed in on the bunker mask.
 
+## Arcade trees, the stadium kit, gadgets and the living world (second release)
+
+Nothing in this group is a third-party asset.
+
+- `public/arcade/trees/*.glb` (the species of the arcade worlds, each with its hero model)
+  and the `palm-a/-b/-c.glb` props: grown from seeds by `tools/arcade-art/trees/gen.mjs`.
+  `public/arcade/trees/leaves.webp`, `leaves-aux.png`, `bark.webp`, `bark-n.webp`: painted
+  tile by tile by an image model (Nano Banana 2.1, through Higgsfield) from this project's
+  own prompts (`tools/arcade-art/trees/prompts.mjs`) and assembled by
+  `tools/arcade-art/trees/textures.mjs`. `public/arcade/trees/manifest.json` lists every
+  file with its size and the job ids. See docs/arcade-look.md, "Trees".
+- `public/arcade/props/stand-section.glb`, `stand-corner.glb`, `led-board.glb`,
+  `ad-board.glb`, `barrier.glb`, `camera-tower.glb`, `tunnel.glb`, `podium.glb` (new), and
+  `crowd.glb`, `grandstand.glb`, `jumbotron.glb` and a dozen older props (rebuilt):
+  modelled by script in Blender (`tools/arcade-art/blender/stadium.py`, `models/`), baked
+  by `tools/arcade-art/bake.mjs`. `public/arcade/props/manifest.json` lists every model.
+- The stadium's spectators, beams and confetti, the course gadgets and the living world
+  (trains, boats under way, birds, fish, walkers, weather) are drawn by code
+  (`public/render/crowd.js`, `stadium-fx.js`, `gadgets.js`, `world-models.js`,
+  `world-fx.js`): no file ships for them.
+
 ## Arcade stage skies and ground materials (v3 environment pass)
 
 - `public/arcade/env/sky/*.webp`: eleven sky panoramas, one for each arcade stage's theme

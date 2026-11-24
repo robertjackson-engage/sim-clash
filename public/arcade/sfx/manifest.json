@@ -28,6 +28,35 @@
         "arm-rare.mp3"
       ]
     },
+    "be-bull": {
+      "files": [
+        "be-bull.mp3"
+      ]
+    },
+    "be-bust": {
+      "files": [
+        "be-bust.mp3"
+      ]
+    },
+    "be-checkout": {
+      "files": [
+        "be-checkout.mp3"
+      ]
+    },
+    "be-thunk": {
+      "files": [
+        "be-thunk.mp3",
+        "be-thunk-2.mp3",
+        "be-thunk-3.mp3"
+      ]
+    },
+    "bounce": {
+      "files": [
+        "bounce.mp3",
+        "bounce-2.mp3",
+        "bounce-3.mp3"
+      ]
+    },
     "chest-open": {
       "files": [
         "chest-open.mp3"
@@ -131,6 +160,31 @@
         "cup-drop.mp3"
       ]
     },
+    "disaster": {
+      "files": [
+        "disaster.mp3"
+      ]
+    },
+    "dl-call": {
+      "files": [
+        "dl-call.mp3"
+      ]
+    },
+    "dl-letter": {
+      "files": [
+        "dl-letter.mp3"
+      ]
+    },
+    "dl-matched": {
+      "files": [
+        "dl-matched.mp3"
+      ]
+    },
+    "dl-no-call": {
+      "files": [
+        "dl-no-call.mp3"
+      ]
+    },
     "drawer-close": {
       "files": [
         "drawer-close.mp3"
@@ -168,6 +222,83 @@
         "flag-clank-2.mp3"
       ]
     },
+    "gadget-break": {
+      "files": [
+        "gadget-break.mp3",
+        "gadget-break-2.mp3"
+      ]
+    },
+    "gadget-bumper": {
+      "files": [
+        "gadget-bumper.mp3",
+        "gadget-bumper-2.mp3",
+        "gadget-bumper-3.mp3"
+      ]
+    },
+    "gadget-coin": {
+      "files": [
+        "gadget-coin.mp3",
+        "gadget-coin-2.mp3",
+        "gadget-coin-3.mp3"
+      ],
+      "hard": [
+        "gadget-coin-hard.mp3"
+      ]
+    },
+    "gadget-fan": {
+      "files": [
+        "gadget-fan.mp3"
+      ]
+    },
+    "gadget-geyser": {
+      "files": [
+        "gadget-geyser.mp3"
+      ]
+    },
+    "gadget-pad": {
+      "files": [
+        "gadget-pad.mp3",
+        "gadget-pad-2.mp3"
+      ]
+    },
+    "gadget-ring": {
+      "files": [
+        "gadget-ring.mp3",
+        "gadget-ring-2.mp3"
+      ]
+    },
+    "gadget-strip": {
+      "files": [
+        "gadget-strip.mp3"
+      ]
+    },
+    "gadget-thud": {
+      "files": [
+        "gadget-thud.mp3",
+        "gadget-thud-2.mp3"
+      ]
+    },
+    "gadget-warp": {
+      "files": [
+        "gadget-warp.mp3"
+      ],
+      "hard": [
+        "gadget-warp-hard.mp3"
+      ]
+    },
+    "gadget-zone": {
+      "files": [
+        "gadget-zone.mp3"
+      ],
+      "hard": [
+        "gadget-zone-hard.mp3"
+      ]
+    },
+    "great": {
+      "files": [
+        "great.mp3"
+      ]
+    },
     "green-thump": {
       "files": [
         "green-thump.mp3",
@@ -182,6 +313,11 @@
     "ice-skid": {
       "files": [
         "ice-skid.mp3"
+      ]
+    },
+    "jackpot": {
+      "files": [
+        "jackpot.mp3"
       ]
     },
     "lava-sizzle": {
@@ -203,6 +339,26 @@
       "files": [
         "oooh.mp3",
         "oooh-2.mp3"
+      ]
+    },
+    "perfect": {
+      "files": [
+        "perfect.mp3"
+      ]
+    },
+    "replay-in": {
+      "files": [
+        "replay-in.mp3"
+      ]
+    },
+    "replay-offer": {
+      "files": [
+        "replay-offer.mp3"
+      ]
+    },
+    "replay-out": {
+      "files": [
+        "replay-out.mp3"
       ]
     },
     "riser": {
@@ -359,6 +515,76 @@
         "whoosh.mp3",
         "whoosh-2.mp3",
         "whoosh-3.mp3"
+      ]
+    },
+    "world-celebration": {
+      "files": [
+        "world-celebration.mp3"
+      ]
+    },
+    "world-dragon-roar": {
+      "files": [
+        "world-dragon-roar.mp3"
+      ]
+    },
+    "world-eruption": {
+      "files": [
+        "world-eruption.mp3"
+      ]
+    },
+    "world-finale": {
+      "files": [
+        "world-finale.mp3"
+      ]
+    },
+    "world-fireworks": {
+      "files": [
+        "world-fireworks.mp3"
+      ]
+    },
+    "world-flare": {
+      "files": [
+        "world-flare.mp3"
+      ]
+    },
+    "world-knockout": {
+      "files": [
+        "world-knockout.mp3"
+      ]
+    },
+    "world-lava-burp": {
+      "files": [
+        "world-lava-burp.mp3"
+      ]
+    },
+    "world-lights-dip": {
+      "files": [
+        "world-lights-dip.mp3"
+      ]
+    },
+    "world-lights-flare": {
+      "files": [
+        "world-lights-flare.mp3"
+      ]
+    },
+    "world-shockwave": {
+      "files": [
+        "world-shockwave.mp3"
+      ]
+    },
+    "world-snap": {
+      "files": [
+        "world-snap.mp3"
+      ]
+    },
+    "world-snowman": {
+      "files": [
+        "world-snowman.mp3"
+      ]
+    },
+    "world-tumbleweed": {
+      "files": [
+        "world-tumbleweed.mp3"
       ]
     },
     "roar": {

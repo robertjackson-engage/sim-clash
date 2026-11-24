@@ -78,6 +78,7 @@ export class ReplayDirector {
   }
 
   _cue(name, opts) { try { this.audio?.cue?.(name, opts); } catch (_) { /* silent */ } }
+  _say(line, opts) { try { this.audio?.say?.(line, opts); } catch (_) { /* silent */ } }
 
   _show(job) {
     if (!this.root) return;
@@ -149,7 +150,9 @@ export class ReplayDirector {
       cameraPlan,
     });
     this._show(run);
-    this._cue('whoosh', { intensity: 0.5 });
+    this._cue('replay-in', { intensity: 0.5 });
+    // the announcer says what this is: the shot of the match, or a second look (a reel is silent: it is browsed)
+    if (run.kind === 'sotm') this._say('m-shot-of-the-match'); else if (run.kind === 'instant') this._say('m-replay');
     return true;
   }
 
@@ -177,7 +180,7 @@ export class ReplayDirector {
     this.last = { camera: run.camera, title: run.title, reason, kind: run.kind };
     if (reason === 'skip') { try { this.scene.stopShot?.(); } catch (_) { /* gone */ } }
     this._hide();
-    if (reason !== 'cancel') this._cue('whoosh', { intensity: 0.35 });
+    if (reason !== 'cancel') this._cue('replay-out', { intensity: 0.35 });
     try { run.onEnd?.(reason); } catch (e) { console.warn('[replay] onEnd', e); }
   }
 }

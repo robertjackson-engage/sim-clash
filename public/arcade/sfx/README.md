@@ -6,7 +6,8 @@ The full story (sources, the mix, the sound map, how to swap a sound) is in
 
 - `manifest.json` says which files play for which cue. It is rebuilt from the files in this
   folder: `<cue>.mp3`, `<cue>-2.mp3`, `<cue>-3.mp3` are takes (one is picked at random,
-  never the same twice running), `<cue>-hard.mp3` is a take for a hard hit.
+  never the same twice running), `<cue>-hard.mp3` is a take for a hard hit (a driver; the
+  full coin trail; the x3 multiplier ring; the exit of a warp).
 - `CREDITS.md` lists every file with its source, URL and licence. Everything is CC0
   (Kenney packs, freesound.org recordings) or generated for this project. Nothing comes from
   another game, a film or a broadcast.
@@ -27,8 +28,13 @@ moment it wants heard.
 
 Levels, cooldowns, how many sounds may play at once and which crowd reaction wins are decided
 in `public/arcade/audio.js`, not by the files: the announcer on top, then impacts, outcome
-stings, game feel, the crowd, and the interface quietest. The files are levelled to targets
-between -17 and -27 LUFS (`sources.mjs`).
+stings, game feel, the crowd, the living world (`world-*`: the stage answering the game, one
+beat at a time, under whatever it plays with), and the interface quietest. The files are
+levelled to targets between -17 and -27 LUFS (`sources.mjs`).
+
+Five cues have no file on purpose and stay synthesized (`good`, `ok`, `miss`, `slowmo-in`,
+`slowmo-out`); the gadget, living-world, Bullseye, duel and replay cues have no synthesizer,
+so each of those needs its file.
 
 The toggle in the power-up dock mutes everything in this layer
 (`localStorage['open-birdie.arcade.muted']`), the announcer included.

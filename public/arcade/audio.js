@@ -39,9 +39,10 @@
  *   loud effect never pumps the voice.
  *
  * The mix is decided here, not by the callers (see MIX, COOLDOWN, EXCLUSIVE below): the
- * announcer on top, then impacts, outcome stings, game feel, the crowd, and the interface
- * quietest; every cue has a cooldown; a category has a voice limit; there is one crowd
- * reaction and one outcome sting at a time. moment() plays one shot outcome as one moment.
+ * announcer on top, then impacts, outcome stings, game feel, the crowd, the living world
+ * under whatever moment it answers, and the interface quietest; every cue has a cooldown;
+ * a category has a voice limit; there is one crowd reaction, one outcome sting and one beat
+ * of the world at a time. moment() plays one shot outcome as one moment.
  *
  * Gain staging (measured in Chromium): any single cue peaks ≤ ~0.5 at the cue bus and
  * the crowd bed ≤ ~0.35. The compressor adds its own automatic makeup (~×1.3), and the
@@ -64,6 +65,8 @@ const EPS = 0.0001; // −80 dB floor for exponential ramps (they cannot hit 0)
  *   sting   the outcome of a shot or a hole (one at a time: a bigger one replaces a smaller)
  *   feel    rewards, power-ups, transitions, tension
  *   crowd   crowd reactions (one at a time: a roar replaces a gasp, never the other way)
+ *   world   the stage answering the game (fireworks, a dragon, the lights). It always plays
+ *           WITH a callout or a payoff, so it sits under them: one at a time, no crowd in it
  *   ui      menus and counters. Quietest.
  */
 export const CUE_CATEGORY = Object.freeze({
@@ -92,6 +95,23 @@ export const CUE_CATEGORY = Object.freeze({
   // one distinct sound per kind of pick in the lobby (a pick is ONE sound, never tick plus confirm)
   'select-player': 'ui', 'select-format': 'ui', 'select-stage': 'ui', 'toggle-on': 'ui', 'toggle-off': 'ui',
   'drawer-open': 'ui', 'drawer-close': 'ui', 'ui-error': 'ui',
+
+  // course gadgets (public/render/gadget-core.js GADGET_CUES): what the ball hits is an
+  // impact, what it flies through or collects is game feel
+  'gadget-pad': 'impact', 'gadget-bumper': 'impact', 'gadget-break': 'impact', 'gadget-thud': 'impact',
+  'gadget-ring': 'feel', 'gadget-coin': 'feel', 'gadget-warp': 'feel', 'gadget-geyser': 'feel',
+  'gadget-strip': 'feel', 'gadget-fan': 'feel', 'gadget-zone': 'feel',
+
+  // the living world (public/render/world-life.js LIVING_CUES)
+  'world-shockwave': 'world', 'world-eruption': 'world', 'world-dragon-roar': 'world', 'world-flare': 'world',
+  'world-fireworks': 'world', 'world-celebration': 'world', 'world-snap': 'world', 'world-lava-burp': 'world',
+  'world-tumbleweed': 'world', 'world-snowman': 'world', 'world-knockout': 'world', 'world-lights-dip': 'world',
+  'world-lights-flare': 'world', 'world-finale': 'world',
+
+  // Bullseye, the trick shot duel, instant replays (docs/modes.md)
+  'be-thunk': 'impact', 'be-bull': 'sting', 'be-bust': 'sting', 'be-checkout': 'sting',
+  'dl-call': 'sting', 'dl-matched': 'sting', 'dl-letter': 'feel', 'dl-no-call': 'feel',
+  'replay-in': 'feel', 'replay-out': 'feel', 'replay-offer': 'ui',
 });
 
 /** A stage may have its own reveal sting, 'stage-sting-<theme>'; without a file it is 'stage-sting'. */
@@ -121,7 +141,9 @@ const SYNTH_FALLBACK = {
 
 /** Cues that are silent until their generated sample exists (no synthesizer stands in). */
 export const SAMPLE_CUE_NAMES = ['crowd-cheer', 'crowd-ohh', 'crowd-aww', 'crowd-laugh', 'applause',
-  'vs-slam', 'drumroll', 'sting-knockout', 'chest-open', 'trick-cast', 'coin-flip', 'stage-sting'];
+  'vs-slam', 'drumroll', 'sting-knockout', 'chest-open', 'trick-cast', 'coin-flip', 'stage-sting',
+  // every gadget, living-world, Bullseye, duel and replay cue is a recording: none has a synthesizer
+  ...Object.keys(CUE_CATEGORY).filter((n) => /^(gadget|world|be|dl|replay)-/.test(n))];
 
 /** Cues that always sound: their own synthesizer, or a borrowed one. */
 export const SYNTH_CUE_NAMES = CUE_NAMES.filter((n) => !SAMPLE_CUE_NAMES.includes(n));
@@ -134,11 +156,21 @@ const MIX = {
   sting: { gain: 0.85, voices: 2, cooldown: 0.3, rate: 0, vary: 0 },
   feel: { gain: 0.8, voices: 4, cooldown: 0.08, rate: 0.015, vary: 0.05 },
   crowd: { gain: 0.75, voices: 2, cooldown: 0.5, rate: 0.02, vary: 0.06 },
+  world: { gain: 0.68, voices: 2, cooldown: 1.0, rate: 0.02, vary: 0.05 },
   ui: { gain: 0.6, voices: 3, cooldown: 0.03, rate: 0, vary: 0 },
 };
-// A run of hover ticks should sound like a selector rolling, not one sample repeated.
-const VARY = { 'ui-tick': { rate: 0.06, vary: 0.1 } };
+// A run of hover ticks should sound like a selector rolling, not one sample repeated. A trail
+// of coins moves a little more than other game feel; the chimes and the tape whips stay at pitch.
+const VARY = { 'ui-tick': { rate: 0.06, vary: 0.1 }, 'gadget-coin': { rate: 0.03, vary: 0.08 },
+  'gadget-zone': { rate: 0, vary: 0 }, 'gadget-ring': { rate: 0.01, vary: 0.05 }, 'replay-in': { rate: 0, vary: 0 }, 'replay-out': { rate: 0, vary: 0 } };
 const HARD_HIT = 0.78;   // cue intensity from which a cue's "hard" takes play (a driver, not a wedge)
+// ... or the cue's own line: the full coin trail (1, a coin is 0.55), the x3 zone (1, the x2 is
+// 0.8), the warp's exit (0.9, its mouth is 0.8). public/render/gadget-core.js cueIntensity().
+const HARD_AT = { 'gadget-coin': 0.9, 'gadget-zone': 0.95, 'gadget-warp': 0.85 };
+// Cues that come in runs and must not pile up: a new one fades the one before it (60 ms), so
+// a trail of coins is a clean run of chimes, a ball rattling between bumpers a run of pops,
+// and neither fills its category's voices (the cup must still be heard to drop).
+const CHOKE = new Set(['gadget-coin', 'gadget-bumper']);
 const MAX_VOICES = 12;   // everything at once; past this only an impact still gets through
 const COOLDOWN = {
   strike: 0.12, splash: 0.3, 'water-plunk': 0.3, 'lava-sizzle': 0.5, 'cup-drop': 0.8, 'flag-clank': 0.25,
@@ -146,6 +178,12 @@ const COOLDOWN = {
   'vs-slam': 0.5, drumroll: 2, riser: 2.4, 'heartbeat-hit': 0.4, 'arm-rare': 0.2, 'arm-epic': 0.3,
   'ui-tick': 0.03, 'trophy-tick': 0.035, 'turn-chime': 0.5,
   'lobby-open': 0.5, 'start-match': 1, 'coin-flip': 1, 'coin-land': 1, 'stage-sting': 0.5, 'tee-off': 0.5,
+  // gadgets: a trail of coins is a run of chimes (the caller lets one through every 80 ms),
+  // a ball rattling between bumpers pops each time, the rest cannot repeat inside one contact
+  'gadget-coin': 0.06, 'gadget-bumper': 0.07, 'gadget-pad': 0.12, 'gadget-thud': 0.12, 'gadget-ring': 0.15,
+  'gadget-warp': 0.15, 'gadget-break': 0.25, 'gadget-strip': 0.25, 'gadget-geyser': 0.4, 'gadget-fan': 0.5, 'gadget-zone': 0.5,
+  'be-thunk': 0.1, 'be-bull': 0.5, 'be-bust': 0.5, 'be-checkout': 1, 'dl-call': 0.5, 'dl-letter': 0.2, 'dl-matched': 0.5, 'dl-no-call': 0.5,
+  'replay-in': 0.3, 'replay-out': 0.3, 'replay-offer': 0.3,
 };
 // One crowd reaction and one outcome sting at a time. Inside the window a cue of a higher
 // rank replaces the one sounding (which fades out); the same rank or lower is dropped.
@@ -154,7 +192,14 @@ const EXCLUSIVE = {
     'crowd-laugh': 2, 'crowd-aww': 2, oooh: 1, gasp: 1, 'crowd-gasp': 1 } },
   sting: { window: 0.6, rank: { jackpot: 3, 'fanfare-win': 3, 'sting-knockout': 3, perfect: 2, 'fanfare-hole': 2,
     disaster: 2, 'sting-fail': 2, great: 1, good: 1, miss: 1, ok: 0,
-    'vs-slam': 3, 'start-match': 2, 'coin-land': 2, 'stage-sting': 2 } },
+    'vs-slam': 3, 'start-match': 2, 'coin-land': 2, 'stage-sting': 2,
+    'be-checkout': 3, 'be-bull': 2, 'be-bust': 2, 'dl-call': 2, 'dl-matched': 2 } },
+  // One beat of the living world at a time, ranked as its own reaction bus ranks them
+  // (public/render/world-life.js REACTIONS): the finale takes over from anything, a holed
+  // ball or a knockout from a great shot's fireworks, and a splash never cuts a dragon off.
+  world: { window: 1.0, rank: { 'world-finale': 5, 'world-celebration': 4, 'world-knockout': 4, 'world-lights-dip': 4,
+    'world-lights-flare': 4, 'world-eruption': 3, 'world-dragon-roar': 3, 'world-shockwave': 2, 'world-flare': 2,
+    'world-fireworks': 2, 'world-snap': 1, 'world-lava-burp': 1, 'world-tumbleweed': 1, 'world-snowman': 1 } },
 };
 // moment(): when each part of one shot outcome starts, in ms after the impact.
 const MOMENT = { sting: 80, crowd: 180, voiceAfterCrowd: 380, voiceAfterSting: 320, voiceAfterImpact: 120 };
@@ -284,6 +329,7 @@ export class ArcadeAudio {
     this._missing = new Map();         // url -> when it last answered "not found" (ms)
     this._live = new Set();            // cue voices that are sounding: { cat, end, kill }
     this._cueLast = new Map();         // cue name -> when it last fired (context seconds)
+    this._choked = new Map();          // a cue that comes in runs -> its voice that is sounding (CHOKE)
     this._held = {};                   // category -> the exclusive cue holding it { rank, at, rec }
     this._curCat = null;               // the category of the cue being started (routes _voice())
     this._lastVoice = null;
@@ -437,7 +483,10 @@ export class ArcadeAudio {
       const now = this._ctx.currentTime;
       // while the gallery is rising, and just after its payoff, that IS the crowd: nothing else joins in
       if (cat === 'crowd' && !force && ((this._swell && now < this._swell.until) || now < this._payoffUntil)) return false;
-      const last = this._cueLast.get(name);
+      // (a cue with its own hard line keeps a separate cooldown for its hard take: the full
+      // coin trail lands on the heels of its last coin, and must not be dropped as a repeat)
+      const key = HARD_AT[name] != null && Number.isFinite(intensity) && intensity >= HARD_AT[name] ? `${name}!` : name;
+      const last = this._cueLast.get(key);
       if (!force && last != null && now - last < (COOLDOWN[name] ?? mix.cooldown)) return false;   // no machine-gunning
 
       const ex = EXCLUSIVE[cat];
@@ -462,14 +511,19 @@ export class ArcadeAudio {
       const entry = this._sfx.get(name);
       let played = true;
       if (override) this._playSample(override, t, i, 0.55, LEGACY_VARY);
-      else if (entry && this._cueSample(entry, t, i, VARY[name] || mix)) { /* a real take is playing */ }
+      else if (entry && this._cueSample(entry, t, i, VARY[name] || mix, HARD_AT[name] ?? HARD_HIT)) { /* a real take is playing */ }
       else {
         const fn = this._synth[name] || this._synth[SYNTH_FALLBACK[name]];
         if (fn) fn.call(this, t, i); else played = false;
       }
       this._curCat = null;
       if (!played) return false;
-      this._cueLast.set(name, now);
+      this._cueLast.set(key, now);
+      if (CHOKE.has(name)) {
+        const prev = this._choked.get(key);
+        if (prev && prev !== this._lastVoice) prev.kill(0.06);
+        this._choked.set(key, this._lastVoice);
+      }
       if (ex) {
         if (held && held.rec) held.rec.kill(0.12);
         this._held[cat] = { rank, at: now, rec: this._lastVoice };
@@ -969,6 +1023,7 @@ export class ArcadeAudio {
   _stopCues() {
     for (const rec of Array.from(this._live)) rec.kill(0.05);
     this._live.clear();
+    this._choked.clear();
     this._held = {};
   }
 
@@ -1184,14 +1239,14 @@ export class ArcadeAudio {
   }
 
   /** Play a random decoded take of a sampled cue. False when none is ready (the caller may synthesize). */
-  _cueSample(entry, t, intensity, mix) {
+  _cueSample(entry, t, intensity, mix, hardAt = HARD_HIT) {
     const loaded = [];
     entry.buffers.forEach((b, k) => { if (b) loaded.push(k); else this._loadSfxTake(entry, k).catch(() => {}); });
     if (!loaded.length) return false;
     // a hard hit plays a hard take when there is one; anything else plays the ordinary ones
     const hard = loaded.filter((k) => k >= entry.soft);
     const soft = loaded.filter((k) => k < entry.soft);
-    const ready = intensity >= HARD_HIT && hard.length ? hard : soft.length ? soft : hard;
+    const ready = intensity >= hardAt && hard.length ? hard : soft.length ? soft : hard;
     const k = ready[pickTake(ready.length, ready.indexOf(entry.last))];
     entry.last = k;
     this._playSample(entry.buffers[k], t, intensity, SAMPLE_GAIN, mix);

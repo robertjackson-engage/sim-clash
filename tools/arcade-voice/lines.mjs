@@ -421,7 +421,263 @@ const POWERUP_LINES = POWERUPS.map(([id, text]) => {
     : [`[shouting, hyped] ${bare}!!!`, `[booming, excited, announcing] ${bare}!`]);
 });
 
-export const LINES = [...CALLOUT_LINES, ...MATCH_LINES, ...STAGE_LINES, ...POWERUP_LINES];
+// ---- added after the contract by the feature streams ---------------------------------------
+// Each id below is one the game asks for by name; the text is the banner's own words where
+// there is a banner. Delivery notes are per take, as everywhere above: the first take is the
+// plain shout, the second the stretched one, the third (where there is one) staccato or a
+// laugh. Lines heard many times a round have three takes.
+const G = (id, text, takes, extra) => line('gadget', id, text, takes, extra);
+const P = (id, text, takes, extra) => line('party', id, text, takes, extra);
+const B = (id, text, takes, extra) => line('bullseye', id, text, takes, extra);
+const D = (id, text, takes, extra) => line('duel', id, text, takes, extra);
+const R = (id, text, takes, extra) => line('replay', id, text, takes, extra);
+
+// Course gadgets (lib/gadgets.js GADGET_CALLOUTS: id, banner text, tone). Said by the HUD as
+// the shot's callout, so the tone sets the delivery: epic loses its mind, good is a happy
+// shout, funny grins.
+const GADGET_LINES = [
+  G('full-trail', 'FULL TRAIL!', [
+    '[shouting, thrilled] FULL TRAIL!!!',
+    '[screaming, hyped] FULL TRAAAIL!',
+    '[shouting, awestruck] FULL! TRAIL!',
+  ]),
+  G('smashed-it', 'SMASHED IT!', [
+    '[shouting, booming, gleeful] SMASHED IT!!!',
+    '[screaming, thrilled] SMAAASHED IT!',
+    '[shouting, punchy] SMASHED! IT!',
+  ]),
+  G('triple-up', 'TRIPLE UP!', [
+    '[shouting, thrilled] TRIPLE UP!!!',
+    '[screaming, hyped] TRIIIPLE UP!',
+    '[shouting, awestruck] TRIPLE! UP!',
+  ]),
+  G('warp-speed', 'WARP SPEED!', [
+    '[shouting, hyped] WARP SPEED!!!',
+    '[excited, shouting] WAAARP SPEED!',
+    '[booming, announcing] WARP! SPEED!',
+  ]),
+  G('ring-it', 'RING IT!', [
+    '[shouting, happy] RING IT!',
+    '[excited, shouting] RIIING IT!',
+    '[shouting, punchy] RING! IT!',
+  ]),
+  G('double-up', 'DOUBLE UP!', [
+    '[shouting, happy] DOUBLE UP!!!',
+    '[excited, shouting] DOUBLE UUUP!',
+    '[shouting, punchy] DOUBLE! UP!',
+  ]),
+  G('thar-she-blows', 'THAR SHE BLOWS!', [
+    '[shouting like an old sea captain] THAR SHE BLOWS!',
+    '[shouting, gleeful, booming] THAR SHE BLOOOWS!',
+    '[laughing, shouting] THAR SHE BLOWS!!!',
+  ]),
+  G('boing', 'BOING!', [
+    '[shouting, playful, grinning] BOING!',
+    '[sing-song, teasing, shouting] BOOOIIING!',
+    '[shouting, cheerful, mocking] BOING!!!',
+  ]),
+  G('pinball', 'PINBALL WIZARD!', [
+    '[shouting, grinning, amused] PINBALL WIZARD!',
+    '[shouting, teasing, sing-song] PIIINBALL WIZARD!',
+    '[laughing, shouting] PINBALL WIZARD!!!',
+  ]),
+  G('turbo', 'TURBO!', [
+    '[shouting, hyped] TURBO!!!',
+    '[screaming, hyped] TURRRBO!',
+    '[booming, punchy] TURBO!',
+  ]),
+  G('denied', 'DENIED!', [
+    '[shouting, booming, gleeful] DENIED!!!',
+    '[shouting, mocking, grinning] DENIIIED!',
+    '[shouting, deadpan, harsh] DENIED!',
+  ]),
+  G('stuck', 'STUCK IN THE MUD!', [
+    '[shouting, amused] STUCK IN THE MUD!',
+    '[shouting, mock sympathy] STUCK IN THE MUUUD!',
+    '[laughing, shouting] STUCK IN THE MUD!!!',
+  ]),
+];
+
+// Party games for three and four (public/arcade/party.js). The three format names are read
+// like QUICK MATCH; "TO STAY ALIVE", "FOR THE SKINS", "TAKES THE SKIN", "IS OUT" and "WINS THE
+// GAME" follow a player's name, so they start on the verb; slots 3 and 4 match PLAYER ONE.
+const PARTY_LINES = [
+  P('p-skins', 'SKINS', [
+    '[shouting, announcing, punchy] SKINS!',
+    '[booming, announcing] SKIIINS!',
+    '[shouting, hyped] SKINS!!!',
+  ]),
+  P('p-stroke-race', 'STROKE RACE', [
+    '[shouting, announcing, punchy] STROKE RACE!',
+    '[shouting, hyped] STROKE RAAACE!',
+    '[booming, announcing] STROKE! RACE!',
+  ]),
+  P('p-elimination', 'ELIMINATION', [
+    '[booming, ominous, dramatic] ELIMINATION!',
+    '[shouting, announcing] ELIMINATION!!!',
+    '[booming, slow, menacing] ELIMINAAATION!',
+  ]),
+  P('p-to-stay-alive', 'TO STAY ALIVE!', [
+    '[shouting, urgent, tense] TO STAY ALIVE!',
+    '[booming, tense, dramatic] TO STAY ALIIIVE!',
+  ]),
+  P('p-for-the-skins', 'FOR THE SKINS!', [
+    '[shouting, tense, dramatic] FOR THE SKINS!!!',
+    '[booming, tense, dramatic] FOR THE SKIIINS!',
+  ]),
+  P('p-takes-the-skin', 'TAKES THE SKIN!', [
+    '[shouting, announcing] TAKES THE SKIN!!!',
+    '[shouting, thrilled] TAKES THE SKIIIN!',
+    '[booming, announcing] TAKES! THE! SKIN!',
+  ]),
+  P('p-skin-carries', 'THE SKIN CARRIES!', [
+    '[shouting, tense, dramatic] THE SKIN CARRIES!',
+    '[booming, dramatic] THE SKIN CAAARRIES!',
+  ]),
+  P('p-is-out', 'IS OUT!', [
+    '[shouting, booming, brutal] IS OUT!!!',
+    '[booming, slow, dramatic] IS OUUUT!',
+    '[shouting, harsh, punchy] IS! OUT!',
+  ]),
+  P('p-the-final', 'THE FINAL!', [
+    '[booming, dramatic, announcing] THE FINAL!!!',
+    '[shouting, hyped] THE FIIINAL!',
+  ]),
+  P('p-farthest-is-out', 'FARTHEST IS OUT!', [
+    '[shouting, tense, dramatic] FARTHEST IS OUT!',
+    '[booming, ominous, dramatic] FARTHEST IS OUUUT!',
+  ]),
+  P('p-wins-the-game', 'WINS THE GAME!', [
+    '[shouting, triumphant] WINS THE GAME!!!',
+    '[screaming, thrilled] WINS THE GAAAME!',
+    '[booming, triumphant] WINS! THE! GAME!',
+  ]),
+  P('m-player-3', 'PLAYER THREE', [
+    '[shouting, announcing] PLAYER THREE!',
+    '[shouting, hyped] PLAYER THREEE!',
+    '[booming, announcing] PLAYER! THREE!',
+  ]),
+  P('m-player-4', 'PLAYER FOUR', [
+    '[shouting, announcing] PLAYER FOUR!',
+    '[shouting, hyped] PLAYER FOOOUR!',
+    '[booming, announcing] PLAYER! FOUR!',
+  ]),
+  P('m-player-3-wins', 'PLAYER THREE WINS!', [
+    '[shouting, triumphant] PLAYER THREE WINS!!!',
+    '[screaming, thrilled] PLAYER THREE WIIINS!',
+    '[booming, triumphant] PLAYER THREE! WINS!',
+  ]),
+  P('m-player-4-wins', 'PLAYER FOUR WINS!', [
+    '[shouting, triumphant] PLAYER FOUR WINS!!!',
+    '[screaming, thrilled] PLAYER FOUR WIIINS!',
+    '[booming, triumphant] PLAYER FOUR! WINS!',
+  ]),
+];
+
+// Bullseye, the duel and the replays (docs/modes.md lists these as the ids each mode wants;
+// the screens play existing lines until their callers switch to these).
+const ROUNDS = ['TWO', 'THREE', 'FOUR', 'FIVE', 'SIX'];
+const BULLSEYE_LINES = [
+  B('be-bullseye', 'BULLSEYE!', [
+    '[shouting, thrilled] BULLSEYE!!!',
+    '[screaming, hyped] BULLSEYYYE!',
+    '[shouting, awestruck] BULLS! EYE!',
+  ]),
+  B('be-double', 'DOUBLE!', [
+    '[shouting, happy] DOUBLE!',
+    '[excited, shouting] DOUUUBLE!',
+  ]),
+  B('be-treble', 'TREBLE!', [
+    '[shouting, thrilled] TREBLE!!!',
+    '[excited, shouting] TREEEBLE!',
+  ]),
+  B('be-perfect-turn', 'PERFECT TURN!', [
+    '[screaming with joy, losing his mind] PERFECT TURN!!!',
+    '[shouting, awestruck] PERRRFECT TURN!',
+  ]),
+  B('be-bust', 'BUST!', [
+    '[shouting, deadpan, harsh] BUST!',
+    '[shouting, grinning, mocking] BUUUST!',
+    '[shouting, booming, gleeful] BUST!!!',
+  ]),
+  B('be-check-out', 'CHECK OUT!', [
+    '[shouting, triumphant] CHECK OUT!!!',
+    '[screaming, thrilled] CHECK OUUUT!',
+  ]),
+  B('be-can-anyone-answer', 'CAN ANYONE ANSWER?', [
+    '[booming, tense, dramatic] CAN ANYONE ANSWER?',
+    '[shouting, tense, urgent] CAN ANYONE AAANSWER?',
+  ]),
+  B('be-nearest-the-pin', 'NEAREST THE PIN TONIGHT!', [
+    '[shouting, impressed] NEAREST THE PIN TONIGHT!',
+    '[shouting, thrilled] NEAREST THE PIIIN TONIGHT!',
+  ]),
+  ...ROUNDS.map((word, i) => B(`be-round-${i + 2}`, `ROUND ${word}`, [
+    `[shouting, announcing] ROUND ${word}!`,
+    `[booming, announcing] ROUND! ${word}!`,
+  ])),
+  B('be-final-round', 'FINAL ROUND!', [
+    '[shouting, dramatic] FINAL ROUND!!!',
+    '[booming, dramatic] FINAL ROUUUND!',
+  ]),
+];
+
+const DUEL_LINES = [
+  D('dl-call-your-shot', 'CALL YOUR SHOT!', [
+    '[shouting, hyped, announcing] CALL YOUR SHOT!',
+    '[booming, dramatic] CALL YOUR SHOOOT!',
+  ]),
+  D('dl-match-it', 'MATCH IT!', [
+    '[shouting, tense, urgent] MATCH IT!',
+    '[booming, dramatic] MAAATCH IT!',
+    '[shouting, hyped] MATCH IT!!!',
+  ]),
+  D('dl-matched', 'MATCHED!', [
+    '[shouting, thrilled] MATCHED!!!',
+    '[excited, shouting] MAAATCHED!',
+    '[shouting, impressed] MATCHED!',
+  ]),
+  D('dl-letter', "THAT'S A LETTER!", [
+    "[shouting, grinning, mocking] THAT'S A LETTER!",
+    "[shouting, cheerful, mocking] THAT'S A LEEETTER!",
+    "[shouting, deadpan, harsh] THAT'S A LETTER!!!",
+  ]),
+  D('dl-no-call', 'NO CALL!', [
+    '[shouting, deadpan, harsh] NO CALL!',
+    '[shouting, amused] NO CAAALL!',
+  ]),
+  D('dl-one-letter-left', 'ONE LETTER LEFT!', [
+    '[shouting, tense, dramatic] ONE LETTER LEFT!',
+    '[booming, ominous, dramatic] ONE LETTER LEEEFT!',
+  ]),
+  D('dl-spelled-it', 'SPELLED IT!', [
+    '[shouting, booming, brutal] SPELLED IT!!!',
+    '[shouting, grinning, mocking] SPEEELLED IT!',
+  ]),
+];
+
+const REPLAY_LINES = [
+  R('m-replay', "LET'S SEE THAT AGAIN!", [
+    "[shouting, excited, announcing] LET'S SEE THAT AGAIN!",
+    "[shouting, impressed, grinning] LET'S SEE THAT AGAAAIN!",
+  ]),
+  R('m-shot-of-the-match', 'THE SHOT OF THE MATCH!', [
+    '[booming, dramatic, announcing] THE SHOT OF THE MATCH!',
+    '[shouting, awestruck] THE SHOT OF THE MAAATCH!',
+  ]),
+  R('m-highlights', "TONIGHT'S BEST!", [
+    "[shouting, hyped, announcing] TONIGHT'S BEST!",
+    "[booming, announcing] TONIGHT'S BEEEST!",
+  ]),
+];
+
+export const LINES = [...CALLOUT_LINES, ...MATCH_LINES, ...STAGE_LINES, ...POWERUP_LINES,
+  ...GADGET_LINES, ...PARTY_LINES, ...BULLSEYE_LINES, ...DUEL_LINES, ...REPLAY_LINES];
+// How many takes of a line are rendered: all of them for these (heard many times a game),
+// the first two for the rest.
+export const THREE_TAKES = new Set(['nice-shot', 'great-shot', 'perfect', 'terrible', 'm-youre-up', 'm-for-the-win',
+  'ring-it', 'boing', 'double-up', 'turbo', 'denied', 'p-is-out', 'p-takes-the-skin', 'm-player-3', 'm-player-4',
+  'be-bullseye', 'be-bust', 'dl-matched', 'dl-letter', 'dl-match-it']);
 export const LINE_IDS = LINES.map((l) => l.id);
 
 /** The plain words of a line: 'SHANK-A-POTAMUS!' -> ['shank', 'a', 'potamus']. */

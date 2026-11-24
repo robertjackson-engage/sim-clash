@@ -275,12 +275,15 @@ export class BullseyeUI {
     const p = s.players.find((x) => x.id === d.playerId);
     this._clearTimers();
     this._pop(w, p);
-    if (w.tone === 'bull') { this._cue('coin-burst'); this._say('dart'); } else if (w.tone === 'bust') this._cue('sting-fail');
-    else if (w.tone === 'score') this._cue(d.mult > 1 ? 'streak-up' : 'trophy-tick');
+    // the mode's own sounds and lines (docs/arcade-voice.md, "Bullseye, the duel, replays")
+    if (d.checkout) { this._cue('be-checkout'); this._say('be-check-out'); }
+    else if (w.tone === 'bull') { this._cue('be-bull'); this._say('be-bullseye'); }
+    else if (w.tone === 'bust') { this._cue('be-bust'); this._say('be-bust'); }
+    else if (w.tone === 'score') { this._cue('be-thunk'); if (d.mult === 2) this._say('be-double'); else if (d.mult >= 3) this._say('be-treble'); }
     else if (prev && prev.turn && prev.turn.streak > 0) this._cue('streak-break');
     const rec = s.records && s.records.newNearest;
-    if (d.checkout && s.phase === 'play') this._after(1100, () => this._flash('CAN ANYONE ANSWER?', `${shout(p ? p.name : '')} IS OUT IN ${p ? p.out : ''} BALLS`));
-    else if (rec && rec.n === d.n && !rec.first) this._after(900, () => { this._flash('NEAREST THE PIN TONIGHT!', `${shout(p ? p.name : '')} · ${ftWords(d.ft)}`); this._say('m-closest-to-the-pin'); });
+    if (d.checkout && s.phase === 'play') this._after(1100, () => { this._flash('CAN ANYONE ANSWER?', `${shout(p ? p.name : '')} IS OUT IN ${p ? p.out : ''} BALLS`); this._say('be-can-anyone-answer'); });
+    else if (rec && rec.n === d.n && !rec.first) this._after(900, () => { this._flash('NEAREST THE PIN TONIGHT!', `${shout(p ? p.name : '')} · ${ftWords(d.ft)}`); this._say('be-nearest-the-pin'); });
     const hold = w.tone === 'bull' || w.tone === 'bust' || s.phase === 'done' ? POP_BULL_MS : POP_MS;
     if (s.phase === 'done') { this._after(hold, () => this._screenResult(s)); return; }
     const roundOver = s.round > d.round;
@@ -315,7 +318,12 @@ export class BullseyeUI {
       ${big(s.players.length > 1 ? `${shout(p.name)}, YOU'RE UP` : first ? 'HIT THE TARGET' : `ROUND ${s.round}`, 'be-turn-t')}
       <span class="be-turn-s">${esc(sub)}</span></div>`;
     this._cue('turn-chime');
-    if (s.players.length > 1) this._say('m-youre-up');
+    // the first turn card of a round after the first names the round; the others the thrower
+    const roundKey = `${s.id}|${s.round}`, newRound = s.round > 1 && this.seen.round !== roundKey;
+    this.seen.round = roundKey;
+    const roundLine = s.round === s.rounds ? 'be-final-round' : [null, null, 'be-round-2', 'be-round-3', 'be-round-4', 'be-round-5', 'be-round-6'][s.round] || null;
+    if (newRound && roundLine) this._say(roundLine);
+    else if (s.players.length > 1) this._say('m-youre-up');
     this._after(TURN_MS, () => { const t = this.banner.querySelector('.be-turn'); if (t) t.remove(); });
   }
   _pop(w, p) {

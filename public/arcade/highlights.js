@@ -68,6 +68,7 @@ export function mount(ctx) {
       ui.lobbyOpen = true; ui.note = ''; ui.busy = false;
       root.classList.remove('hl-hidden');
       cue('lobby-open');
+      try { ctx.audio?.say?.('m-highlights'); } catch (_) { /* silent */ }   // TONIGHT'S BEST!
       render();
       ctx.sync();
       fetchJson('/api/highlights').then((out) => { if (out && out.highlights) { ui.reel = out.highlights; render(); } });

@@ -6,7 +6,8 @@
 //   node tools/arcade-voice/import.mjs                    everything in sources.mjs
 //   node tools/arcade-voice/import.mjs --only strike,coin-flip
 //   node tools/arcade-voice/import.mjs --credits          only rewrite manifest.json and CREDITS.md
-//   --downloads <dir>   where the source audio is (default .scratch/voice/downloads)
+//   --downloads <dir>   where the source audio is; may be given more than once, searched in order
+//                       (default .scratch/sound2/downloads, then .scratch/voice/downloads)
 //   --out <dir>         instead of public/arcade/sfx
 //
 // The source audio is not in the repo (docs/arcade-voice.md, "Sources", says how to fetch
@@ -34,6 +35,7 @@ export function describeSource(src) {
   if (kind === 'k') {
     const [pack, name] = rest.split('/');
     const p = PACKS_KENNEY[pack];
+    if (!p) throw new Error(`unknown Kenney pack "${pack}"`);
     return { rel: path.join('kenney', pack, 'Audio', `${name}.ogg`), source: p.name, url: p.url, licence: 'CC0 1.0', original: `${name}.ogg`, author: 'Kenney (kenney.nl)' };
   }
   if (kind === 'f') {
@@ -46,11 +48,32 @@ export function describeSource(src) {
   throw new Error(`unknown source "${src}"`);
 }
 
+/** A second-order low-pass or high-pass (Butterworth), in place on every channel. */
+function filter(clip, kind, hz) {
+  const w = 2 * Math.PI * Math.min(hz, clip.sr * 0.45) / clip.sr;
+  const cos = Math.cos(w);
+  const alpha = Math.sin(w) / Math.SQRT2;
+  const a0 = 1 + alpha;
+  const b1 = (kind === 'lp' ? 1 - cos : -(1 + cos)) / a0;
+  const b0 = Math.abs(b1) / 2;
+  const a1 = (-2 * cos) / a0;
+  const a2 = (1 - alpha) / a0;
+  return { sr: clip.sr, ch: clip.ch.map((x) => {
+    const y = new Float32Array(x.length);
+    let x1 = 0; let x2 = 0; let y1 = 0; let y2 = 0;
+    for (let i = 0; i < x.length; i++) {
+      const v = b0 * x[i] + b1 * x1 + b0 * x2 - a1 * y1 - a2 * y2;
+      x2 = x1; x1 = x[i]; y2 = y1; y1 = v; y[i] = v;
+    }
+    return y;
+  }) };
+}
+
 /** One layer of a clip as stereo 44.1 kHz, levelled to a common loudness, ready to mix. */
 async function loadLayer(layer, downloads) {
   const d = describeSource(layer.src);
-  const file = path.join(downloads, d.rel);
-  if (!fs.existsSync(file)) throw new Error(`source missing: ${d.rel}`);
+  const file = [].concat(downloads).map((root) => path.join(root, d.rel)).find((f) => fs.existsSync(f));
+  if (!file) throw new Error(`source missing: ${d.rel}`);
   let c = await decodeAny(fs.readFileSync(file));
   if (layer.from != null || layer.to != null) {
     c = slice(c, (layer.from || 0) * c.sr, (layer.to != null ? layer.to : c.ch[0].length / c.sr) * c.sr);
@@ -60,7 +83,10 @@ async function loadLayer(layer, downloads) {
   }
   // rate above 1 plays it faster and higher: pretend the source was recorded at a higher rate
   c = resample({ ch: c.ch, sr: Math.round(c.sr * (layer.rate || 1)) }, SR);
-  c = fade(c, { inMs: 1, outMs: layer.fadeOutMs ?? 25 });
+  if (layer.reverse) c = { sr: c.sr, ch: c.ch.map((x) => Float32Array.from(x).reverse()) };   // played backwards: a tail becomes a rise
+  if (layer.hp) c = filter(c, 'hp', layer.hp);
+  if (layer.lp) c = filter(c, 'lp', layer.lp);
+  c = fade(c, { inMs: layer.fadeInMs ?? 1, outMs: layer.fadeOutMs ?? 25 });
   c = normalise(c, { targetLufs: -20, peakDb: -1, maxGainDb: 40 });
   c = applyGain(c, layer.gain ?? 1);
   if (c.ch.length === 1) c = { ch: [c.ch[0], c.ch[0]], sr: SR };
@@ -134,14 +160,15 @@ ${rows.join('\n')}
 
 async function main() {
   const argv = process.argv.slice(2);
-  const opt = { only: null, downloads: path.join(REPO, '.scratch', 'voice', 'downloads'), out: path.join(REPO, 'public', 'arcade', 'sfx'), creditsOnly: false };
+  const opt = { only: null, downloads: [], out: path.join(REPO, 'public', 'arcade', 'sfx'), creditsOnly: false };
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--only') opt.only = new Set(argv[++i].split(','));
-    else if (argv[i] === '--downloads') opt.downloads = path.resolve(argv[++i]);
+    else if (argv[i] === '--downloads') opt.downloads.push(path.resolve(argv[++i]));
     else if (argv[i] === '--out') opt.out = path.resolve(argv[++i]);
     else if (argv[i] === '--credits') opt.creditsOnly = true;
     else throw new Error(`unknown option ${argv[i]}`);
   }
+  if (!opt.downloads.length) opt.downloads = [path.join(REPO, '.scratch', 'sound2', 'downloads'), path.join(REPO, '.scratch', 'voice', 'downloads')];
   fs.mkdirSync(opt.out, { recursive: true });
   let made = 0;
   let failed = 0;

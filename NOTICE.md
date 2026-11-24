@@ -37,7 +37,11 @@ where it matters, is in `CREDITS.md`, `ASSETS.md` and `public/arcade/sfx/CREDITS
 The installer carries one sky photograph (an HDRI) from [Poly Haven](https://polyhaven.com),
 released under CC0 1.0, inside the app. The stages' own sky panoramas and ground textures
 (`public/arcade/env/`) were generated for this project with an image model and processed
-by this repository's tools; they contain no third-party picture. `CREDITS.md` names each
+by this repository's tools; they contain no third-party picture. The same is true of the
+trees' painted leaves and bark (`public/arcade/trees/`). The tree models are grown by this
+repository's code, the stadium kit and the other prop models are scripted in Blender or
+generated from the project's own concept images, and the crowd, the course gadgets and the
+living world are drawn by the game's code with no asset file. `CREDITS.md` names each
 file's source.
 
 ## Names and trademarks

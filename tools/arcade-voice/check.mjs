@@ -128,6 +128,8 @@ async function checkSfx(dir, opts) {
   const specs = new Map(SFX.map((s) => [s.cue, s]));
   const imported = new Map(IMPORTS.map((s) => [s.file, s]));
   for (const cue of NEW_SFX_CUES) if (!manifest.cues[cue]) (SAMPLE_CUE_NAMES.includes(cue) ? out.fails : out.warns).push(`cue ${cue} is not in the manifest${SAMPLE_CUE_NAMES.includes(cue) ? ' (it is silent)' : ' (the synth plays instead)'}`);
+  // every other cue with no synthesizer (gadgets, the living world, Bullseye, the duel, replays): no file, no sound
+  for (const cue of SAMPLE_CUE_NAMES) if (!NEW_SFX_CUES.includes(cue) && !manifest.cues[cue]) out.fails.push(`cue ${cue} is not in the manifest (it is silent)`);
   // the physical and game-feel cues have a synthesized stand-in, so a missing one is a warning
   for (const cue of [...PHYSICAL_SFX_CUES, ...FEEL_SFX_CUES]) if (!manifest.cues[cue]) out.warns.push(`cue ${cue} is not in the manifest (the synth plays instead)`);
   for (const [alias, target] of Object.entries(SFX_ALIASES)) {

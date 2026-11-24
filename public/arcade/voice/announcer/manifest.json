@@ -751,6 +751,377 @@
         "pu-fog-1.mp3",
         "pu-fog-2.mp3"
       ]
+    },
+    "full-trail": {
+      "text": "FULL TRAIL!",
+      "files": [
+        "full-trail-1.mp3",
+        "full-trail-2.mp3"
+      ]
+    },
+    "smashed-it": {
+      "text": "SMASHED IT!",
+      "files": [
+        "smashed-it-1.mp3",
+        "smashed-it-2.mp3"
+      ]
+    },
+    "triple-up": {
+      "text": "TRIPLE UP!",
+      "files": [
+        "triple-up-1.mp3",
+        "triple-up-2.mp3"
+      ]
+    },
+    "warp-speed": {
+      "text": "WARP SPEED!",
+      "files": [
+        "warp-speed-1.mp3",
+        "warp-speed-2.mp3"
+      ]
+    },
+    "ring-it": {
+      "text": "RING IT!",
+      "files": [
+        "ring-it-1.mp3",
+        "ring-it-2.mp3",
+        "ring-it-3.mp3"
+      ]
+    },
+    "double-up": {
+      "text": "DOUBLE UP!",
+      "files": [
+        "double-up-1.mp3",
+        "double-up-2.mp3",
+        "double-up-3.mp3"
+      ]
+    },
+    "thar-she-blows": {
+      "text": "THAR SHE BLOWS!",
+      "files": [
+        "thar-she-blows-1.mp3",
+        "thar-she-blows-2.mp3"
+      ]
+    },
+    "boing": {
+      "text": "BOING!",
+      "files": [
+        "boing-1.mp3",
+        "boing-2.mp3",
+        "boing-3.mp3"
+      ]
+    },
+    "pinball": {
+      "text": "PINBALL WIZARD!",
+      "files": [
+        "pinball-1.mp3",
+        "pinball-2.mp3"
+      ]
+    },
+    "turbo": {
+      "text": "TURBO!",
+      "files": [
+        "turbo-1.mp3",
+        "turbo-2.mp3",
+        "turbo-3.mp3"
+      ]
+    },
+    "denied": {
+      "text": "DENIED!",
+      "files": [
+        "denied-1.mp3",
+        "denied-2.mp3",
+        "denied-3.mp3"
+      ]
+    },
+    "stuck": {
+      "text": "STUCK IN THE MUD!",
+      "files": [
+        "stuck-1.mp3",
+        "stuck-2.mp3"
+      ]
+    },
+    "p-skins": {
+      "text": "SKINS",
+      "files": [
+        "p-skins-1.mp3",
+        "p-skins-2.mp3"
+      ]
+    },
+    "p-stroke-race": {
+      "text": "STROKE RACE",
+      "files": [
+        "p-stroke-race-1.mp3",
+        "p-stroke-race-2.mp3"
+      ]
+    },
+    "p-elimination": {
+      "text": "ELIMINATION",
+      "files": [
+        "p-elimination-1.mp3",
+        "p-elimination-2.mp3"
+      ]
+    },
+    "p-to-stay-alive": {
+      "text": "TO STAY ALIVE!",
+      "files": [
+        "p-to-stay-alive-1.mp3",
+        "p-to-stay-alive-2.mp3"
+      ]
+    },
+    "p-for-the-skins": {
+      "text": "FOR THE SKINS!",
+      "files": [
+        "p-for-the-skins-1.mp3",
+        "p-for-the-skins-2.mp3"
+      ]
+    },
+    "p-takes-the-skin": {
+      "text": "TAKES THE SKIN!",
+      "files": [
+        "p-takes-the-skin-1.mp3",
+        "p-takes-the-skin-2.mp3",
+        "p-takes-the-skin-3.mp3"
+      ]
+    },
+    "p-skin-carries": {
+      "text": "THE SKIN CARRIES!",
+      "files": [
+        "p-skin-carries-1.mp3",
+        "p-skin-carries-2.mp3"
+      ]
+    },
+    "p-is-out": {
+      "text": "IS OUT!",
+      "files": [
+        "p-is-out-1.mp3",
+        "p-is-out-2.mp3",
+        "p-is-out-3.mp3"
+      ]
+    },
+    "p-the-final": {
+      "text": "THE FINAL!",
+      "files": [
+        "p-the-final-1.mp3",
+        "p-the-final-2.mp3"
+      ]
+    },
+    "p-farthest-is-out": {
+      "text": "FARTHEST IS OUT!",
+      "files": [
+        "p-farthest-is-out-1.mp3",
+        "p-farthest-is-out-2.mp3"
+      ]
+    },
+    "p-wins-the-game": {
+      "text": "WINS THE GAME!",
+      "files": [
+        "p-wins-the-game-1.mp3",
+        "p-wins-the-game-2.mp3"
+      ]
+    },
+    "m-player-3": {
+      "text": "PLAYER THREE",
+      "files": [
+        "m-player-3-1.mp3",
+        "m-player-3-2.mp3",
+        "m-player-3-3.mp3"
+      ]
+    },
+    "m-player-4": {
+      "text": "PLAYER FOUR",
+      "files": [
+        "m-player-4-1.mp3",
+        "m-player-4-2.mp3",
+        "m-player-4-3.mp3"
+      ]
+    },
+    "m-player-3-wins": {
+      "text": "PLAYER THREE WINS!",
+      "files": [
+        "m-player-3-wins-1.mp3",
+        "m-player-3-wins-2.mp3"
+      ]
+    },
+    "m-player-4-wins": {
+      "text": "PLAYER FOUR WINS!",
+      "files": [
+        "m-player-4-wins-1.mp3",
+        "m-player-4-wins-2.mp3"
+      ]
+    },
+    "be-bullseye": {
+      "text": "BULLSEYE!",
+      "files": [
+        "be-bullseye-1.mp3",
+        "be-bullseye-2.mp3",
+        "be-bullseye-3.mp3"
+      ]
+    },
+    "be-double": {
+      "text": "DOUBLE!",
+      "files": [
+        "be-double-1.mp3",
+        "be-double-2.mp3"
+      ]
+    },
+    "be-treble": {
+      "text": "TREBLE!",
+      "files": [
+        "be-treble-1.mp3",
+        "be-treble-2.mp3"
+      ]
+    },
+    "be-perfect-turn": {
+      "text": "PERFECT TURN!",
+      "files": [
+        "be-perfect-turn-1.mp3",
+        "be-perfect-turn-2.mp3"
+      ]
+    },
+    "be-bust": {
+      "text": "BUST!",
+      "files": [
+        "be-bust-1.mp3",
+        "be-bust-2.mp3",
+        "be-bust-3.mp3"
+      ]
+    },
+    "be-check-out": {
+      "text": "CHECK OUT!",
+      "files": [
+        "be-check-out-1.mp3",
+        "be-check-out-2.mp3"
+      ]
+    },
+    "be-can-anyone-answer": {
+      "text": "CAN ANYONE ANSWER?",
+      "files": [
+        "be-can-anyone-answer-1.mp3",
+        "be-can-anyone-answer-2.mp3"
+      ]
+    },
+    "be-nearest-the-pin": {
+      "text": "NEAREST THE PIN TONIGHT!",
+      "files": [
+        "be-nearest-the-pin-1.mp3",
+        "be-nearest-the-pin-2.mp3"
+      ]
+    },
+    "be-round-2": {
+      "text": "ROUND TWO",
+      "files": [
+        "be-round-2-1.mp3",
+        "be-round-2-2.mp3"
+      ]
+    },
+    "be-round-3": {
+      "text": "ROUND THREE",
+      "files": [
+        "be-round-3-1.mp3",
+        "be-round-3-2.mp3"
+      ]
+    },
+    "be-round-4": {
+      "text": "ROUND FOUR",
+      "files": [
+        "be-round-4-1.mp3",
+        "be-round-4-2.mp3"
+      ]
+    },
+    "be-round-5": {
+      "text": "ROUND FIVE",
+      "files": [
+        "be-round-5-1.mp3",
+        "be-round-5-2.mp3"
+      ]
+    },
+    "be-round-6": {
+      "text": "ROUND SIX",
+      "files": [
+        "be-round-6-1.mp3",
+        "be-round-6-2.mp3"
+      ]
+    },
+    "be-final-round": {
+      "text": "FINAL ROUND!",
+      "files": [
+        "be-final-round-1.mp3",
+        "be-final-round-2.mp3"
+      ]
+    },
+    "dl-call-your-shot": {
+      "text": "CALL YOUR SHOT!",
+      "files": [
+        "dl-call-your-shot-1.mp3",
+        "dl-call-your-shot-2.mp3"
+      ]
+    },
+    "dl-match-it": {
+      "text": "MATCH IT!",
+      "files": [
+        "dl-match-it-1.mp3",
+        "dl-match-it-2.mp3",
+        "dl-match-it-3.mp3"
+      ]
+    },
+    "dl-matched": {
+      "text": "MATCHED!",
+      "files": [
+        "dl-matched-1.mp3",
+        "dl-matched-2.mp3",
+        "dl-matched-3.mp3"
+      ]
+    },
+    "dl-letter": {
+      "text": "THAT'S A LETTER!",
+      "files": [
+        "dl-letter-1.mp3",
+        "dl-letter-2.mp3",
+        "dl-letter-3.mp3"
+      ]
+    },
+    "dl-no-call": {
+      "text": "NO CALL!",
+      "files": [
+        "dl-no-call-1.mp3",
+        "dl-no-call-2.mp3"
+      ]
+    },
+    "dl-one-letter-left": {
+      "text": "ONE LETTER LEFT!",
+      "files": [
+        "dl-one-letter-left-1.mp3",
+        "dl-one-letter-left-2.mp3"
+      ]
+    },
+    "dl-spelled-it": {
+      "text": "SPELLED IT!",
+      "files": [
+        "dl-spelled-it-1.mp3",
+        "dl-spelled-it-2.mp3"
+      ]
+    },
+    "m-replay": {
+      "text": "LET'S SEE THAT AGAIN!",
+      "files": [
+        "m-replay-1.mp3",
+        "m-replay-2.mp3"
+      ]
+    },
+    "m-shot-of-the-match": {
+      "text": "THE SHOT OF THE MATCH!",
+      "files": [
+        "m-shot-of-the-match-1.mp3",
+        "m-shot-of-the-match-2.mp3"
+      ]
+    },
+    "m-highlights": {
+      "text": "TONIGHT'S BEST!",
+      "files": [
+        "m-highlights-1.mp3",
+        "m-highlights-2.mp3"
+      ]
     }
   }
 }

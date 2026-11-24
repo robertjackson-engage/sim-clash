@@ -67,6 +67,30 @@ const POWERUPS = {
   'pu-gust': 'GUST!', 'pu-tiny-cup': 'TINY CUP!', 'pu-fog': 'FOG!',
 };
 
+// ── added after the contract by the feature streams (docs/gadgets.md, docs/modes.md) ──
+const GADGETS = {
+  'full-trail': 'FULL TRAIL!', 'smashed-it': 'SMASHED IT!', 'triple-up': 'TRIPLE UP!', 'warp-speed': 'WARP SPEED!',
+  'ring-it': 'RING IT!', 'double-up': 'DOUBLE UP!', 'thar-she-blows': 'THAR SHE BLOWS!', boing: 'BOING!',
+  pinball: 'PINBALL WIZARD!', turbo: 'TURBO!', denied: 'DENIED!', stuck: 'STUCK IN THE MUD!',
+};
+const PARTY = {
+  'p-skins': 'SKINS', 'p-stroke-race': 'STROKE RACE', 'p-elimination': 'ELIMINATION', 'p-to-stay-alive': 'TO STAY ALIVE!',
+  'p-for-the-skins': 'FOR THE SKINS!', 'p-takes-the-skin': 'TAKES THE SKIN!', 'p-skin-carries': 'THE SKIN CARRIES!',
+  'p-is-out': 'IS OUT!', 'p-the-final': 'THE FINAL!', 'p-farthest-is-out': 'FARTHEST IS OUT!', 'p-wins-the-game': 'WINS THE GAME!',
+  'm-player-3': 'PLAYER THREE', 'm-player-4': 'PLAYER FOUR', 'm-player-3-wins': 'PLAYER THREE WINS!', 'm-player-4-wins': 'PLAYER FOUR WINS!',
+};
+const BULLSEYE = {
+  'be-bullseye': 'BULLSEYE!', 'be-double': 'DOUBLE!', 'be-treble': 'TREBLE!', 'be-perfect-turn': 'PERFECT TURN!', 'be-bust': 'BUST!',
+  'be-check-out': 'CHECK OUT!', 'be-can-anyone-answer': 'CAN ANYONE ANSWER?', 'be-nearest-the-pin': 'NEAREST THE PIN TONIGHT!',
+  'be-round-2': 'ROUND TWO', 'be-round-3': 'ROUND THREE', 'be-round-4': 'ROUND FOUR', 'be-round-5': 'ROUND FIVE', 'be-round-6': 'ROUND SIX',
+  'be-final-round': 'FINAL ROUND!',
+};
+const DUEL = {
+  'dl-call-your-shot': 'CALL YOUR SHOT!', 'dl-match-it': 'MATCH IT!', 'dl-matched': 'MATCHED!', 'dl-letter': "THAT'S A LETTER!",
+  'dl-no-call': 'NO CALL!', 'dl-one-letter-left': 'ONE LETTER LEFT!', 'dl-spelled-it': 'SPELLED IT!',
+};
+const REPLAY = { 'm-replay': "LET'S SEE THAT AGAIN!", 'm-shot-of-the-match': 'THE SHOT OF THE MATCH!', 'm-highlights': "TONIGHT'S BEST!" };
+
 const NEW_CUES = ['crowd-roar', 'crowd-cheer', 'crowd-ohh', 'crowd-aww', 'crowd-gasp', 'crowd-laugh', 'applause',
   'whoosh', 'vs-slam', 'drumroll', 'fanfare-win', 'fanfare-hole', 'sting-fail', 'sting-knockout', 'countdown-beep',
   'chest-open', 'coin-burst', 'trick-cast'];
@@ -85,7 +109,13 @@ test('catalogue: the callout, match, stage and power-up sets are exactly the con
   assert.deepEqual(group(LINES, 'match'), MATCH);
   assert.deepEqual(group(LINES, 'stage'), STAGES);
   assert.deepEqual(group(LINES, 'powerup'), POWERUPS);
-  assert.equal(LINES.length, 104);
+  // and the sets the feature streams asked for since: gadget callouts, the party games, Bullseye, the duel, replays
+  assert.deepEqual(group(LINES, 'gadget'), GADGETS);
+  assert.deepEqual(group(LINES, 'party'), PARTY);
+  assert.deepEqual(group(LINES, 'bullseye'), BULLSEYE);
+  assert.deepEqual(group(LINES, 'duel'), DUEL);
+  assert.deepEqual(group(LINES, 'replay'), REPLAY);
+  assert.equal(LINES.length, 104 + 12 + 15 + 14 + 7 + 3);
   assert.equal(new Set(LINE_IDS).size, LINE_IDS.length, 'no id twice');
   for (const id of LINE_IDS) assert.match(id, /^[a-z0-9]+(-[a-z0-9]+)*$/, id);
 });
@@ -152,6 +182,11 @@ test('catalogue: agrees with what the game itself defines (callouts, power-ups, 
       if (c && typeof c.text === 'string') assert.equal(byId.get(voiceId).text, c.text, `the banner and the voice agree on ${id}`);
     }
   }
+  // a course gadget's callout (lib/gadgets.js GADGET_CALLOUTS) is spoken by its own id
+  if (arcade && arcade.GADGET_CALLOUTS && typeof arcade.GADGET_CALLOUTS === 'object') {
+    assert.deepEqual(Object.keys(arcade.GADGET_CALLOUTS).sort(), Object.keys(GADGETS).sort(), 'every gadget callout has a line, and no line is left over');
+    for (const [id, c] of Object.entries(arcade.GADGET_CALLOUTS)) assert.equal(byId.get(id).text, c.text, `the banner and the voice agree on ${id}`);
+  }
   const pus = arcade && Array.isArray(arcade.POWERUPS) ? arcade.POWERUPS : [];
   for (const p of pus) assert.ok(byId.has(`pu-${p.id}`), `power-up ${p.id} has a voice line`);
   const holesDir = path.join(REPO, 'tools', 'arcade-holes', 'holes');
@@ -175,8 +210,8 @@ test('catalogue: every line has two or three takes, and every take says the line
     const b = durationBounds(l);
     assert.ok(b.minS >= 0.3 && b.minS < 1 && b.maxS > 1.5 && b.maxS <= 5, `${l.id}: sane bounds`);
   }
-  // budget: one pack is well under 15,000 characters (the brief allows 60,000 in all)
-  assert.ok(catalogueCharacters() < 15000, `catalogue is ${catalogueCharacters()} characters`);
+  // budget: one pack is well under 20,000 characters (the brief allows 60,000 in all)
+  assert.ok(catalogueCharacters() < 20000, `catalogue is ${catalogueCharacters()} characters`);
 });
 
 test('catalogue: compareWords forgives a stretched shout and catches stray speech', async () => {
@@ -1156,9 +1191,9 @@ test('ArcadeAudio mix: a hierarchy of category levels, cooldowns, a voice limit,
   const ctx = page.Ctx.last;
   const g = (cat) => a._catBus[cat].gain.value;
 
-  // the hierarchy: the announcer is on its own bus above all of it; then impact > sting > feel > crowd > ui
-  assert.ok(g('impact') > g('sting') && g('sting') > g('feel') && g('feel') > g('crowd') && g('crowd') > g('ui'));
-  for (const cat of ['impact', 'sting', 'feel', 'crowd', 'ui']) assert.equal(a._catBus[cat].to[0], a._cueBus);
+  // the hierarchy: the announcer is on its own bus above all of it; then impact > sting > feel > crowd > world > ui
+  assert.ok(g('impact') > g('sting') && g('sting') > g('feel') && g('feel') > g('crowd') && g('crowd') > g('world') && g('world') > g('ui'));
+  for (const cat of ['impact', 'sting', 'feel', 'crowd', 'world', 'ui']) assert.equal(a._catBus[cat].to[0], a._cueBus);
   assert.equal(a._cueBus.to[0], a._sfxDuck, 'every category ducks under the voice');
   assert.equal(a._voiceBus.to[0], a._ceiling);
 

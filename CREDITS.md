@@ -36,12 +36,13 @@ All sound effects are CC0 recordings or were generated for this project.
 original file name. In short:
 
 - **[Kenney](https://kenney.nl)** audio packs (Interface Sounds, UI Audio, Impact Sounds,
-  Casino Audio, Digital Audio, RPG Audio): CC0 1.0. Interface sounds, impacts, coins.
+  Casino Audio, Digital Audio, RPG Audio, Sci-Fi Sounds): CC0 1.0. Interface sounds,
+  impacts, coins, and layers of the gadget sounds.
 - **[freesound.org](https://freesound.org)** recordings, each one checked as Creative
   Commons 0 on its own page: the crowd (a session recorded by ShangusBurger), golf strikes,
   the cup, water, whooshes, timpani, rockets. CC0 needs no credit; the authors are named in
   the table anyway.
-- **Seven stings and jingles** (fanfares, the stage sting, the turn chime) were generated
+- **Eleven stings and jingles** (fanfares, the stage sting, the turn chime) were generated
   from text prompts with ElevenLabs Music. No reference audio was used.
 
 ## Announcer voice
@@ -62,7 +63,12 @@ All prop models in `public/arcade/props/` were made for this project:
 
 - **Modelled by script in Blender** (pagodas, pyramids, grandstands, balloons, torii, the
   crowd and about forty more): the Python sources are in `tools/arcade-art/blender/`, and
-  `tools/arcade-art/bake.mjs` turns the export into the small game models.
+  `tools/arcade-art/bake.mjs` turns the export into the small game models. The **stadium
+  kit** of the second release is made the same way (`tools/arcade-art/blender/stadium.py`):
+  `stand-section`, `stand-corner`, `led-board`, `ad-board`, `barrier`, `camera-tower`,
+  `tunnel` and `podium`, with the rebuilt `crowd`, `grandstand` and `jumbotron`. The words
+  on its boards and hoardings are the game's own name and made-up sponsors; no real brand,
+  club, league or stadium is shown or copied.
 - **Generated with image-to-3D** from this project's own concept and reference images
   (`docs/art/`), then reduced with `tools/arcade-art/fit-glb.mjs`: dragon, giant tree,
   shipwreck, sphinx and temple (made with [Meshy](https://www.meshy.ai)), and three of the
@@ -72,6 +78,15 @@ All prop models in `public/arcade/props/` were made for this project:
   and the rest, each with a higher-detail "hero" model for the trees by a tee or a green) is
   built from seeds by `tools/arcade-art/trees/gen.mjs`. The `palm` prop
   (`public/arcade/props/palm-a.glb`, `-b`, `-c`) is that generator's coconut palm.
+
+- **Drawn by the game's own code, with no model or picture file at all**: the 25,000
+  spectators of a stadium (`public/render/crowd.js`: one instanced figure, dressed and
+  animated in the shader), the beams, flares and confetti (`stadium-fx.js`), the sixteen
+  kinds of course gadgets (`public/render/gadgets.js`: rings, pads, strips, fans, geysers,
+  bumpers, rails, walls, funnels, a pipe, a cannon, coins), and the living world's cast
+  (`public/render/world-models.js`: trains, cars, a cable car, camels, birds, fish, koi,
+  dolphins, a whale, turtles, walkers, windmills, windsocks, pennants and the rest; a boat,
+  a balloon and an airship under way reuse the prop models above).
 
 The concept paintings in `docs/art/concepts/` were generated for this project as a style
 guide. No model, texture, layout or name is taken from another game.
