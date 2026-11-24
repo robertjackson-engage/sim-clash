@@ -25,11 +25,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  # two jobs, as in GitHub's own static-site template: deploying in the same job as the upload
+  # can run before the artifact is listed, and then finds nothing to deploy
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Check out
         uses: actions/checkout@v4
@@ -51,6 +50,13 @@ jobs:
         with:
           path: _site
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
