@@ -18,6 +18,6 @@ window.SIMCLASH_SITE = {
   owner: 'robertjackson-engage',
   repo: 'sim-clash',
   branch: 'main',
-  downloadUrl: '',
+  downloadUrl: 'https://github.com/robertjackson-engage/sim-clash/releases/latest/download/Sim-Clash-Setup.exe',
   bridgeUrl: '',
 };
