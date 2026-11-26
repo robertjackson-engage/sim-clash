@@ -110,3 +110,11 @@ test('main.js: a second launch quits at once (the first one is focused instead) 
   assert.deepEqual(steps(second), ['setName', 'quit']);
   assert.ok(steps(run('ok')).includes('focus'), 'the running game comes to the front');
 });
+
+test('main.js: a link that asks for a new window goes to the PC\'s browser when it is https, and never opens a second game window', () => {
+  const r = run('ok');
+  const asked = r.log.filter((l) => l[0] === 'new window');
+  assert.equal(asked.length, 4);
+  assert.ok(asked.every((l) => l[2] === 'deny'), 'no second window, whatever was asked for');
+  assert.deepEqual(r.log.filter((l) => l[0] === 'openExternal'), [['openExternal', 'https://example.com/download']], 'only the https address is handed over');
+});

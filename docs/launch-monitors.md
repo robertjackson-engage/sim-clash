@@ -806,11 +806,11 @@ You need:
 Steps:
 
 1. Close GSPro if it is open.
-2. Start VX Connector.
+2. Install VX Connector, then start it.
 3. Right-click its icon by the clock: Switch to OpenAPI Compatible.
-4. In ProTee Labs: Game Options, Game: GSPro, then Connect.
-5. Dismiss the "no longer supported" warning.
-6. When the VX Connector icon turns green, hit a ball.
+4. Start ProTee Labs.
+5. In ProTee Labs: Game Options, Game: GSPro, then Connect.
+6. Dismiss the "no longer supported" warning. Shots still arrive.
 
 Other connectors:
 
@@ -819,9 +819,11 @@ Other connectors:
 Notes:
 
 - Untested here. VX Connector says it sends to any sim that takes GSPro Open API shots on port 921 of this PC, which is what this game listens for. It lists other sims as tested, not this one.
+- On its download page take VxConnectorSetup.exe. Windows will say it protected your PC: More info, then Run anyway.
 - It always sends to port 921 on this PC: leave the game's port at 921.
 - Unofficial, and not supported by ProTee. It runs a copy of itself named GSPconnect.exe, because ProTee Labs only connects when a program of that name is running; some antivirus products flag that.
 - ProTee Labs itself stopped sending Open API shots in 2026 and its own interface for other games is closed, so there is no official way in.
+- The game ticks a step when it sees the program running. The name ProTee Labs runs under was not checked: if its step does not tick, press NEXT.
 
 Sources:
 

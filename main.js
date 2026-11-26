@@ -97,6 +97,13 @@ if (!app.requestSingleInstanceLock()) {
       webPreferences: { contextIsolation: true },
     });
     win.on('closed', () => { win = null; });
+    // A link that asks for a new window (the connection wizard's download button, a
+    // connector's page) opens in the player's own browser, never as a second game window.
+    // Only https addresses are handed over; anything else goes nowhere.
+    win.webContents.setWindowOpenHandler(({ url }) => {
+      if (/^https:\/\//i.test(String(url || ''))) require('electron').shell.openExternal(url).catch(() => {});
+      return { action: 'deny' };
+    });
     // v2:final SIMCLASH_MUTE=1: the window makes no sound at all, whatever the page's own sound
     // setting says (for looking at a build on a PC somebody is using; docs/dev/packaging.md).
     // On the window itself, before anything is loaded into it, so it holds for every page.

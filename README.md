@@ -14,7 +14,7 @@ opponent, things on the course to hit, a stadium crowd, an announcer, and sudden
 a hole is tied. It is built to be loud, quick
 and friendly to a bad swing. It is not a golf simulator: there are no real courses in it.
 
-- **Status:** beta (`1.0.0-beta.2`). Windows. It has been played on one simulator bay so
+- **Status:** beta (`1.0.0-beta.3`). Windows. It has been played on one simulator bay so
   far; reports from other launch monitors are very welcome.
 - **Price:** nothing. No account, no real money, nothing to buy.
 - **Licence:** MIT. Built on [Open-Birdie](#built-on-open-birdie).

@@ -20,7 +20,11 @@ const whenReady = new Promise((resolve) => { appReady = resolve; });
 class BrowserWindow {
   constructor(opts) {
     this.opts = opts; this.visible = opts.show !== false; this.full = !!opts.fullscreen; this.on_ = {}; this.once_ = {};
-    this.webContents = { on: (name, fn) => { this.on_[`wc:${name}`] = fn; }, setAudioMuted: (v) => { log.push(['setAudioMuted', v]); } };
+    this.webContents = {
+      on: (name, fn) => { this.on_[`wc:${name}`] = fn; },
+      setAudioMuted: (v) => { log.push(['setAudioMuted', v]); },
+      setWindowOpenHandler: (fn) => { this.openHandler = fn; },
+    };
     log.push(['window', { fullscreen: opts.fullscreen, show: opts.show, backgroundColor: opts.backgroundColor, title: opts.title, contextIsolation: opts.webPreferences.contextIsolation }]);
     BrowserWindow.last = this;
   }
@@ -49,6 +53,7 @@ const electron = {
   },
   BrowserWindow,
   globalShortcut: { register: (key, fn) => { handlers[`key:${key}`] = fn; log.push(['shortcut', key]); }, unregisterAll() {} },
+  shell: { openExternal: (url) => { log.push(['openExternal', url]); return Promise.resolve(); } },
 };
 const fakeServer = { ready: serverReady, primaryNonce: 'NONCE', close() { log.push(['server.close']); } };
 
@@ -86,6 +91,12 @@ delete process.env.BIRDIE_ARCADE_DIR;
     win.on_['wc:before-input-event']({ preventDefault() { log.push(['BUG: plain Enter was eaten']); } }, { type: 'keyDown', key: 'Enter', alt: false });
     handlers['key:F11']();
     handlers['second-instance']();
+    // a page asks for a new window: an https link, then things that are not
+    if (win.openHandler) {
+      for (const url of ['https://example.com/download', 'file:///C:/Windows/notepad.exe', 'javascript:alert(1)', 'http://example.com/plain']) {
+        log.push(['new window', url, win.openHandler({ url }).action]);
+      }
+    }
   }
   let prefs = null;
   try { prefs = JSON.parse(fs.readFileSync(path.join(userData, 'window.json'), 'utf8')); } catch (_) { /* none written */ }

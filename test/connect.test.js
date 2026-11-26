@@ -11,7 +11,7 @@ const net = require('node:net');
 const http = require('node:http');
 const path = require('node:path');
 const { OpenConnectServer } = require('../lib/openconnect');
-const { createConnectHub, diagnose, checkShot, shotView, programName } = require('../lib/connect');
+const { createConnectHub, diagnose, checkShot, shotView, programName, programRunning, guideChecks } = require('../lib/connect');
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const quiet = { log() {}, warn() {}, error() {} };
@@ -42,6 +42,7 @@ async function rig(t, opts = {}) {
     broadcast: (name, data) => events.push({ name, data }),
     foresight: opts.foresight || (() => null),
     holder: opts.holder || (async () => null),
+    programs: opts.programs || (async () => null), programsMs: opts.programsMs ?? 20,
   });
   const web = http.createServer((req, res) => { hub.handle(req, res, new URL(req.url, 'http://x')); });
   await new Promise((resolve) => web.listen(0, '127.0.0.1', resolve));
@@ -231,4 +232,58 @@ test('checkShot: a golf shot passes; wrong units and wrong mapping are called ou
   assert.ok(ids({ Speed: 140, VLA: 12, HLA: 0 }).includes('no-spin'));
   assert.ok(ids({ Speed: 140, HLA: 0, TotalSpin: 2500 }).includes('no-launch'));
   assert.ok(ids({ Speed: 140, VLA: 12, HLA: 0, TotalSpin: 40000 }).includes('spin-high'));
+});
+
+// ---- the wizard's guide: steps the game can tick by itself (a device's `guide.checks`)
+
+test('programRunning: exact names, a trailing * for any ending, no answer without a list', () => {
+  const names = ['System', 'GSPro', 'vx-connector', 'ProTee Labs', 'explorer'];
+  assert.equal(programRunning(names, 'gspro'), true, 'case does not matter');
+  assert.equal(programRunning(names, 'GSP'), false, 'not a prefix match unless asked for');
+  assert.equal(programRunning(names, 'ProTee*'), true);
+  assert.equal(programRunning(names, 'Uneekor*'), false);
+  assert.equal(programRunning(null, 'GSPro'), null, 'the list could not be read: no answer');
+  assert.equal(programRunning(names, ''), null);
+});
+
+test('guideChecks: running, closed and connected, and null when it cannot be told', () => {
+  const dev = { guide: { checks: [
+    { step: 0, want: 'closed', program: 'GSPro' },
+    { step: 1, want: 'running', program: 'vx-connector' },
+    { step: 3, want: 'running', program: 'ProTee*' },
+    { step: 4, want: 'connected' },
+  ] } };
+  assert.deepEqual(guideChecks(dev, { programs: ['GSPro', 'explorer'], connected: false }).map((c) => c.ok), [false, false, false, false]);
+  assert.deepEqual(guideChecks(dev, { programs: ['vx-connector', 'ProTeeLabs'], connected: true }).map((c) => c.ok), [true, true, true, true]);
+  assert.deepEqual(guideChecks(dev, { programs: null, connected: false }).map((c) => c.ok), [null, null, null, false]);
+  assert.deepEqual(guideChecks({ id: 'no-guide' }, {}), []);
+});
+
+test('the status carries a guided device\'s ticks, and looks at the running programs only when a wizard asks', async (t) => {
+  let running = ['GSPro', 'explorer'], looked = 0;
+  const r = await rig(t, { programs: async () => { looked++; return running; } });
+  await r.hub.start();
+  await r.post('/api/connect/device', { id: 'protee-vx' });
+
+  let st = await r.get('/api/connect/status');
+  assert.ok(st.guide && st.guide.checks.length === 4, 'the ProTee VX has four steps the game can see');
+  assert.equal(looked, 0, 'nobody asked for the guide: the programs were not listed');
+  assert.deepEqual(st.guide.checks.map((c) => c.ok), [null, null, null, false]);
+
+  await r.get('/api/connect/status?guide=1');
+  assert.ok(await until(async () => (await r.get('/api/connect/status?guide=1')).guide.checks[0].ok === false), 'GSPro is open: its step is not done');
+
+  running = ['explorer', 'vx-connector'];
+  assert.ok(await until(async () => {
+    const c = (await r.get('/api/connect/status?guide=1')).guide.checks;
+    return c[0].ok === true && c[1].ok === true && c[2].ok === false;
+  }), 'GSPro closed and VX Connector started: two ticks');
+  assert.ok(r.events.some((e) => e.name === 'connect' && e.data.guide && e.data.guide.checks[1].ok === true), 'a tick is broadcast, not only polled');
+
+  await r.connector();
+  assert.ok(await until(async () => (await r.get('/api/connect/status?guide=1')).guide.checks[3].ok === true), 'the connector connected: that step ticks');
+
+  await r.post('/api/connect/device', { id: 'garmin-r10' });
+  st = await r.get('/api/connect/status?guide=1');
+  assert.equal(st.guide, null, 'a launch monitor without a guide has none');
 });

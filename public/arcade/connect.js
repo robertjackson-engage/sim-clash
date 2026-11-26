@@ -84,8 +84,28 @@ export function shotIn(status) {
   return a || b || null;
 }
 
+/** A device's guide (lib/launch-monitors.js): a download button, a warning, steps the game ticks itself. */
+export function guideOf(dev) {
+  const g = dev && dev.guide;
+  return g && typeof g === 'object' ? g : null;
+}
+
+/** The download a step offers ({ step, label, url }), or null. */
+export function downloadFor(dev, step) {
+  const g = guideOf(dev);
+  return g && g.download && g.download.step === step && /^https:\/\//.test(String(g.download.url || '')) ? g.download : null;
+}
+
+/** Which steps the game has seen done, from a status about this device: { [step]: true | false | null }. */
+export function ticksIn(status, deviceId) {
+  const out = {};
+  if (!status || !status.guide || !status.device || status.device.id !== deviceId) return out;
+  for (const c of status.guide.checks || []) if (c && Number.isInteger(c.step)) out[c.step] = c.ok === true ? true : c.ok === false ? false : null;
+  return out;
+}
+
 export function initialState() {
-  return { screen: 'loading', brandId: null, deviceId: null, step: 0, cursor: 0, linked: false, sinceSeq: 0, shot: null, effects: [] };
+  return { screen: 'loading', brandId: null, deviceId: null, step: 0, cursor: 0, linked: false, sinceSeq: 0, shot: null, ticks: {}, effects: [] };
 }
 
 /** The buttons of a screen, in order; the last one is where the cursor starts. */
@@ -94,7 +114,7 @@ export function buttonsOf(state, cat) {
     case 'steps': {
       const dev = deviceOf(cat, state.deviceId);
       const last = !dev || state.step >= dev.steps.length - 1;
-      return ['back', state.linked || last ? 'to-hit' : 'next'];
+      return ['back', ...(downloadFor(dev, state.step) ? ['get'] : []), state.linked || last ? 'to-hit' : 'next'];
     }
     case 'unsupported': return ['back', 'try'];
     case 'hit': return state.shot ? ['again', 'looks-right'] : ['back', 'skip-ball'];
@@ -128,13 +148,25 @@ function moveCursor(state, cat, dir) {
 
 const goto = (state, screen, patch = {}) => ({ ...state, screen, cursor: 0, ...patch });
 
+/**
+ * Where the cursor rests on a step: on its download button while the game has not seen that
+ * step done, else on the button that moves on (the last one).
+ */
+function settle(state, cat) {
+  if (state.screen !== 'steps') return state;
+  const buttons = buttonsOf(state, cat);
+  const get = buttons.indexOf('get');
+  const wantGet = get >= 0 && !state.linked && (state.ticks || {})[state.step] !== true;
+  return { ...state, cursor: wantGet ? get : buttons.length - 1 };
+}
+
 function openDevice(state, cat, id, effects) {
   const dev = deviceOf(cat, id);
   effects.push({ type: 'save-device', id });
   if (id !== 'other' && dev && dev.tier === 'unsupported') {
     return goto(state, 'unsupported', { deviceId: id, cursor: 1 });
   }
-  return goto(state, 'steps', { deviceId: id, step: 0, cursor: 1, linked: false, shot: null });
+  return settle(goto(state, 'steps', { deviceId: id, step: 0, linked: false, shot: null, ticks: {} }), cat);
 }
 
 /**
@@ -159,8 +191,22 @@ export function reduce(state, action, cat) {
 
   if (action.type === 'status') {
     const st = action.status || {};
-    if (s.screen === 'steps' && st.connected && !s.linked) return out({ ...s, linked: true, cursor: 1 });
-    if (s.screen === 'steps' && !st.connected && s.linked) return out({ ...s, linked: false });
+    if (s.screen === 'steps') {
+      const dev = deviceOf(cat, s.deviceId);
+      const was = s.ticks || {};
+      const ticks = ticksIn(st, s.deviceId);
+      let n = JSON.stringify(ticks) === JSON.stringify(was) ? s : { ...s, ticks };
+      if (st.connected && !n.linked) n = settle({ ...n, linked: true }, cat);
+      else if (!st.connected && n.linked) n = settle({ ...n, linked: false }, cat);
+      // a step the game has just seen done: on to the next one it has not
+      if (dev && !n.linked && ticks[n.step] === true && was[n.step] !== true && n.step < dev.steps.length - 1) {
+        let step = n.step + 1;
+        while (step < dev.steps.length - 1 && ticks[step] === true) step++;
+        cue('ui-tick');
+        n = settle({ ...n, step }, cat);
+      }
+      return out(n);
+    }
     if (s.screen === 'hit') {
       const shot = shotIn(st);
       if (shot && shot.seq > s.sinceSeq && (!s.shot || shot.seq > s.shot.seq)) {
@@ -190,7 +236,7 @@ export function reduce(state, action, cat) {
       case 'unsupported':
       case 'steps': {
         cue('ui-back');
-        if (s.screen === 'steps' && s.step > 0) return out({ ...s, step: s.step - 1 });
+        if (s.screen === 'steps' && s.step > 0) return out(settle({ ...s, step: s.step - 1 }, cat));
         if (multi) return out(goto(s, 'models', { cursor: Math.max(0, devicesOf(cat, s.brandId).findIndex((d) => d.id === s.deviceId)) }));
         return out(goto(s, 'brands', { cursor: s.deviceId === 'other' ? cat.brands.length + 1 : brandCursor() }));
       }
@@ -198,7 +244,7 @@ export function reduce(state, action, cat) {
         cue('ui-back');
         effects.push({ type: 'probe', on: false });
         const dev = deviceOf(cat, s.deviceId);
-        return out(goto(s, 'steps', { step: dev ? dev.steps.length - 1 : 0, cursor: 1, shot: null }));
+        return out(settle(goto(s, 'steps', { step: dev ? dev.steps.length - 1 : 0, shot: null }), cat));
       }
       case 'done': {
         cue('ui-back');
@@ -244,7 +290,14 @@ export function reduce(state, action, cat) {
     if (!buttons.includes(id)) return out(s);
     switch (id) {
       case 'back': return reduce(s, { type: 'back' }, cat);
-      case 'next': cue('ui-tick'); return out({ ...s, step: s.step + 1, cursor: 1 });
+      case 'next': cue('ui-tick'); return out(settle({ ...s, step: s.step + 1 }, cat));
+      case 'get': {
+        const dl = downloadFor(deviceOf(cat, s.deviceId), s.step);
+        if (!dl) return out(s);
+        cue('ui-confirm');
+        effects.push({ type: 'open', url: dl.url });
+        return out(s);
+      }
       case 'to-hit':
         cue('ui-confirm');
         effects.push({ type: 'probe', on: true });
@@ -304,7 +357,7 @@ export function shotText(shot) {
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const TIER_LABEL = { tested: 'TESTED', expected: 'EXPECTED TO WORK', community: 'COMMUNITY', unsupported: 'NOT SUPPORTED YET' };
 const BUTTON_TEXT = {
-  back: '‹ BACK', next: 'NEXT STEP ›', 'to-hit': 'HIT A BALL ›', try: 'TRY IT WITH TEST SWINGS ›',
+  back: '‹ BACK', next: 'NEXT STEP ›', get: 'GET THE CONNECTOR ›', 'to-hit': 'HIT A BALL ›', try: 'TRY IT WITH TEST SWINGS ›',
   again: 'HIT ANOTHER', 'looks-right': 'LOOKS RIGHT ›', 'skip-ball': 'SKIP THE TEST BALL ›', play: 'PLAY ›',
 };
 const GO = new Set(['next', 'to-hit', 'try', 'looks-right', 'play']);
@@ -390,7 +443,9 @@ export class ConnectWizard {
 
   async _refresh() {
     if (this.disposed || !this.cat) return;
-    const st = await this.fetchJson('/api/connect/status');
+    // on a device's steps the game is asked which of them it can see done (its guide)
+    const guided = this.state.screen === 'steps' && !!guideOf(deviceOf(this.cat, this.state.deviceId));
+    const st = await this.fetchJson(guided ? '/api/connect/status?guide=1' : '/api/connect/status');
     if (st) this._onStatus(st);
   }
 
@@ -401,7 +456,8 @@ export class ConnectWizard {
     if (!this.cat) return;
     const before = this.state;
     const next = reduce(before, { type: 'status', status: st }, this.cat);
-    const moved = next.screen !== before.screen || next.linked !== before.linked || next.shot !== before.shot;
+    const moved = next.screen !== before.screen || next.linked !== before.linked || next.shot !== before.shot
+      || next.step !== before.step || next.ticks !== before.ticks;
     this._apply(next, { full: moved });
   }
 
@@ -410,6 +466,11 @@ export class ConnectWizard {
   }
   _probe(on) { this._post('/api/connect/probe', { on }).then((st) => { if (st && st.ok) this._onStatus(st); }); }
   _cue(name) { try { this.audio?.cue?.(name); } catch (_) { /* silent */ } }
+  /** A download page, in the player's own browser (the game's window hands new windows to it: main.js). */
+  _open(url) {
+    if (!/^https:\/\//.test(String(url || ''))) return;
+    try { (this.doc.defaultView || globalThis).open(url, '_blank', 'noopener,noreferrer'); } catch (_) { /* nowhere to open it */ }
+  }
 
   _dispatch(action) {
     if (this.disposed || !this.cat || this.finished) return;
@@ -428,6 +489,7 @@ export class ConnectWizard {
       if (e.type === 'cue') this._cue(e.name);
       else if (e.type === 'save-device') this._post('/api/connect/device', { id: e.id }).then((st) => { if (st && st.ok) this._onStatus(st); });
       else if (e.type === 'probe') this._probe(e.on);
+      else if (e.type === 'open') this._open(e.url);
       else if (e.type === 'done') this._finish();
     }
     if (this.finished) return;
@@ -541,8 +603,13 @@ export class ConnectWizard {
   }
 
   _buttons() {
-    const list = buttonsOf(this.state, this.cat);
-    return `<nav class="cn-btns">${list.map((id, i) => `<button type="button" class="cn-btn${GO.has(id) ? ' cn-go' : ''}" data-cn-btn="${id}" data-cn-item="${i}">${BUTTON_TEXT[id]}</button>`).join('')}</nav>`;
+    const s = this.state;
+    const list = buttonsOf(s, this.cat);
+    // a step with a download: that is the button to press until the game has seen the step done
+    const dl = list.includes('get') ? downloadFor(deviceOf(this.cat, s.deviceId), s.step) : null;
+    const main = dl && !s.linked && (s.ticks || {})[s.step] !== true ? 'get' : null;
+    const text = (id) => (id === 'get' && dl ? `${esc(dl.label)} ›` : BUTTON_TEXT[id]);
+    return `<nav class="cn-btns">${list.map((id, i) => `<button type="button" class="cn-btn${(main ? id === main : GO.has(id)) ? ' cn-go' : ''}" data-cn-btn="${id}" data-cn-item="${i}">${text(id)}</button>`).join('')}</nav>`;
   }
 
   _brands() {
@@ -589,7 +656,12 @@ export class ConnectWizard {
     if (!dev) return '';
     const brand = cat.brands.find((b) => b.id === dev.brand);
     const name = dev.id === 'other' ? 'A CONNECTOR THAT IS NOT LISTED' : fullName(brand && brand.name, dev.name);
-    const steps = dev.steps.map((t, i) => `<li class="${i === s.step ? 'cn-now' : i < s.step ? 'cn-was' : ''}"><i>${i + 1}</i><span>${esc(t)}</span></li>`).join('');
+    const guide = guideOf(dev);
+    const ticks = s.ticks || {};
+    const checked = new Set(((guide && guide.checks) || []).map((c) => c.step));   // the steps the game can see for itself
+    const seen = (i) => (i !== s.step || !checked.has(i) ? '' : ticks[i] === true ? '<small class="cn-auto cn-auto-ok">DONE: THE GAME CAN SEE IT</small>' : '<small class="cn-auto">THE GAME TICKS THIS WHEN IT SEES IT</small>');
+    const steps = dev.steps.map((t, i) => `<li class="${i === s.step ? 'cn-now' : i < s.step ? 'cn-was' : ''}${ticks[i] === true ? ' cn-ok' : ''}"><i>${ticks[i] === true ? '✓' : i + 1}</i><span>${esc(t)}${seen(i)}</span></li>`).join('');
+    const caution = guide && guide.warning ? `<p class="cn-caution"><b>GOOD TO KNOW</b>${esc(guide.warning)}</p>` : '';
     const connector = dev.connector ? `<p class="cn-connector"><span>CONNECTOR</span><b>${esc(dev.connector.name)}</b>${/^https:/.test(dev.connector.url) ? `<a href="${esc(dev.connector.url)}" target="_blank" rel="noopener noreferrer">${esc(dev.connector.url.replace(/^https:\/\//, ''))}</a>` : ''}</p>` : '';
     const needs = (dev.needs || []).length ? `<div class="cn-needs"><span>YOU NEED</span><ul>${dev.needs.map((n) => `<li>${esc(n)}</li>`).join('')}</ul></div>` : '';
     const notes = (dev.notes || []).slice(0, 2).map((n) => `<li>${esc(n)}</li>`).join('');
@@ -601,11 +673,11 @@ export class ConnectWizard {
         </section>
         <aside class="cn-side">
           <div data-cn-light class="cn-light"></div>
-          ${dev.route === 'foresight-bridge' ? `${needs}<div class="cn-fb" data-cn-fb data-cn-free></div>` : `${connector}${needs}${notes ? `<ul class="cn-notes">${notes}</ul>` : ''}`}
+          ${dev.route === 'foresight-bridge' ? `${needs}<div class="cn-fb" data-cn-fb data-cn-free></div>` : `${caution}${connector}${needs}${notes ? `<ul class="cn-notes">${notes}</ul>` : ''}`}
         </aside>
       </div>
       ${this._buttons()}
-      <footer class="cn-keys"><span><kbd>ENTER</kbd> ${s.linked ? 'HIT A BALL' : 'NEXT'}</span><span><kbd>ESC</kbd> BACK</span></footer>`;
+      <footer class="cn-keys${buttonsOf(s, cat).includes('get') ? ' cn-keys-far' : ''}">${buttonsOf(s, cat).includes('get') ? '<span><kbd>ENTER</kbd> SELECT</span>' : `<span><kbd>ENTER</kbd> ${s.linked ? 'HIT A BALL' : 'NEXT'}</span>`}<span><kbd>ESC</kbd> BACK</span></footer>`;
   }
 
   _unsupported() {

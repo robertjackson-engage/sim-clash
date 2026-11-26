@@ -31,7 +31,7 @@ window.SIMCLASH_SITE = {
   downloadUrl: 'https://github.com/robertjackson-engage/sim-clash/releases/latest/download/Sim-Clash-Setup.exe',
   downloadSize: 'about 165 MB',
   youtubeUrl: '',
-  release: '1.0.0-beta.2',
+  release: '1.0.0-beta.3',
   // Visit counting, off while this is ''. Set it to a GoatCounter site code (the "simclash" in
   // simclash.goatcounter.com) to count page views, where visitors came from and clicks on
   // Download and the trailer. No cookies, nothing stored in the browser, no personal data.

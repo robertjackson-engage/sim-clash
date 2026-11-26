@@ -1442,18 +1442,20 @@
       ],
       "steps": [
         "Close GSPro if it is open.",
-        "Start VX Connector.",
+        "Install VX Connector, then start it.",
         "Right-click its icon by the clock: Switch to OpenAPI Compatible.",
+        "Start ProTee Labs.",
         "In ProTee Labs: Game Options, Game: GSPro, then Connect.",
-        "Dismiss the \"no longer supported\" warning.",
-        "When the VX Connector icon turns green, hit a ball."
+        "Dismiss the \"no longer supported\" warning. Shots still arrive."
       ],
       "settings": [],
       "notes": [
         "Untested here. VX Connector says it sends to any sim that takes GSPro Open API shots on port 921 of this PC, which is what this game listens for. It lists other sims as tested, not this one.",
+        "On its download page take VxConnectorSetup.exe. Windows will say it protected your PC: More info, then Run anyway.",
         "It always sends to port 921 on this PC: leave the game's port at 921.",
         "Unofficial, and not supported by ProTee. It runs a copy of itself named GSPconnect.exe, because ProTee Labs only connects when a program of that name is running; some antivirus products flag that.",
-        "ProTee Labs itself stopped sending Open API shots in 2026 and its own interface for other games is closed, so there is no official way in."
+        "ProTee Labs itself stopped sending Open API shots in 2026 and its own interface for other games is closed, so there is no official way in.",
+        "The game ticks a step when it sees the program running. The name ProTee Labs runs under was not checked: if its step does not tick, press NEXT."
       ],
       "sources": [
         {
@@ -1476,7 +1478,36 @@
           "note": "Forum: a user's report of the \"no longer supported\" message",
           "confirmed": true
         }
-      ]
+      ],
+      "guide": {
+        "download": {
+          "step": 1,
+          "label": "GET VX CONNECTOR",
+          "url": "https://github.com/zonkey-acoustic/vx-connector/releases/latest"
+        },
+        "warning": "VX Connector is an unofficial program by a hobbyist, not by ProTee or by this game. Windows and some antivirus programs warn about it.",
+        "checks": [
+          {
+            "step": 0,
+            "want": "closed",
+            "program": "GSPro"
+          },
+          {
+            "step": 1,
+            "want": "running",
+            "program": "vx-connector"
+          },
+          {
+            "step": 3,
+            "want": "running",
+            "program": "ProTee*"
+          },
+          {
+            "step": 4,
+            "want": "connected"
+          }
+        ]
+      }
     },
     {
       "id": "openlaunch-nova",

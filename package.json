@@ -1,6 +1,6 @@
 {
   "name": "open-birdie",
-  "version": "1.0.0-beta.2",
+  "version": "1.0.0-beta.3",
   "description": "Sim Clash: arcade 1v1 golf for real launch monitors. Two players, one bay, real swings. Open source, built on Open-Birdie.",
   "main": "main.js",
   "author": "Sim Clash contributors",

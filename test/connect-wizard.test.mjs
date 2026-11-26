@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import {
-  reduce, initialState, buttonsOf, brandList, devicesOf, deviceOf, addressFor, lightOf, shotText, shotIn, fullName, fill, TIER_ORDER,
+  reduce, initialState, buttonsOf, brandList, devicesOf, deviceOf, addressFor, lightOf, shotText, shotIn, fullName, fill, TIER_ORDER, guideOf, downloadFor, ticksIn,
 } from '../public/arcade/connect.js';
 
 const require = createRequire(import.meta.url);
@@ -219,4 +219,82 @@ test('the status light and the shot card say what the server said', () => {
   assert.equal(shotText(null), null);
   assert.equal(shotIn({ lastShot: shot(2), probe: { shot: shot(5) } }).seq, 5);
   assert.equal(shotIn({ lastShot: shot(2), probe: { shot: null } }).seq, 2);
+});
+
+// ---- a guided device (the ProTee VX): a download button, steps the game ticks by itself
+
+const guided = (checks, extra = {}) => ({ connected: false, device: { id: 'protee-vx' }, guide: { checks }, ...extra });
+const vxTicks = (a, b, c, d) => [{ step: 0, ok: a }, { step: 1, ok: b }, { step: 3, ok: c }, { step: 4, ok: d }];
+
+test('the ProTee VX is guided: a download on its install step, four steps the game can see', () => {
+  const dev = deviceOf(cat, 'protee-vx');
+  assert.equal(dev.tier, 'community');
+  assert.ok(guideOf(dev).warning.length > 20);
+  const dl = downloadFor(dev, 1);
+  assert.ok(dl && /^https:\/\/github\.com\//.test(dl.url) && dl.label);
+  assert.equal(downloadFor(dev, 0), null);
+  assert.equal(downloadFor(deviceOf(cat, 'garmin-r10'), 0), null, 'a launch monitor without a guide has no button');
+  assert.deepEqual(guideOf(dev).checks.map((c) => c.step), [0, 1, 3, 4]);
+});
+
+test('a guided step: the game ticks it and moves on, the download button opens the page, nothing holds the player back', () => {
+  let s = pick(start(), 'protee');
+  assert.equal(s.screen, 'steps');
+  assert.equal(s.deviceId, 'protee-vx');
+  assert.deepEqual(buttonsOf(s, cat), ['back', 'next']);
+
+  // nothing known yet: nothing moves
+  s = reduce(s, { type: 'status', status: guided(vxTicks(null, null, null, false)) }, cat);
+  assert.equal(s.step, 0);
+  assert.deepEqual(cues(s), []);
+
+  // GSPro is seen closed: step 1 ticks, the wizard is on the install step with its button under the cursor
+  s = reduce(s, { type: 'status', status: guided(vxTicks(true, false, false, false)) }, cat);
+  assert.equal(s.step, 1);
+  assert.deepEqual(cues(s), ['ui-tick']);
+  assert.equal(s.ticks[0], true);
+  assert.deepEqual(buttonsOf(s, cat), ['back', 'get', 'next']);
+  assert.equal(buttonsOf(s, cat)[s.cursor], 'get');
+
+  // ENTER opens the download page and stays on the step
+  s = reduce(s, { type: 'select' }, cat);
+  assert.deepEqual(effect(s, 'open'), { type: 'open', url: downloadFor(deviceOf(cat, 'protee-vx'), 1).url });
+  assert.equal(s.step, 1);
+  assert.deepEqual(cues(s), ['ui-confirm']);
+
+  // the same answer again changes nothing (no second sound, no jump)
+  const again = reduce(s, { type: 'status', status: guided(vxTicks(true, false, false, false)) }, cat);
+  assert.equal(again.step, 1);
+  assert.deepEqual(cues(again), []);
+
+  // VX Connector is seen running: on to the step the game cannot see, which the player passes with NEXT
+  s = reduce(s, { type: 'status', status: guided(vxTicks(true, true, false, false)) }, cat);
+  assert.equal(s.step, 2);
+  assert.deepEqual(buttonsOf(s, cat), ['back', 'next']);
+  s = reduce(s, { type: 'press', id: 'next' }, cat);
+  assert.equal(s.step, 3);
+
+  // going back to a ticked step is allowed: it is not thrown forward again
+  let b = reduce(s, { type: 'back' }, cat);
+  b = reduce(b, { type: 'back' }, cat);
+  assert.equal(b.step, 1);
+  b = reduce(b, { type: 'status', status: guided(vxTicks(true, true, false, false)) }, cat);
+  assert.equal(b.step, 1, 'it was already ticked: no jump');
+  assert.equal(buttonsOf(b, cat)[b.cursor], 'next', 'ticked: the cursor is on NEXT, not on the download');
+
+  // a check never blocks: NEXT works on a step that is not ticked
+  assert.equal(reduce(s, { type: 'press', id: 'next' }, cat).step, 4);
+
+  // the connector connects: HIT A BALL is offered at once
+  s = reduce(s, { type: 'status', status: guided(vxTicks(true, true, true, true), { connected: true }) }, cat);
+  assert.equal(s.linked, true);
+  assert.equal(buttonsOf(s, cat)[s.cursor], 'to-hit');
+});
+
+test('ticks about another launch monitor are ignored', () => {
+  let s = pick(start(), 'protee');
+  s = reduce(s, { type: 'status', status: { connected: false, device: { id: 'garmin-r10' }, guide: { checks: vxTicks(true, true, true, false) } } }, cat);
+  assert.equal(s.step, 0);
+  assert.deepEqual(s.ticks, {});
+  assert.deepEqual(ticksIn(null, 'protee-vx'), {});
 });

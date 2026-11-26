@@ -3,6 +3,40 @@
 All notable changes to Sim Clash are documented here. Sim Clash is a fork of Open-Birdie;
 Open-Birdie's own changelog, as it stood when this fork was made, follows below the line.
 
+## [1.0.0-beta.3] - 2026-11-26
+
+A small build about getting connected. The game, its stages and its rules are the ones of
+1.0.0-beta.2.
+
+### Connecting
+- **The ProTee VX has a way in.** It was listed as not supported; it is now "community /
+  unofficial", through VX Connector, a free program by a hobbyist that sends ProTee Labs
+  shots to this PC the way the game listens for them. Untested here: nobody has hit a ball
+  with it into this game yet (`lib/launch-monitors.json`, `docs/launch-monitors.md`).
+- **Steps the game follows with you.** A launch monitor's entry can now carry a guide
+  (`guide` in the catalogue): a button on the step that needs a download, a plain warning
+  beside the steps, and steps the game ticks by itself when it sees them done (a program
+  running or closed on this PC, a connector connected). A tick moves the wizard on to the
+  next step; it never holds anyone back, and NEXT always works. The ProTee VX is the first
+  entry with one: GET VX CONNECTOR opens its download page, and closing GSPro, starting VX
+  Connector, starting ProTee Labs and connecting each tick themselves
+  (`public/arcade/connect.js`, `lib/connect.js`). The game only looks at the list of
+  running programs while that screen is open.
+- **Links open in your own browser.** A link in the game that asks for a new window (a
+  connector's page, the new download button) used to open inside a second game window; it
+  now goes to the PC's browser (`main.js`).
+
+### Website
+- The site has its own address, [simclashgolf.com](https://simclashgolf.com); the old
+  address forwards to it.
+- The site counts visits with GoatCounter (no cookies, nothing stored in the browser); the
+  FAQ says so. The game itself still sends nothing.
+
+### Known issues
+- The same as 1.0.0-beta.2, listed below: this build changes nothing in play.
+- The name ProTee Labs runs under was not checked, so its step may not tick by itself:
+  press NEXT.
+
 ## [1.0.0-beta.2] - 2026-11-24
 
 The second public build. Same engine, same holes, same rules: every stage has been rebuilt
