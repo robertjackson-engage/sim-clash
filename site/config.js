@@ -35,5 +35,5 @@ window.SIMCLASH_SITE = {
   // Visit counting, off while this is ''. Set it to a GoatCounter site code (the "simclash" in
   // simclash.goatcounter.com) to count page views, where visitors came from and clicks on
   // Download and the trailer. No cookies, nothing stored in the browser, no personal data.
-  analytics: '',
+  analytics: 'simclash',
 };

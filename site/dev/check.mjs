@@ -80,7 +80,7 @@ for (const page of pages) {
   if (!/^https:\/\/[^/]+\/.+\.(jpg|png)$/.test(og)) err(page, `og:image must be an absolute https address of a JPEG or PNG (is "${og}")`);
   // served from its own domain (paths start at the root) or from <owner>.github.io/<repo>/
   else if (![/^https:\/\/[^/]+\//, /^https:\/\/[^/]+\/[^/]+\//].some((re) => fs.existsSync(path.join(site, og.replace(re, ''))))) err(page, `og:image ${og}: no such file in the site`);
-  else referenced.add(og.replace(/^https:\/\/[^/]+\/[^/]+\//, ''));
+  else referenced.add([/^https:\/\/[^/]+\//, /^https:\/\/[^/]+\/[^/]+\//].map((re) => og.replace(re, '')).find((f) => fs.existsSync(path.join(site, f))));
   if (!/<meta name="twitter:card" content="summary_large_image">/.test(html)) err(page, 'no twitter:card');
   if (!/<link rel="canonical" href="https:\/\/[^"]+">/.test(html)) err(page, 'no canonical link');
   if (!/<meta http-equiv="Content-Security-Policy"/.test(html)) err(page, 'no Content-Security-Policy');
