@@ -140,7 +140,7 @@
 
     <section id="monitors">
       <h2>Which launch monitors</h2>
-      <p>This list is generated from the catalogue the game's own connection wizard uses, so the site, the game and the documentation say the same thing. It holds <!-- gen:lm-n-total -->30<!-- /gen:lm-n-total --> launch monitors, was last checked on <!-- gen:lm-updated -->2026-11-23<!-- /gen:lm-updated -->, and is careful on purpose: nothing is called tested unless a ball has been hit with it on a real rig. Today that is <!-- gen:lm-n-tested -->1<!-- /gen:lm-n-tested --> unit.</p>
+      <p>This list is generated from the catalogue the game's own connection wizard uses, so the site, the game and the documentation say the same thing. It holds <!-- gen:lm-n-total -->30<!-- /gen:lm-n-total --> launch monitors, was last checked on <!-- gen:lm-updated -->2026-11-26<!-- /gen:lm-updated -->, and is careful on purpose: nothing is called tested unless a ball has been hit with it on a real rig. Today that is <!-- gen:lm-n-tested -->1<!-- /gen:lm-n-tested --> unit.</p>
       <!-- gen:lm-tiers -->
       <h3 id="tier-tested">Tested <span class="tier-n">(1)</span></h3>
       <p>Works on a real rig.</p>
@@ -167,7 +167,7 @@
         </tbody>
       </table></div>
 
-      <h3 id="tier-community">Community / unofficial <span class="tier-n">(12)</span></h3>
+      <h3 id="tier-community">Community / unofficial <span class="tier-n">(13)</span></h3>
       <p>Needs an unofficial helper program between the launch monitor and the game. Untested here.</p>
       <div class="tbl"><table>
         <thead><tr><th>Launch monitor</th><th>Models</th><th>Comes in through</th><th>Its steps</th></tr></thead>
@@ -184,16 +184,16 @@
           <tr><td>TrackMan</td><td class="wrapok">TrackMan 4, TrackMan iO</td><td class="wrapok"><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" rel="noopener">MLM2PRO-GSPro-Connector (device: Trackman)</a></td><td><a href="#lm-trackman">Steps</a></td></tr>
           <tr><td>Voice Caddie Swing Caddie SC4 / SC4 Pro</td><td class="wrapok">Swing Caddie SC4, Swing Caddie SC4 Pro</td><td class="wrapok"><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" rel="noopener">MLM2PRO-GSPro-Connector (device: Voice Caddie SC4)</a></td><td><a href="#lm-voicecaddie-sc4">Steps</a></td></tr>
           <tr><td>TruGolf Apogee</td><td class="wrapok">TruGolf Apogee</td><td class="wrapok"><a href="https://github.com/springbok/MLM2PRO-GSPro-Connector" rel="noopener">MLM2PRO-GSPro-Connector (device: TruGolf Apogee Apex)</a></td><td><a href="#lm-trugolf-apogee">Steps</a></td></tr>
+          <tr><td>ProTee VX</td><td class="wrapok">ProTee VX</td><td class="wrapok"><a href="https://github.com/zonkey-acoustic/vx-connector" rel="noopener">VX Connector</a></td><td><a href="#lm-protee-vx">Steps</a></td></tr>
         </tbody>
       </table></div>
 
-      <h3 id="tier-unsupported">Not supported yet <span class="tier-n">(9)</span></h3>
+      <h3 id="tier-unsupported">Not supported yet <span class="tier-n">(8)</span></h3>
       <p>No way in that we know of. You can still play with test swings.</p>
       <div class="tbl"><table>
         <thead><tr><th>Launch monitor</th><th>Why not</th></tr></thead>
         <tbody>
           <tr><td>FlightScope X3 / X2 / Mevo (original)</td><td class="wrapok">No connector was found that sends these units' shots as Open Connect. GSPro reaches the X2 and X3 through its own private FlightScope connection; FlightScope says the original Mevo does not support simulator courses, and opens the X3C to approved integrators only.</td></tr>
-          <tr><td>ProTee VX</td><td class="wrapok">ProTee Labs used to connect to GSPro through the Open API, which would have reached this game. Since ProTee Labs 1.8.14 it uses GSPro's own built-in connection, and a user has reported the Open API route as no longer supported. If your ProTee Labs still has a GSPro CONNECT button under Game Options, it may be worth a try with GSPro closed: nobody has confirmed either way.</td></tr>
           <tr><td>OpenLaunch NOVA</td><td class="wrapok">The NOVA reaches GSPro through GSPro's own built-in connection, which cannot be pointed at this game. It is the best candidate for a direct connection, though: OpenLaunch publishes a local API (JSON over TCP and WebSocket, found on the network automatically) with an Apache-2.0 developer guide. See the roadmap.</td></tr>
           <tr><td>OptiShot Nova / BallFlight / Orbit</td><td class="wrapok">OptiShot's units run OptiShot's own Orion software. No connector was found that sends their shots to GSPro or as Open Connect, and they are not on GSPro's supported list. (The Nova on GSPro's list is OpenLaunch's, a different product.)</td></tr>
           <tr><td>Golfzon WAVE</td><td class="wrapok">No connector was found that sends the WAVE's shots to GSPro or as Open Connect, and it is not on GSPro's supported list.</td></tr>
@@ -449,12 +449,15 @@
           <h4>Where this comes from</h4><ul><li><a href="https://github.com/open-flight/openflight/blob/main/docs/using/simulator/gspro.md" rel="noopener">github.com/open-flight/openflight/blob/main/docs/using/simulator/gspro.md</a>: OpenFlight documentation: the gspro connector's host, port, device_id, heartbeat</li><li><a href="https://raw.githubusercontent.com/open-flight/openflight/main/src/openflight/sim/config.py" rel="noopener">raw.githubusercontent.com/open-flight/openflight/main/src/openflight/sim/config.py</a>: Source: defaults host 127.0.0.1, port 921</li><li><a href="https://raw.githubusercontent.com/open-flight/openflight/main/LICENSE" rel="noopener">raw.githubusercontent.com/open-flight/openflight/main/LICENSE</a>: AGPL-3.0-or-later</li></ul>
         </div>
       </details>
-      <details class="lm" id="lm-protee-vx" data-k="protee vx protee vx protee  not supported yet">
-        <summary>ProTee VX <span class="badge t-unsupported">Not supported yet</span><small>ProTee VX</small></summary>
+      <details class="lm" id="lm-protee-vx" data-k="protee vx protee vx protee vx connector community / unofficial">
+        <summary>ProTee VX <span class="badge t-community">Community / unofficial</span><small>ProTee VX</small></summary>
         <div>
-          <p>ProTee Labs used to connect to GSPro through the Open API, which would have reached this game. Since ProTee Labs 1.8.14 it uses GSPro's own built-in connection, and a user has reported the Open API route as no longer supported. If your ProTee Labs still has a GSPro CONNECT button under Game Options, it may be worth a try with GSPro closed: nobody has confirmed either way.</p>
-          <p>You can still play: <a href="#no-monitor">test swings</a> need no launch monitor.</p>
-          <h4>Where this comes from</h4><ul><li><a href="https://golfsimulatorforum.com/forum/protee-golf-simulator/protee-launch-monitors/399370-protee-vx-and-gspro?p=419004" rel="noopener">golfsimulatorforum.com/forum/protee-golf-simulator/protee-launch-monitors/399370-protee-vx-and-gspro?p=419004</a>: Forum: ProTee's own post on the Open API route, and a later report that it is no longer supported (a report, not confirmed)</li><li><a href="https://gspro.gitbook.io/gspro-knowledge-base/troubleshooting-and-support/how-to-clear-gspro-connect-settings.md" rel="noopener">gspro.gitbook.io/gspro-knowledge-base/troubleshooting-and-support/how-to-clear-gspro-connect-settings.md</a>: ProTee VX is its own interface inside GSPro Connect</li></ul>
+          <dl><dt>Comes in through</dt><dd><a href="https://github.com/zonkey-acoustic/vx-connector" rel="noopener">VX Connector</a></dd><dt>That connector's licence</dt><dd>MIT (per its README)</dd></dl>
+          <h4>You need</h4><ul><li>ProTee Labs with an activated ProTee VX on this PC</li></ul>
+          <h4>Steps</h4><ol class="steps slim"><li><p>Close GSPro if it is open.</p></li><li><p>Start VX Connector.</p></li><li><p>Right-click its icon by the clock: Switch to OpenAPI Compatible.</p></li><li><p>In ProTee Labs: Game Options, Game: GSPro, then Connect.</p></li><li><p>Dismiss the &quot;no longer supported&quot; warning.</p></li><li><p>When the VX Connector icon turns green, hit a ball.</p></li></ol>
+          <h4>Good to know</h4><ul><li>Untested here. VX Connector says it sends to any sim that takes GSPro Open API shots on port 921 of this PC, which is what this game listens for. It lists other sims as tested, not this one.</li><li>It always sends to port 921 on this PC: leave the game's port at 921.</li><li>Unofficial, and not supported by ProTee. It runs a copy of itself named GSPconnect.exe, because ProTee Labs only connects when a program of that name is running; some antivirus products flag that.</li><li>ProTee Labs itself stopped sending Open API shots in 2026 and its own interface for other games is closed, so there is no official way in.</li></ul>
+          <h4>Other connectors</h4><ul><li><a href="https://github.com/devigned/vx-bridge" rel="noopener">VX Bridge</a> (MIT). Forwards ProTee Labs shots to Infinite Tees or to GSPro's OpenAPI Connect application, for a licensed copy of either on the same PC. Whether it will send to this game was not checked.</li></ul>
+          <h4>Where this comes from</h4><ul><li><a href="https://github.com/zonkey-acoustic/vx-connector" rel="noopener">github.com/zonkey-acoustic/vx-connector</a>: README: OpenAPI Compatible mode sends to port 921; the steps in ProTee Labs; the GSPconnect.exe copy</li><li><a href="https://github.com/devigned/vx-bridge" rel="noopener">github.com/devigned/vx-bridge</a>: README: forwards to Infinite Tees or GSPro OpenAPI on the same PC</li><li><a href="https://csc.protee-united.com/hc/en-us/articles/10194104166684-ProTee-Labs-Changelog" rel="noopener">csc.protee-united.com/hc/en-us/articles/10194104166684-ProTee-Labs-Changelog</a>: ProTee Labs changelog: GSPro OpenAPI no longer supported (1.11.11); a closed &quot;ProTee Link&quot; connector for other games (a report, not confirmed)</li><li><a href="https://golfsimulatorforum.com/forum/protee-golf-simulator/protee-launch-monitors/399370-protee-vx-and-gspro?p=419004" rel="noopener">golfsimulatorforum.com/forum/protee-golf-simulator/protee-launch-monitors/399370-protee-vx-and-gspro?p=419004</a>: Forum: a user's report of the &quot;no longer supported&quot; message</li></ul>
         </div>
       </details>
       <details class="lm" id="lm-openlaunch-nova" data-k="openlaunch nova openlaunch nova openlaunch  not supported yet">

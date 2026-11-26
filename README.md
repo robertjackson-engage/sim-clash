@@ -174,10 +174,10 @@ ball has been hit with it on a real rig: today that is one unit.
 | --- | --- | --- |
 | **Tested** (1) | Works on a real rig. | Foresight GCQuad |
 | **Expected to work** (8) | Its own connector is documented to send Open Connect, or it is the same connector as a tested unit. Nobody has tried it with this game yet. | Foresight GC3 / GCHawk / QuadMAX / Falcon; Bushnell Launch Pro; Square Golf (Home); NVisage N1; Bullseye LM; GolfIn Idra; PiTrac; OpenFlight |
-| **Community / unofficial** (12) | Needs an unofficial helper program between the launch monitor and the game. Untested here. | Foresight GC2; Uneekor EYE XO / XO2 / EYE MINI / QED; Garmin Approach R10; Garmin Approach R50; FlightScope Mevo+ / Mevo Gen2 / Xi; SkyTrak / SkyTrak+; Rapsodo MLM2PRO; Square Golf Omni; Full Swing KIT; TrackMan; Voice Caddie Swing Caddie SC4 / SC4 Pro; TruGolf Apogee |
-| **Not supported yet** (9) | No way in that we know of. You can still play with test swings. | FlightScope X3 / X2 / Mevo (original); ProTee VX; OpenLaunch NOVA; OptiShot Nova / BallFlight / Orbit; Golfzon WAVE; GolfJoy GDS / GR / Spica; VTrack; Bluetees RAINMAKER; Ernest Sports ES16 / ES Tour Plus |
+| **Community / unofficial** (13) | Needs an unofficial helper program between the launch monitor and the game. Untested here. | Foresight GC2; Uneekor EYE XO / XO2 / EYE MINI / QED; Garmin Approach R10; Garmin Approach R50; FlightScope Mevo+ / Mevo Gen2 / Xi; SkyTrak / SkyTrak+; Rapsodo MLM2PRO; Square Golf Omni; Full Swing KIT; TrackMan; Voice Caddie Swing Caddie SC4 / SC4 Pro; TruGolf Apogee; ProTee VX |
+| **Not supported yet** (8) | No way in that we know of. You can still play with test swings. | FlightScope X3 / X2 / Mevo (original); OpenLaunch NOVA; OptiShot Nova / BallFlight / Orbit; Golfzon WAVE; GolfJoy GDS / GR / Spica; VTrack; Bluetees RAINMAKER; Ernest Sports ES16 / ES Tour Plus |
 
-Catalogue version 1, checked 2026-11-23.
+Catalogue version 1, checked 2026-11-26.
 <!-- launch-monitors:end -->
 
 Sim Clash has been played on very few setups so far. If you try it, please tell us what

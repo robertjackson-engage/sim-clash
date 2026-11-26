@@ -3,7 +3,7 @@
 <!-- GENERATED from lib/launch-monitors.json by tools/arcade-dev/launch-monitors-doc.mjs. Do not edit by hand:
      change the catalogue (or the generator) and run  node tools/arcade-dev/launch-monitors-doc.mjs --write  -->
 
-Catalogue version 1, checked 2026-11-23.
+Catalogue version 1, checked 2026-11-26.
 
 ## In short
 
@@ -41,7 +41,7 @@ Nothing here is presented as tested unless a ball has been hit with it on a real
 | PiTrac | PiTrac (open-source, build it yourself) | [PiTrac's own GSPro interface](https://docs.pitrac.org/software/simulator-integration/) | GPL-2.0 |
 | OpenFlight | OpenFlight (open-source, build it yourself) | [OpenFlight's own GSPro (OpenConnectV1) connector](https://github.com/open-flight/openflight/blob/main/docs/using/simulator/gspro.md) | AGPL-3.0-or-later |
 
-### Community / unofficial (12)
+### Community / unofficial (13)
 
 | Launch monitor | Models | Comes in through | Licence of that connector |
 | --- | --- | --- | --- |
@@ -57,13 +57,13 @@ Nothing here is presented as tested unless a ball has been hit with it on a real
 | TrackMan | TrackMan 4, TrackMan iO | [MLM2PRO-GSPro-Connector (device: Trackman)](https://github.com/springbok/MLM2PRO-GSPro-Connector) | GPL-3.0 |
 | Voice Caddie Swing Caddie SC4 / SC4 Pro | Swing Caddie SC4, Swing Caddie SC4 Pro | [MLM2PRO-GSPro-Connector (device: Voice Caddie SC4)](https://github.com/springbok/MLM2PRO-GSPro-Connector) | GPL-3.0 |
 | TruGolf Apogee | TruGolf Apogee | [MLM2PRO-GSPro-Connector (device: TruGolf Apogee Apex)](https://github.com/springbok/MLM2PRO-GSPro-Connector) | GPL-3.0 |
+| ProTee VX | ProTee VX | [VX Connector](https://github.com/zonkey-acoustic/vx-connector) | MIT (per its README) |
 
-### Not supported yet (9)
+### Not supported yet (8)
 
 | Launch monitor | Why not |
 | --- | --- |
 | FlightScope X3 / X2 / Mevo (original) | No connector was found that sends these units' shots as Open Connect. GSPro reaches the X2 and X3 through its own private FlightScope connection; FlightScope says the original Mevo does not support simulator courses, and opens the X3C to approved integrators only. |
-| ProTee VX | ProTee Labs used to connect to GSPro through the Open API, which would have reached this game. Since ProTee Labs 1.8.14 it uses GSPro's own built-in connection, and a user has reported the Open API route as no longer supported. If your ProTee Labs still has a GSPro CONNECT button under Game Options, it may be worth a try with GSPro closed: nobody has confirmed either way. |
 | OpenLaunch NOVA | The NOVA reaches GSPro through GSPro's own built-in connection, which cannot be pointed at this game. It is the best candidate for a direct connection, though: OpenLaunch publishes a local API (JSON over TCP and WebSocket, found on the network automatically) with an Apache-2.0 developer guide. See the roadmap. |
 | OptiShot Nova / BallFlight / Orbit | OptiShot's units run OptiShot's own Orion software. No connector was found that sends their shots to GSPro or as Open Connect, and they are not on GSPro's supported list. (The Nova on GSPro's list is OpenLaunch's, a different product.) |
 | Golfzon WAVE | No connector was found that sends the WAVE's shots to GSPro or as Open Connect, and it is not on GSPro's supported list. |
@@ -793,6 +793,43 @@ Sources:
 - <https://raw.githubusercontent.com/springbok/MLM2PRO-GSPro-Connector/main/src/settings.py>: Source: the TruGolf Apogee device entries
 - <https://gsprogolf.com/>: TruGolf Apogee is not on GSPro's supported list
 
+### ProTee VX
+
+**Community / unofficial.** Models: ProTee VX. Catalogue id: `protee-vx`.
+
+Connector: [VX Connector](https://github.com/zonkey-acoustic/vx-connector) (MIT (per its README)).
+
+You need:
+
+- ProTee Labs with an activated ProTee VX on this PC
+
+Steps:
+
+1. Close GSPro if it is open.
+2. Start VX Connector.
+3. Right-click its icon by the clock: Switch to OpenAPI Compatible.
+4. In ProTee Labs: Game Options, Game: GSPro, then Connect.
+5. Dismiss the "no longer supported" warning.
+6. When the VX Connector icon turns green, hit a ball.
+
+Other connectors:
+
+- [VX Bridge](https://github.com/devigned/vx-bridge) (MIT). Forwards ProTee Labs shots to Infinite Tees or to GSPro's OpenAPI Connect application, for a licensed copy of either on the same PC. Whether it will send to this game was not checked.
+
+Notes:
+
+- Untested here. VX Connector says it sends to any sim that takes GSPro Open API shots on port 921 of this PC, which is what this game listens for. It lists other sims as tested, not this one.
+- It always sends to port 921 on this PC: leave the game's port at 921.
+- Unofficial, and not supported by ProTee. It runs a copy of itself named GSPconnect.exe, because ProTee Labs only connects when a program of that name is running; some antivirus products flag that.
+- ProTee Labs itself stopped sending Open API shots in 2026 and its own interface for other games is closed, so there is no official way in.
+
+Sources:
+
+- <https://github.com/zonkey-acoustic/vx-connector>: README: OpenAPI Compatible mode sends to port 921; the steps in ProTee Labs; the GSPconnect.exe copy
+- <https://github.com/devigned/vx-bridge>: README: forwards to Infinite Tees or GSPro OpenAPI on the same PC
+- <https://csc.protee-united.com/hc/en-us/articles/10194104166684-ProTee-Labs-Changelog>: ProTee Labs changelog: GSPro OpenAPI no longer supported (1.11.11); a closed "ProTee Link" connector for other games *(a report, not confirmed)*
+- <https://golfsimulatorforum.com/forum/protee-golf-simulator/protee-launch-monitors/399370-protee-vx-and-gspro?p=419004>: Forum: a user's report of the "no longer supported" message
+
 ### FlightScope X3 / X2 / Mevo (original)
 
 **Not supported yet.** Models: X3, X3C, X2, Mevo (original). Catalogue id: `flightscope-x3`.
@@ -803,17 +840,6 @@ Sources:
 
 - <https://flightscope.com/faqs/main>: FlightScope FAQ: original Mevo and simulation; X3C and third-party software
 - <https://gsprogolf.com/>: GSPro's supported list (X2, X3 through its own integration)
-
-### ProTee VX
-
-**Not supported yet.** Models: ProTee VX. Catalogue id: `protee-vx`.
-
-ProTee Labs used to connect to GSPro through the Open API, which would have reached this game. Since ProTee Labs 1.8.14 it uses GSPro's own built-in connection, and a user has reported the Open API route as no longer supported. If your ProTee Labs still has a GSPro CONNECT button under Game Options, it may be worth a try with GSPro closed: nobody has confirmed either way.
-
-Sources:
-
-- <https://golfsimulatorforum.com/forum/protee-golf-simulator/protee-launch-monitors/399370-protee-vx-and-gspro?p=419004>: Forum: ProTee's own post on the Open API route, and a later report that it is no longer supported *(a report, not confirmed)*
-- <https://gspro.gitbook.io/gspro-knowledge-base/troubleshooting-and-support/how-to-clear-gspro-connect-settings.md>: ProTee VX is its own interface inside GSPro Connect
 
 ### OpenLaunch NOVA
 

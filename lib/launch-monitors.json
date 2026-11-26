@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-11-23",
+  "updated": "2026-11-26",
   "port": 921,
   "about": "Which launch monitors can feed the game, and how. The game listens on TCP 921 and speaks GSPro Open Connect v1 (the role GSPro's Open API plays), so a connector that sends shots to GSPro's Open API can send them here when GSPro is closed. Foresight GC units come in through the built-in Foresight bridge instead. Read by the game (GET /api/launch-monitors, the connection wizard), by tools/arcade-dev/launch-monitors-doc.mjs (docs/launch-monitors.md), the README and the website. Every claim has a source; 'confirmed' means official documentation or source code that was read, anything else is a report.",
   "tiers": [
@@ -1419,28 +1419,61 @@
       "models": [
         "ProTee VX"
       ],
-      "tier": "unsupported",
-      "route": "none",
-      "address": null,
-      "connector": null,
-      "alternatives": [],
-      "needs": [],
+      "tier": "community",
+      "route": "open-connect",
+      "address": "local",
+      "connector": {
+        "name": "VX Connector",
+        "url": "https://github.com/zonkey-acoustic/vx-connector",
+        "license": "MIT (per its README)",
+        "openSource": true,
+        "by": "zonkey-acoustic"
+      },
+      "alternatives": [
+        {
+          "name": "VX Bridge",
+          "url": "https://github.com/devigned/vx-bridge",
+          "license": "MIT",
+          "note": "Forwards ProTee Labs shots to Infinite Tees or to GSPro's OpenAPI Connect application, for a licensed copy of either on the same PC. Whether it will send to this game was not checked."
+        }
+      ],
+      "needs": [
+        "ProTee Labs with an activated ProTee VX on this PC"
+      ],
       "steps": [
-        "No way to connect it yet.",
-        "You can try the game with test swings."
+        "Close GSPro if it is open.",
+        "Start VX Connector.",
+        "Right-click its icon by the clock: Switch to OpenAPI Compatible.",
+        "In ProTee Labs: Game Options, Game: GSPro, then Connect.",
+        "Dismiss the \"no longer supported\" warning.",
+        "When the VX Connector icon turns green, hit a ball."
       ],
       "settings": [],
-      "why": "ProTee Labs used to connect to GSPro through the Open API, which would have reached this game. Since ProTee Labs 1.8.14 it uses GSPro's own built-in connection, and a user has reported the Open API route as no longer supported. If your ProTee Labs still has a GSPro CONNECT button under Game Options, it may be worth a try with GSPro closed: nobody has confirmed either way.",
-      "notes": [],
+      "notes": [
+        "Untested here. VX Connector says it sends to any sim that takes GSPro Open API shots on port 921 of this PC, which is what this game listens for. It lists other sims as tested, not this one.",
+        "It always sends to port 921 on this PC: leave the game's port at 921.",
+        "Unofficial, and not supported by ProTee. It runs a copy of itself named GSPconnect.exe, because ProTee Labs only connects when a program of that name is running; some antivirus products flag that.",
+        "ProTee Labs itself stopped sending Open API shots in 2026 and its own interface for other games is closed, so there is no official way in."
+      ],
       "sources": [
         {
-          "url": "https://golfsimulatorforum.com/forum/protee-golf-simulator/protee-launch-monitors/399370-protee-vx-and-gspro?p=419004",
-          "note": "Forum: ProTee's own post on the Open API route, and a later report that it is no longer supported",
+          "url": "https://github.com/zonkey-acoustic/vx-connector",
+          "note": "README: OpenAPI Compatible mode sends to port 921; the steps in ProTee Labs; the GSPconnect.exe copy",
+          "confirmed": true
+        },
+        {
+          "url": "https://github.com/devigned/vx-bridge",
+          "note": "README: forwards to Infinite Tees or GSPro OpenAPI on the same PC",
+          "confirmed": true
+        },
+        {
+          "url": "https://csc.protee-united.com/hc/en-us/articles/10194104166684-ProTee-Labs-Changelog",
+          "note": "ProTee Labs changelog: GSPro OpenAPI no longer supported (1.11.11); a closed \"ProTee Link\" connector for other games",
           "confirmed": false
         },
         {
-          "url": "https://gspro.gitbook.io/gspro-knowledge-base/troubleshooting-and-support/how-to-clear-gspro-connect-settings.md",
-          "note": "ProTee VX is its own interface inside GSPro Connect",
+          "url": "https://golfsimulatorforum.com/forum/protee-golf-simulator/protee-launch-monitors/399370-protee-vx-and-gspro?p=419004",
+          "note": "Forum: a user's report of the \"no longer supported\" message",
           "confirmed": true
         }
       ]
