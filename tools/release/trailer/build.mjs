@@ -54,7 +54,7 @@ const OUT = path.resolve(repo, flag('--out', path.join('release', 'media')));
 const FPS = 60, W = 1920, H = 1080;
 // The address on the end card and the vertical cut, and nowhere else: change it here when the
 // site moves to a domain of its own. (cut.mjs writes {{SITE}} where it goes.)
-const SITE_ADDRESS = 'robertjackson-engage.github.io/sim-clash';
+const SITE_ADDRESS = 'simclashgolf.com';
 
 const ffmpeg = findFfmpeg();
 if (!ffmpeg) {

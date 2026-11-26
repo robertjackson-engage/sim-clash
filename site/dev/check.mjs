@@ -78,7 +78,8 @@ for (const page of pages) {
   for (const prop of ['og:title', 'og:description', 'og:type', 'og:url', 'og:image']) if (!new RegExp(`<meta property="${prop}" content="[^"]+">`).test(html)) err(page, `no ${prop}`);
   const og = attr((/<meta property="og:image" [^>]*>/.exec(html) || [''])[0], 'content') || '';
   if (!/^https:\/\/[^/]+\/.+\.(jpg|png)$/.test(og)) err(page, `og:image must be an absolute https address of a JPEG or PNG (is "${og}")`);
-  else if (!fs.existsSync(path.join(site, og.replace(/^https:\/\/[^/]+\/[^/]+\//, '')))) err(page, `og:image ${og}: no such file in the site`);
+  // served from its own domain (paths start at the root) or from <owner>.github.io/<repo>/
+  else if (![/^https:\/\/[^/]+\//, /^https:\/\/[^/]+\/[^/]+\//].some((re) => fs.existsSync(path.join(site, og.replace(re, ''))))) err(page, `og:image ${og}: no such file in the site`);
   else referenced.add(og.replace(/^https:\/\/[^/]+\/[^/]+\//, ''));
   if (!/<meta name="twitter:card" content="summary_large_image">/.test(html)) err(page, 'no twitter:card');
   if (!/<link rel="canonical" href="https:\/\/[^"]+">/.test(html)) err(page, 'no canonical link');

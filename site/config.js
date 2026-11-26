@@ -24,6 +24,10 @@ window.SIMCLASH_SITE = {
   owner: 'robertjackson-engage',
   repo: 'sim-clash',
   branch: 'main',
+  // The site's own domain name. '' means the GitHub Pages address (<owner>.github.io/<repo>).
+  // It is used for the absolute addresses in each page's <head> and in sitemap.xml; the
+  // domain itself is set in the repository's Pages settings, not here.
+  domain: 'simclashgolf.com',
   downloadUrl: 'https://github.com/robertjackson-engage/sim-clash/releases/latest/download/Sim-Clash-Setup.exe',
   downloadSize: 'about 165 MB',
   youtubeUrl: '',

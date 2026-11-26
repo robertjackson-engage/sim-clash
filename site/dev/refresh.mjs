@@ -17,7 +17,7 @@
 //                                                          named on the Make it yours page
 //   CHANGELOG.md                                           the release notes on the What's new page
 //                                                          (when it has an entry for config.release)
-//   site/config.js                                         owner, repo, release: the absolute
+//   site/config.js                                         domain (else owner, repo), release: the absolute
 //                                                          addresses in each <head>, sitemap.xml;
 //                                                          downloadUrl: the href of every Download button
 //
@@ -47,7 +47,8 @@ const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').
 const sandbox = { window: {} };
 vm.runInNewContext(fs.readFileSync(path.join(site, 'config.js'), 'utf8'), sandbox);
 const cfg = sandbox.window.SIMCLASH_SITE || {};
-const SITE_URL = `https://${cfg.owner}.github.io/${cfg.repo}/`;
+const SITE_DOMAIN = String(cfg.domain || '').replace(/^https?:\/\//, '').replace(/\/+$/, '');
+const SITE_URL = SITE_DOMAIN ? `https://${SITE_DOMAIN}/` : `https://${cfg.owner}.github.io/${cfg.repo}/`;
 // Every Download button is a real link (it works with scripts off): the installer itself when
 // config.downloadUrl is set, else the Install page. Written into every page below.
 const DOWNLOAD_HREF = cfg.downloadUrl || 'install.html';
