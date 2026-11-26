@@ -28,4 +28,8 @@ window.SIMCLASH_SITE = {
   downloadSize: 'about 165 MB',
   youtubeUrl: '',
   release: '1.0.0-beta.2',
+  // Visit counting, off while this is ''. Set it to a GoatCounter site code (the "simclash" in
+  // simclash.goatcounter.com) to count page views, where visitors came from and clicks on
+  // Download and the trailer. No cookies, nothing stored in the browser, no personal data.
+  analytics: '',
 };

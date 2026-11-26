@@ -1,7 +1,9 @@
 // Sim Clash site: fills the GitHub links from config.js, runs the hero clip, the trailer
 // lightbox, the "your download has started" panel, the route overlays, the before / after
 // sliders and the launch-monitor filter.
-// No framework, no network calls of its own, nothing tracked. Every page works without it.
+// No framework. Nothing is stored in the browser. The only network call of its own is the
+// optional visit count at the end of this file (config.js "analytics"; off when that is empty).
+// Every page works without it.
 (function () {
   'use strict';
   var doc = document;
@@ -239,4 +241,31 @@
   var cur = doc.querySelector('.nav a[aria-current="page"]');
   var nav = doc.querySelector('.nav');
   if (cur && nav && nav.scrollWidth > nav.clientWidth) nav.scrollLeft = Math.max(0, cur.offsetLeft - 24);
+
+  // ---------- visit counting (optional; config.js "analytics") ----------
+  // One picture request per page view to GoatCounter, and one per click on Download, the
+  // trailer or a GitHub link. No cookie, no local storage, no fingerprint: the request carries
+  // the page, its title, the referring site, the screen size and any ?ref= / ?utm_ tag.
+  var code = String(cfg.analytics || '').replace(/[^a-z0-9-]/gi, '');
+  var live = /^https?:$/.test(location.protocol) && !/^(localhost|127\.|\[::1\]|.*\.localhost$)/.test(location.hostname);
+  if (code && live) {
+    var count = function (p, title, isEvent) {
+      try {
+        var q = 'p=' + encodeURIComponent(p) + '&t=' + encodeURIComponent(title || '') +
+          '&r=' + encodeURIComponent(isEvent ? '' : doc.referrer) + '&e=' + (isEvent ? 'true' : 'false') +
+          '&s=' + encodeURIComponent([screen.width, screen.height, window.devicePixelRatio || 1].join(',')) +
+          '&q=' + encodeURIComponent(location.search) + '&rnd=' + Math.random().toString(36).slice(2, 7);
+        new Image().src = 'https://' + code + '.goatcounter.com/count?' + q;
+      } catch (e) { /* counting never breaks the page */ }
+    };
+    var page = location.pathname.split('/').pop().replace(/\.html$/, '') || 'home';
+    if (doc.visibilityState !== 'prerender') count(location.pathname, doc.title, false);
+    doc.addEventListener('click', function (ev) {
+      var a = ev.target && ev.target.closest ? ev.target.closest('a,button') : null;
+      if (!a) return;
+      if (a.getAttribute('data-gh') === 'download') count('download-' + page, 'Download (' + page + ')', true);
+      else if (a.hasAttribute('data-trailer')) count('trailer-' + page, 'Trailer (' + page + ')', true);
+      else if (a.hasAttribute('data-gh')) count('github-' + a.getAttribute('data-gh'), 'GitHub: ' + a.getAttribute('data-gh'), true);
+    }, true);
+  }
 })();

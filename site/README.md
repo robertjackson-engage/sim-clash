@@ -1,7 +1,7 @@
 # The Sim Clash website
 
 A static site for GitHub Pages: plain HTML, one stylesheet, two small scripts. No framework,
-no build step, no external requests (no CDN, no fonts to fetch, no analytics). It is served
+no build step, no external requests (no CDN, no fonts to fetch) apart from an optional, cookie-free visit count that is off until config.js names a GoatCounter site code. It is served
 from `https://<owner>.github.io/sim-clash/`, so every path in it is relative.
 
 `.github/workflows/pages.yml` publishes this folder on every push to `main` that touches it
